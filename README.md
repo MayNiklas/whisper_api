@@ -13,5 +13,5 @@ source .venv/bin/activate
 pip3 install -r requirements.txt
 
 # Run the server
-.venv/bin/uvicorn main:app --reload --host 127.0.0.1 --port 8081
+.venv/bin/uvicorn --app-dir whisper_api main:app --reload --host 127.0.0.1 --port 8081
 ```
