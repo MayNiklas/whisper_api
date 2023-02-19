@@ -6,7 +6,9 @@ services:
       # use Dockerfile.gpu when using a NVIDIA GPU
       dockerfile: Dockerfile.gpu
     ports:
-      - "3000:3000"
+      - "3001:3001"
+    environment:
+      - PORT=3001
     # Uncomment the following lines when using a NVIDIA GPU
     deploy:
       resources:
