@@ -37,16 +37,17 @@ class Task:
         """
         Process the task.
         """
-        self.set_processing()
-        self.result = convert.transcribe(self.audiofile.name)
-
-    def set_processing(self):
+        # set status to processing
         self.time_processing = datetime.now()
         self.status = "processing"
 
-    def set_finished(self):
+        # process audio file
+        self.result = convert.transcribe(self.audiofile.name)
+
+        # set status to done
         self.time_finished = datetime.now()
-        self.compute_time = self.time_finished - self.time_started
+        self.compute_time = self.time_finished - self.time_processing
         self.status = "done"
+
         # delete audio file
         self.audiofile.close()
