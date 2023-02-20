@@ -2,12 +2,9 @@ from fastapi import FastAPI
 from fastapi import UploadFile
 
 from .objects import Task
+from .objects import tasks
 
 app = FastAPI()
-
-
-# List of tasks - TODO: this is very temporary!
-tasks = []
 
 
 @app.post("/v1/transcribe")

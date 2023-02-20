@@ -51,3 +51,7 @@ class Task:
 
         # delete audio file
         self.audiofile.close()
+
+
+# List holding tasks - TODO: this is very temporary!
+tasks = []
