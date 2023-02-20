@@ -1,2 +1,2 @@
-# from .convert import transcribe
+from . import convert
 from .main import app
