@@ -12,7 +12,7 @@ git clone https://github.com/MayNiklas/whisper_api.git
 cd whisper_api
 
 # run the server via nix (using CUDA)
-nix run .#whisper_api 
+nix run .#whisper_api
 ```
 
 ### Linux
