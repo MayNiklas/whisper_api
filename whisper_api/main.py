@@ -1,8 +1,6 @@
-import time
 from fastapi import FastAPI, UploadFile
 
 from .models import Task
-from . import convert
 
 app = FastAPI()
 
@@ -40,11 +38,19 @@ async def status(task_id: str):
     for task in tasks:
         if str(task.uuid) == task_id:
             if task.status != "done":
-                return {"task_id": task.uuid, "status": task.status}
+                return {
+                    "task_id": task.uuid,
+                    "time_uploaded": task.time_uploaded,
+                    "status": task.status,
+                }
             else:
                 return {
                     "task_id": task.uuid,
+                    "time_uploaded": task.time_uploaded,
                     "status": task.status,
+                    "time_processing": task.time_processing,
+                    "time_finished": task.time_finished,
+                    "compute_time": task.compute_time,
                     "language": task.result["language"],
                     "transcript": task.result["text"],
                 }
@@ -58,8 +64,5 @@ async def work():
     """
     for task in tasks:
         if task.status == "pending":
-            task.status = "running"
-            task.result = convert.transcribe(task.audiofile.name)
-            task.status = "done"
-
-    return {"status": "ok"}
+            task.process()
+    return {"status": "done"}
