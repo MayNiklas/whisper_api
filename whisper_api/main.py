@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi import UploadFile
 
-from .models import Task
+from .objects import Task
 
 app = FastAPI()
 
