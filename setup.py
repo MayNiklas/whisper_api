@@ -1,7 +1,8 @@
 import os
 
 import pkg_resources
-from setuptools import setup, find_packages
+from setuptools import find_packages
+from setuptools import setup
 
 
 def read_version(fname="whisper_api/version.py"):
@@ -10,13 +11,13 @@ def read_version(fname="whisper_api/version.py"):
 
 
 setup(
-    name='whisper_api',
+    name="whisper_api",
     version=read_version(),
-    url='https://github.com/MayNiklas/whisper_api',
-    license='',
-    author='MayNiklas',
-    author_email='info@niklas-steffen.de',
-    description='a simple API for whisper',
+    url="https://github.com/MayNiklas/whisper_api",
+    license="",
+    author="MayNiklas",
+    author_email="info@niklas-steffen.de",
+    description="a simple API for whisper",
     long_description=open("README.md", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
     readme="README.md",

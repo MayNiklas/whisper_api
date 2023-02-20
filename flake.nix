@@ -27,7 +27,7 @@
           whisper_api = with pkgs.python310Packages;
             buildPythonPackage rec {
               pname = "whisper_api";
-              version = "1.0.0";
+              version = "20230220";
               src = self;
               propagatedBuildInputs = [
                 fastapi

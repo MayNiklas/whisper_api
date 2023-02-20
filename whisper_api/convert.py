@@ -1,7 +1,7 @@
-from .model_loader import load_model
+from . import model_loader
 
 # load model fitting the hardware we are running on
-model = load_model()
+model = model_loader.load_model()
 
 
 def get_length(result) -> float:
