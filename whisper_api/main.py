@@ -65,8 +65,9 @@ async def status(task_id: str):
 
 
 # needs to always be running in the background while having access to Tasks
+# currently is also blocking
 @app.get("/v1/work")
-async def work():
+def work():
     """
     Start the background task.
     """
