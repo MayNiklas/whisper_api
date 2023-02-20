@@ -1,3 +1,4 @@
+import time
 from fastapi import FastAPI, UploadFile
 
 from .models import Task
@@ -5,9 +6,8 @@ from . import convert
 
 app = FastAPI()
 
-DEFAULT_MODEL = "large-v2"
 
-# List of tasks
+# List of tasks - TODO: this is very temporary!
 tasks = []
 
 
@@ -39,22 +39,27 @@ async def status(task_id: str):
     """
     for task in tasks:
         if str(task.uuid) == task_id:
-            return {"task_id": task.uuid, "status": task.status, "result": task.result}
+            if task.status != "done":
+                return {"task_id": task.uuid, "status": task.status}
+            else:
+                return {
+                    "task_id": task.uuid,
+                    "status": task.status,
+                    "language": task.result["language"],
+                    "transcript": task.result["text"],
+                }
 
 
+# needs to always be running in the background while having access to Tasks
 @app.get("/v1/work")
 async def work():
     """
-    Get a task to work on.
-    :return: Task to work on.
+    Start the background task.
     """
     for task in tasks:
         if task.status == "pending":
-            task.status = "working"
+            task.status = "running"
+            task.result = convert.transcribe(task.audiofile.name)
+            task.status = "done"
 
-            result = convert.transcribe(task.audiofile.name)
-
-    return {
-        "language": result["language"],
-        "transcript": result["text"],
-    }
+    return {"status": "ok"}
