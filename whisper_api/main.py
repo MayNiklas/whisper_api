@@ -38,11 +38,18 @@ async def status(task_id: str):
     """
     for task in tasks:
         if str(task.uuid) == task_id:
-            if task.status != "done":
+            if task.status == "pending":
                 return {
                     "task_id": task.uuid,
                     "time_uploaded": task.time_uploaded,
                     "status": task.status,
+                }
+            elif task.status == "pending":
+                return {
+                    "task_id": task.uuid,
+                    "time_uploaded": task.time_uploaded,
+                    "status": task.status,
+                    "time_processing": task.time_processing,
                 }
             else:
                 return {
