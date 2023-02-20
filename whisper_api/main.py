@@ -1,12 +1,13 @@
-from tempfile import NamedTemporaryFile
-
 from fastapi import FastAPI, UploadFile
 
-from .convert import transcribe as convert
+from .models import Task
 
 app = FastAPI()
 
 DEFAULT_MODEL = "large-v2"
+
+# List of tasks
+tasks = []
 
 
 @app.post("/v1/transcribe")
@@ -17,17 +18,12 @@ async def transcribe(file: UploadFile):
     :return: Transcription of audio file.
     """
 
-    # save file to temporary file
-    temp = NamedTemporaryFile()
-    temp.write(await file.read())
+    # Create a new task
+    # Task contains a temporary file to store the audio file
+    # and a unique identifier
+    task = Task()
+    task.audiofile.write(await file.read())
 
-    result = convert(temp.name)
+    tasks.append(task)
 
-    # test via:
-    # curl --location --request POST 127.0.0.1:8081/v1/transcribe -F "file=@audio.m4a"
-
-    return {
-        "filename": file.filename,
-        "language": result["language"],
-        "transcript": result["text"],
-    }
+    return {"task_id": task.uuid}
