@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import FastAPI
 from fastapi import UploadFile
 
@@ -61,13 +63,33 @@ async def status(task_id: str):
                 }
 
 
-# needs to always be running in the background while having access to Tasks
-@app.get("/v1/work")
-def work():
+async def periodic():
     """
-    Start the background task.
+    Periodically run this function.
     """
-    for task in tasks:
-        if task.status == "pending":
-            task.process()
-    return {"status": "done"}
+    while True:
+        # check for pending tasks every second
+        await asyncio.sleep(1)
+
+        # to keep track of whether we did anything
+        done_something = False
+
+        for task in tasks:
+            if task.status == "pending":
+                print("Processing task: {}".format(task.uuid))
+                # TODO: make this non-blocking
+                task.process()
+                print("Finished processing task: {}".format(task.uuid))
+                done_something = True
+
+            if done_something:
+                print("Done processing tasks.")
+
+
+@app.on_event("startup")
+async def schedule_periodic():
+    """
+    Schedule the periodic function to run every seconds.
+    """
+    loop = asyncio.get_event_loop()
+    loop.create_task(periodic())
