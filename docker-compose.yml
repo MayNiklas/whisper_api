@@ -1,0 +1,18 @@
+version: "3.9"
+services:
+  api:
+    build:
+      context: .
+      # use Dockerfile.gpu when using a NVIDIA GPU
+      dockerfile: Dockerfile.gpu
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+    # Uncomment the following lines when using a NVIDIA GPU
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [ gpu ]
