@@ -1,5 +1,9 @@
+from os import getenv
+
 import torch
 import whisper
+
+dev_mode = getenv("DEV_MODE", False)
 
 
 def get_fitting_model() -> str:
@@ -9,6 +13,10 @@ def get_fitting_model() -> str:
     Returns:
         str: name of the model
     """
+
+    if dev_mode:
+        print("DEV_MODE is set, using model small...")
+        return "small"
 
     # check if GPU is available
     if torch.cuda.is_available():

@@ -85,6 +85,13 @@ cd whisper_api
 nix run .#whisper_api
 ```
 
+## Settings
+
+```bash
+# enable development mode -> use small models
+export DEV_MODE=True
+```
+
 ## Projects being used
 
 * [OpenAI Whisper](https://github.com/openai/whisper)
