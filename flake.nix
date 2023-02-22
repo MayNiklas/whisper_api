@@ -14,17 +14,45 @@
             cudaSupport = true;
           };
         };
+        python = pkgs.python310;
+        python-packages = with python.pkgs; [
+          fastapi
+          multipart
+          openai-whisper
+          torch
+          uvicorn
+        ];
       in
       rec {
 
         # Use nixpkgs-fmt for `nix fmt'
         formatter = pkgs.nixpkgs-fmt;
 
-        defaultPackage = packages.whisper_api;
+        # nix develop
+        devShells.default =
+          let
+            python-with-packages = python.withPackages (ps: python-packages);
+          in
+          pkgs.mkShell
+            {
+              buildInputs = with pkgs;[
+                # only needed for development
+                nixpkgs-fmt
+                pre-commit
 
+                # also in final package
+                python-with-packages
+              ];
+
+              shellHook = ''
+                export PYTHONPATH=${python-with-packages}/${python-with-packages.sitePackages}
+              '';
+            };
+
+        defaultPackage = packages.whisper_api;
         packages = flake-utils.lib.flattenTree rec {
 
-          whisper_api = with pkgs.python310Packages;
+          whisper_api = with python.pkgs;
             buildPythonPackage rec {
               pname = "whisper_api";
               version = (lib.strings.removePrefix ''__version__ = "''
@@ -33,13 +61,7 @@
                 ''
                   (builtins.readFile ./whisper_api/version.py)));
               src = self;
-              propagatedBuildInputs = [
-                fastapi
-                multipart
-                openai-whisper
-                torch
-                uvicorn
-              ];
+              propagatedBuildInputs = python-packages;
               doCheck = false;
             };
 
