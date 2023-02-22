@@ -19,6 +19,11 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 
+# download models so they are cached in the docker image
+COPY whisper_api/download_models.py download_models.py
+RUN python3 download_models.py && \
+    rm download_models.py
+
 COPY whisper_api whisper_api
 
 ENV PORT=3001
