@@ -5,8 +5,30 @@ from fastapi import UploadFile
 
 from .objects import Task
 from .objects import tasks
+from .version import __version__
 
-app = FastAPI()
+
+description = """
+Whisper API transcribes audio files.
+
+## Users
+
+You will be able to:
+
+* **Create** a new task by uploading an audio file.
+* **Read** the status of a task.
+"""
+
+app = FastAPI(
+    title="Whisper API",
+    description=description,
+    version=__version__,
+    # terms_of_service="PLACEHOLDER",
+    contact={
+        "name": "GitHub Repository",
+        "url": "https://github.com/mayniklas/whisper_api/",
+    },
+)
 
 
 @app.post("/v1/transcribe")
