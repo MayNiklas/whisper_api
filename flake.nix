@@ -4,11 +4,18 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
+  # only used for `nix develop'
+  nixConfig = {
+    extra-trusted-public-keys = "cache.lounge.rocks:uXa8UuAEQoKFtU8Om/hq6d7U+HgcrduTVr8Cfl6JuaY=";
+    extra-substituters = "https://cache.lounge.rocks?priority=100";
+  };
+
   outputs = { self, nixpkgs, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
           inherit system;
+          # remove comment to enable CUDA
           config = {
             allowUnfree = true;
             cudaSupport = true;

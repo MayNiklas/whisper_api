@@ -1,0 +1,56 @@
+---
+kind: pipeline
+type: exec
+name: flake info
+
+platform:
+  os: linux
+  arch: amd64
+
+clone:
+  depth: 1
+
+steps:
+  - name: show flake show
+    commands:
+      - nix flake show
+
+  - name: show flake info
+    commands:
+      - nix flake info
+
+---
+kind: pipeline
+type: exec
+name: build for x86 CPU's
+
+platform:
+  os: linux
+  arch: amd64
+
+clone:
+  depth: 1
+
+steps:
+  - name: build package
+    commands:
+      - nix build .#packages.x86_64-linux.whisper_api --out-link result-whisper_api
+
+  - name: build devShell
+    commands:
+      - nix build .#devShells.x86_64-linux.default --out-link result-devShell
+
+  - name: upload to binary cache via s3
+    commands:
+      - nix run 'github:mayniklas/nixos'#s3uploader
+    environment:
+      AWS_ACCESS_KEY_ID:
+        from_secret: aws_key
+      AWS_SECRET_ACCESS_KEY:
+        from_secret: aws_secret
+
+trigger:
+  branch:
+    - main
+  event:
+    - push
