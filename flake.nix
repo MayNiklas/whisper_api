@@ -15,7 +15,6 @@
       let
         pkgs = import nixpkgs {
           inherit system;
-          # remove comment to enable CUDA
           config = {
             allowUnfree = true;
             cudaSupport = true;
