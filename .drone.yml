@@ -35,6 +35,8 @@ steps:
   - name: build package
     commands:
       - nix build .#packages.x86_64-linux.whisper_api --out-link result-whisper_api
+      - nix build .#packages.x86_64-linux.whisper_api_withCUDA --out-link result-whisper_api_withCUDA
+      - nix build .#packages.x86_64-linux.whisper_api_withoutCUDA --out-link result-whisper_api_withoutCUDA
 
   - name: build devShell
     commands:

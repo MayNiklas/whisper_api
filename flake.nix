@@ -15,29 +15,35 @@
       let
         pkgs = import nixpkgs {
           inherit system;
-          config = {
-            allowUnfree = true;
-            cudaSupport = true;
-          };
         };
-        python = pkgs.python310;
-        python-packages = with python.pkgs; [
-          fastapi
-          multipart
-          openai-whisper
-          torch
-          uvicorn
-        ];
       in
       rec {
 
         # Use nixpkgs-fmt for `nix fmt'
         formatter = pkgs.nixpkgs-fmt;
 
+        # TODO:
+        # make sure `nix develop' is available for CUDA and non-CUDA
+        # maybe also find a nicer way for the different package versions?
+
         # nix develop
         devShells.default =
           let
-            python-with-packages = python.withPackages (ps: python-packages);
+            pkgs = import nixpkgs {
+              inherit system;
+              config = {
+                allowUnfree = true;
+                cudaSupport = true;
+              };
+            };
+            python-with-packages = pkgs.python3.withPackages
+              (p: with p; [
+                fastapi
+                multipart
+                openai-whisper
+                torch
+                uvicorn
+              ]);
           in
           pkgs.mkShell
             {
@@ -56,20 +62,34 @@
             };
 
         defaultPackage = packages.whisper_api;
+
         packages = flake-utils.lib.flattenTree rec {
 
-          whisper_api = with python.pkgs;
-            buildPythonPackage rec {
-              pname = "whisper_api";
-              version = (lib.strings.removePrefix ''__version__ = "''
-                (lib.strings.removeSuffix ''
-                  "
-                ''
-                  (builtins.readFile ./whisper_api/version.py)));
-              src = self;
-              propagatedBuildInputs = python-packages;
-              doCheck = false;
-            };
+          whisper_api = pkgs.python3Packages.callPackage ./default.nix { };
+
+          whisper_api_withCUDA =
+            let
+              pkgs = import nixpkgs {
+                inherit system;
+                config = {
+                  allowUnfree = true;
+                  cudaSupport = true;
+                };
+              };
+            in
+            pkgs.python3Packages.callPackage ./default.nix { };
+
+          whisper_api_withoutCUDA =
+            let
+              pkgs = import nixpkgs {
+                inherit system;
+                config = {
+                  allowUnfree = false;
+                  cudaSupport = false;
+                };
+              };
+            in
+            pkgs.python3Packages.callPackage ./default.nix { };
 
         };
       });
