@@ -30,11 +30,14 @@ def get_fitting_model() -> str:
             "base": 1,
         }
 
-        # find the best fitting model for the available GPU memory
+        # find the best model for the available/free VRAM
         for model_name, vram_size in vram_model_map.items():
-            if torch.cuda.get_device_properties(0).total_memory >= vram_size * 1e9:
+            if torch.cuda.mem_get_info()[0] >= vram_size * 1e9:
                 print(f"Using model {model_name}...")
                 return model_name
+
+        # TODO: we should force using the CPU,
+        # if no model fits the available VRAM
 
     else:
         print("GPU not available, using CPU...")
