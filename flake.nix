@@ -22,44 +22,35 @@
         # Use nixpkgs-fmt for `nix fmt'
         formatter = pkgs.nixpkgs-fmt;
 
-        # TODO:
-        # make sure `nix develop' is available for CUDA and non-CUDA
-        # maybe also find a nicer way for the different package versions?
+        devShells = {
 
-        # nix develop
-        devShells.default =
-          let
-            pkgs = import nixpkgs {
-              inherit system;
-              config = {
-                allowUnfree = true;
-                cudaSupport = true;
+          # nix develop
+          default =
+            let
+              pkgs = import nixpkgs {
+                inherit system;
+                config = {
+                  allowUnfree = true;
+                  cudaSupport = true;
+                };
               };
-            };
-            python-with-packages = pkgs.python3.withPackages
-              (p: with p; [
-                fastapi
-                multipart
-                openai-whisper
-                torch
-                uvicorn
-              ]);
-          in
-          pkgs.mkShell
-            {
-              buildInputs = with pkgs;[
-                # only needed for development
-                nixpkgs-fmt
-                pre-commit
+            in
+            import ./shell.nix { inherit pkgs; };
 
-                # also in final package
-                python-with-packages
-              ];
+          # nix develop .#withoutCUDA
+          withoutCUDA =
+            let
+              pkgs = import nixpkgs {
+                inherit system;
+                config = {
+                  allowUnfree = false;
+                  cudaSupport = false;
+                };
+              };
+            in
+            import ./shell.nix { inherit pkgs; };
 
-              shellHook = ''
-                export PYTHONPATH=${python-with-packages}/${python-with-packages.sitePackages}
-              '';
-            };
+        };
 
         defaultPackage = packages.whisper_api;
 

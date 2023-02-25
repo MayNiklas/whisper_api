@@ -32,15 +32,25 @@ clone:
   depth: 1
 
 steps:
-  - name: build package
+  - name: build .#packages.x86_64-linux.whisper_api
     commands:
       - nix build .#packages.x86_64-linux.whisper_api --out-link result-whisper_api
+
+  - name: build .#packages.x86_64-linux.whisper_api_withCUDA
+    commands:
       - nix build .#packages.x86_64-linux.whisper_api_withCUDA --out-link result-whisper_api_withCUDA
+
+  - name: build .#packages.x86_64-linux.whisper_api_withoutCUDA
+    commands:
       - nix build .#packages.x86_64-linux.whisper_api_withoutCUDA --out-link result-whisper_api_withoutCUDA
 
-  - name: build devShell
+  - name: build .#devShells.x86_64-linux.default
     commands:
       - nix build .#devShells.x86_64-linux.default --out-link result-devShell
+
+  - name: build .#devShells.x86_64-linux.withoutCUDA
+    commands:
+      - nix build .#devShells.x86_64-linux.withoutCUDA --out-link result-devShell_withoutCUDA
 
   - name: upload to binary cache via s3
     commands:
