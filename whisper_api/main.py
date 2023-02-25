@@ -32,16 +32,19 @@ app = FastAPI(
 
 
 @app.post("/v1/transcribe")
-async def transcribe(file: UploadFile):
+async def transcribe(file: UploadFile, language: str = None):
     """
     Transcribe audio file.
-    :param file: Uploaded audio file.
-    :return: Transcription of audio file.
+    :param file: Audio file to transcribe.
+    :param language: Language of the audio file.
+
+    :return: ID of the task.
     """
 
     # Create a new task
     task = Task()
     task.audiofile.write(await file.read())
+    task.language = language
 
     # Append task to pool of tasks
     tasks.append(task)

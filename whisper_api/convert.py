@@ -4,7 +4,7 @@ from . import model_loader
 model = model_loader.load_model()
 
 
-def transcribe(file) -> str:
+def transcribe(file, file_language=None) -> str:
     """
     Transcribe a file using the loaded model.
 
@@ -16,4 +16,4 @@ def transcribe(file) -> str:
     """
 
     # transcribe the file
-    return model.transcribe(file)
+    return model.transcribe(file, language=file_language)

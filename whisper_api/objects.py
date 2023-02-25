@@ -24,6 +24,7 @@ class Task:
         self.uuid = uuid.uuid4()
         self.time_uploaded = datetime.now()
         self.audiofile = NamedTemporaryFile()
+        self.language = None
         self.status = "pending"
         self.time_processing = None
         self.time_finished = None
@@ -42,7 +43,7 @@ class Task:
         self.status = "processing"
 
         # process audio file
-        self.result = convert.transcribe(self.audiofile.name)
+        self.result = convert.transcribe(self.audiofile.name, self.language)
 
         # set status to done
         self.time_finished = datetime.now()
