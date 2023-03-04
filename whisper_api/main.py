@@ -2,6 +2,7 @@ import asyncio
 
 from fastapi import FastAPI
 from fastapi import UploadFile
+from fastapi import responses
 
 from .objects import Task
 from .objects import tasks
@@ -88,33 +89,29 @@ async def status(task_id: str):
                 }
 
 
-async def periodic():
+@app.get("/v1/get_pending_task")
+async def get_pending_task():
     """
-    Periodically run this function.
+    Get a pending task.
+    :return: ID of the task.
     """
-    while True:
-        # check for pending tasks every second
-        await asyncio.sleep(1)
-
-        # to keep track of whether we did anything
-        done_something = False
-
-        for task in tasks:
-            if task.status == "pending":
-                print("Processing task: {}".format(task.uuid))
-                # TODO: make this non-blocking
-                task.process()
-                print("Finished processing task: {}".format(task.uuid))
-                done_something = True
-
-            if done_something:
-                print("Done processing tasks.")
+    for task in tasks:
+        if task.status == "pending":
+            return {
+                "task_id": task.uuid,
+                "language": task.language,
+                "status": task.status,
+            }
 
 
-@app.on_event("startup")
-async def schedule_periodic():
+@app.get("/v1/get_task_audiofile/{task_id}")
+async def get_task_audiofile(task_id: str):
     """
-    Schedule the periodic function to run every seconds.
+    Get the audio file of a task.
+    :param task_id: ID of the task.
+    :return: Audio file.
     """
-    loop = asyncio.get_event_loop()
-    loop.create_task(periodic())
+    for task in tasks:
+        if str(task.uuid) == task_id:
+            # return audiofile stored at path task.audiofile.name
+            return responses.FileResponse(task.audiofile.name)
