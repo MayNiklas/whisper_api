@@ -1,4 +1,5 @@
 fastapi~=0.88.0
+minio ~= 7.1.13
 openai-whisper>=20230124
 python-multipart~=0.0.5
 uvicorn~=0.20.0

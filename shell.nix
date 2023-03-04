@@ -9,6 +9,7 @@ let
   python-with-packages = pkgs.python3.withPackages
     (p: with p; [
       fastapi
+      minio
       multipart
       openai-whisper
       torch

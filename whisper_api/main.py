@@ -1,8 +1,8 @@
 import asyncio
 
 from fastapi import FastAPI
-from fastapi import UploadFile
 from fastapi import responses
+from fastapi import UploadFile
 
 from .objects import Task
 from .objects import tasks

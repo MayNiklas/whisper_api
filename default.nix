@@ -2,10 +2,11 @@
 , buildPythonPackage
 
   # propagates
-, torch
 , fastapi
+, minio
 , multipart
 , openai-whisper
+, torch
 , uvicorn
 }:
 buildPythonPackage rec {
@@ -23,6 +24,7 @@ buildPythonPackage rec {
 
   propagatedBuildInputs = [
     fastapi
+    minio
     multipart
     openai-whisper
     torch
