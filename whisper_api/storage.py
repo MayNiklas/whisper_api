@@ -1,7 +1,8 @@
 from minio import Minio
-from minio import timedelta
+from datetime import timedelta
 from minio.error import S3Error
 import os
+import uuid
 
 
 bucket_name = os.environ.get("MINIO_BUCKET_NAME")
@@ -36,6 +37,20 @@ def store_file(uuid, file_path, file_name):
         print("error occurred storing file.", exc)
 
 
+def get_file_name(uuid) -> str:
+    """
+    Returns the name of the file
+    """
+
+    try:
+        objects = client.list_objects(bucket_name, prefix=f"{uuid}/", recursive=True)
+        # return first object_name
+        for obj in objects:
+            return obj.object_name
+    except S3Error as exc:
+        print("error occurred getting file name.", exc)
+
+
 def get_file(uuid) -> str:
     """
     Returns a presigned url to download the file
@@ -44,9 +59,7 @@ def get_file(uuid) -> str:
     try:
         return client.presigned_get_object(
             bucket_name,
-            client.list_objects(bucket_name, prefix=f"{uuid}/", recursive=True)
-            .objects[0]
-            .object_name,
+            get_file_name(uuid),
             expires=timedelta(hours=2),
         )
     except S3Error as exc:
