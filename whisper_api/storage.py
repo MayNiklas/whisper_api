@@ -7,23 +7,19 @@ import uuid
 
 bucket_name = os.environ.get("MINIO_BUCKET_NAME")
 
-try:
-    # Create a minio client
-    client = Minio(
-        os.environ.get("MINIO_ENDPOINT"),
-        access_key=os.environ.get("MINIO_ACCESS_KEY"),
-        secret_key=os.environ.get("MINIO_SECRET_KEY"),
-    )
+# Create a minio client
+client = Minio(
+    endpoint=os.environ.get("MINIO_ENDPOINT"),
+    access_key=os.environ.get("MINIO_ACCESS_KEY"),
+    secret_key=os.environ.get("MINIO_SECRET_KEY"),
+)
 
-    # make sure bucket exists
-    if not client.bucket_exists(bucket_name):
-        try:
-            client.make_bucket(bucket_name)
-        except S3Error as exc:
-            print("error occurred creating bucket.", exc)
-
-except S3Error as exc:
-    print("error occurred connecting to minio.", exc)
+# make sure bucket exists
+if not client.bucket_exists(bucket_name):
+    try:
+        client.make_bucket(bucket_name)
+    except S3Error as exc:
+        print("error occurred creating bucket.", exc)
 
 
 def store_file(uuid, file_path, file_name):
