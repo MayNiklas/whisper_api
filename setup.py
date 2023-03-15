@@ -30,7 +30,10 @@ setup(
         )
     ],
     entry_points={
-        "console_scripts": ["whisper_api=whisper_api.webserver:start"],
+        "console_scripts": [
+            "whisper_api=whisper_api.webserver:start",
+            "whisper_cli=whisper_api.cli:cli",
+        ],
     },
     include_package_data=True,
 )
