@@ -2,6 +2,8 @@ import asyncio
 
 from fastapi import FastAPI
 from fastapi import UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
 from .objects import Task
 from .objects import tasks
@@ -29,6 +31,35 @@ app = FastAPI(
         "url": "https://github.com/mayniklas/whisper_api/",
     },
 )
+
+# needs to be improved - this is just a quick fix
+
+origins = [
+    "*",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/")
+async def index():
+    return FileResponse("static/index.html")
+
+
+@app.get("/styles.css")
+async def styles():
+    return FileResponse("static/styles.css")
+
+
+@app.get("/script.js")
+async def script():
+    return FileResponse("static/script.js")
 
 
 @app.post("/v1/transcribe")

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Transcribe Audio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="container">
+  <h1>Transcribe Audio</h1>
+  <form>
+    <label for="audioFile">Select an audio file:</label>
+    <input type="file" id="audioFile">
+    <button type="button" onclick="transcribe()">Transcribe</button>
+  </form>
+  <div id="taskIdContainer" style="display: none">
+    <p><strong>Task ID:</strong> <span id="taskId"></span></p>
+  </div>
+  <div id="resultContainer" style="display: none">
+    <h2>Transcription:</h2>
+    <div id="result"></div>
+  </div>
+  <button type="button" id="cleanOutputBtn" onclick="cleanOutput()">Clean Output</button>
+  <script src="script.js"></script>
+</body>
+
+</html>
