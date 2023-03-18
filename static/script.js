@@ -1,51 +1,63 @@
 function transcribe() {
-  const file = document.getElementById("audioFile").files[0];
-  const endpoint = "v1/transcribe";
+  // Clear the output container
+  const outputContainer = document.getElementById("resultContainer");
+  outputContainer.style.display = "none";
+  outputContainer.querySelector("#result").innerHTML = "";
+
+  // Get the selected file
+  const fileInput = document.getElementById("audioFile");
+  const file = fileInput.files[0];
+  if (!file) {
+    alert("Please select an audio file.");
+    return;
+  }
+
+  // Create a FormData object and append the file to it
   const formData = new FormData();
-  formData.append("file", new Blob([file], { type: file.type }));
-  fetch(endpoint, {
+  formData.append("file", file, file.name);
+
+  // Send a POST request to the server to initiate transcription
+  fetch("/v1/transcribe", {
     method: "POST",
     body: formData,
   })
     .then((response) => response.json())
     .then((data) => {
-      const taskId = data.task_id;
-      document.getElementById("taskId").textContent = taskId;
+      // Display the task ID
       const taskIdContainer = document.getElementById("taskIdContainer");
+      const taskId = document.getElementById("taskId");
+      taskId.innerText = data.task_id;
       taskIdContainer.style.display = "block";
-      const resultContainer = document.getElementById("resultContainer");
-      resultContainer.style.display = "block";
-      const cleanOutputBtn = document.getElementById("cleanOutputBtn");
-      cleanOutputBtn.style.display = "inline-block";
-      const statusEndpoint = `v1/status/${taskId}`;
-      const interval = setInterval(() => {
-        fetch(statusEndpoint)
+
+      // Check the status of the transcription every second
+      const intervalId = setInterval(() => {
+        fetch(`/v1/status/${data.task_id}`)
           .then((response) => response.json())
           .then((data) => {
             if (data.status === "done") {
-              clearInterval(interval);
-              const resultDiv = document.getElementById("result");
-              resultDiv.innerHTML = data.transcript;
+              // Display the transcription
+              clearInterval(intervalId);
+              const resultContainer = document.getElementById("resultContainer");
+              const result = document.getElementById("result");
+              result.innerText = data.transcript;
+              resultContainer.style.display = "block";
+              document.getElementById("cleanOutputBtn").style.display = "block";
+              taskIdContainer.style.display = "none";
             }
-          })
-          .catch((error) => {
-            console.error(error);
-            clearInterval(interval);
           });
       }, 1000);
     })
     .catch((error) => {
-      console.error(error);
+      console.error("Error:", error);
     });
 }
 
 function cleanOutput() {
+  const outputContainer = document.getElementById("resultContainer");
+  outputContainer.style.display = "none";
+  outputContainer.querySelector("#result").innerHTML = "";
+  document.getElementById("cleanOutputBtn").style.display = "none";
   const taskIdContainer = document.getElementById("taskIdContainer");
   taskIdContainer.style.display = "none";
-  const resultContainer = document.getElementById("resultContainer");
-  resultContainer.style.display = "none";
-  const cleanOutputBtn = document.getElementById("cleanOutputBtn");
-  cleanOutputBtn.style.display = "none";
-  const resultDiv = document.getElementById("result");
-  resultDiv.innerHTML = "";
+  taskIdContainer.querySelector("#taskId").innerHTML = "";
 }
