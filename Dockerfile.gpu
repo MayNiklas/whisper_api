@@ -24,6 +24,7 @@ COPY whisper_api/download_models.py download_models.py
 RUN python3 download_models.py && \
     rm download_models.py
 
+COPY static static
 COPY whisper_api whisper_api
 
 ENV PORT=3001
