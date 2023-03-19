@@ -27,6 +27,7 @@ RUN python3 download_models.py && \
 COPY static static
 COPY whisper_api whisper_api
 
-ENV PORT=3001
+ENV PORT=3001 \
+    PRELOAD=false
 
 CMD python3 -m uvicorn whisper_api.main:app --host 0.0.0.0 --port $PORT

@@ -9,6 +9,7 @@ services:
       - "3001:3001"
     environment:
       - PORT=3001
+      - PRELOAD=false
     # Uncomment the following lines when using a NVIDIA GPU
     deploy:
       resources:
