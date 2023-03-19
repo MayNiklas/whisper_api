@@ -99,7 +99,7 @@ async def status(task_id: str):
                     "time_uploaded": task.time_uploaded,
                     "status": task.status,
                 }
-            elif task.status == "pending":
+            elif task.status == "processing":
                 return {
                     "task_id": task.uuid,
                     "time_uploaded": task.time_uploaded,
