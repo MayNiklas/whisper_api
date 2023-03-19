@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi import UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.responses import HTMLResponse
 
 from .objects import Task
 from .objects import tasks
@@ -45,21 +46,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@app.get("/")
-async def index():
-    return FileResponse("static/index.html")
-
-
-@app.get("/styles.css")
-async def styles():
-    return FileResponse("static/styles.css")
-
-
-@app.get("/script.js")
-async def script():
-    return FileResponse("static/script.js")
 
 
 @app.post("/v1/transcribe")
@@ -117,6 +103,27 @@ async def status(task_id: str):
                     "language": task.result["language"],
                     "transcript": task.result["text"],
                 }
+
+
+# serve static folder
+@app.get("/{file_path:path}")
+async def static(file_path: str):
+    """
+    Serve static files e.g. the frontend.
+    :param file_path: Path to the file.
+    :return: File.
+    """
+
+    if file_path == "":
+        file_path = "index.html"
+
+    allowed_files = ["index.html", "script.js", "styles.css"]
+
+    # return 404 if not in allowed files
+    if file_path not in allowed_files:
+        return HTMLResponse(status_code=404, content="404 Not Found")
+
+    return FileResponse(f"static/{file_path}")
 
 
 async def periodic():
