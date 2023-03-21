@@ -1,4 +1,8 @@
 import asyncio
+import multiprocessing
+from multiprocessing import freeze_support
+from multiprocessing import Pool
+from tempfile import NamedTemporaryFile
 
 from fastapi import FastAPI
 from fastapi import UploadFile
@@ -48,6 +52,28 @@ app.add_middleware(
 )
 
 
+# create Pipe for communication between main and worker thread
+conn1, conn2 = multiprocessing.Pipe(duplex=True)
+
+
+def worker(pipe):
+    """
+    Worker thread.
+    :param pipe: Pipe to communicate with the main thread.
+    """
+
+    from . import convert
+
+    while True:
+        job = pipe.recv()
+        pipe.send(
+            {
+                "uuid": job["uuid"],
+                "result": convert.transcribe(job["file"], job["language"]),
+            }
+        )
+
+
 @app.post("/v1/transcribe")
 async def transcribe(file: UploadFile, language: str = None):
     """
@@ -66,6 +92,11 @@ async def transcribe(file: UploadFile, language: str = None):
     # Append task to pool of tasks
     tasks.append(task)
 
+    # send file to worker thread
+    conn2.send(
+        {"uuid": task.uuid, "file": task.audiofile.name, "language": task.language}
+    )
+
     # return task id
     return {"task_id": task.uuid}
 
@@ -79,27 +110,17 @@ async def status(task_id: str):
     """
     for task in tasks:
         if str(task.uuid) == task_id:
-            if task.status == "pending":
+            if task.status == "pending" or task.status == "processing":
                 return {
                     "task_id": task.uuid,
                     "time_uploaded": task.time_uploaded,
                     "status": task.status,
-                }
-            elif task.status == "processing":
-                return {
-                    "task_id": task.uuid,
-                    "time_uploaded": task.time_uploaded,
-                    "status": task.status,
-                    "time_processing": task.time_processing,
                 }
             else:
                 return {
                     "task_id": task.uuid,
                     "time_uploaded": task.time_uploaded,
                     "status": task.status,
-                    "time_processing": task.time_processing,
-                    "time_finished": task.time_finished,
-                    "compute_time": task.compute_time,
                     "language": task.result["language"],
                     "transcript": task.result["text"],
                 }
@@ -126,33 +147,36 @@ async def static(file_path: str):
     return FileResponse(f"static/{file_path}")
 
 
-async def periodic():
+async def process_tasks():
     """
-    Periodically run this function.
+    Start background process and receive results from the worker thread.
     """
+
+    # create worker thread
+    p = multiprocessing.Process(target=worker, args=(conn1,))
+    p.start()
+
     while True:
         # check for pending tasks every second
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.25)
 
-        # to keep track of whether we did anything
-        done_something = False
+        # check if there is a result from the worker thread
+        if conn2.poll(0.1):
+            res = conn2.recv()
 
-        for task in tasks:
-            if task.status == "pending":
-                print("Processing task: {}".format(task.uuid))
-                # TODO: make this non-blocking
-                task.process()
-                print("Finished processing task: {}".format(task.uuid))
-                done_something = True
+            task = next((task for task in tasks if task.uuid == res["uuid"]), None)
+            task.result = res["result"]
+            task.status = "done"
+            task.audiofile.close()
 
-            if done_something:
-                print("Done processing tasks.")
+            print("Task done: " + str(task.uuid))
 
 
 @app.on_event("startup")
-async def schedule_periodic():
+async def startup():
     """
-    Schedule the periodic function to run every seconds.
+    Get's executed on startup.
     """
+
     loop = asyncio.get_event_loop()
-    loop.create_task(periodic())
+    loop.create_task(process_tasks())
