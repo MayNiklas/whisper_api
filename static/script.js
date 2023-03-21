@@ -99,6 +99,9 @@ function transcribe() {
               resultContainer.style.display = "block";
               document.getElementById("cleanOutputBtn").style.display = "block";
               taskIdContainer.style.display = "none";
+
+              // Remove the content of the file variable after transcription
+              fileInput.value = "";
             }
           });
       }, 1000);
