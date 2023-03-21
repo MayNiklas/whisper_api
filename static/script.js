@@ -55,66 +55,40 @@ function transcribe(file) {
     formData.append("file", selectedFile, selectedFile.name);
   }
 
-  // Create a new XMLHttpRequest
-  const xhr = new XMLHttpRequest();
+  // Send a POST request to the server to initiate transcription
+  fetch("/v1/transcribe", {
+    method: "POST",
+    body: formData,
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      // Display the task ID
+      const taskIdContainer = document.getElementById("taskIdContainer");
+      const taskId = document.getElementById("taskId");
+      taskId.innerText = data.task_id;
+      taskIdContainer.style.display = "block";
 
-  // Handle the upload progress
-  xhr.upload.addEventListener("progress", (event) => {
-    if (event.lengthComputable) {
-      // Show the progress container and update the progress bar width
-      const progressContainer = document.getElementById("progressContainer");
-      progressContainer.style.display = "block";
-      const progressBar = document.getElementById("progress");
-      const progressPercentage = Math.round((event.loaded / event.total) * 100);
-      progressBar.style.width = `${progressPercentage}%`;
-    }
-  });
-
-  // Handle the load event
-  xhr.addEventListener("load", () => {
-    // Parse the response JSON
-    const data = JSON.parse(xhr.responseText);
-
-    // Display the task ID
-    const taskIdContainer = document.getElementById("taskIdContainer");
-    const taskId = document.getElementById("taskId");
-    taskId.innerText = data.task_id;
-    taskIdContainer.style.display = "block";
-
-    // Show "upload done!" with a green checkmark
-    const uploadStatus = document.getElementById("uploadStatus");
-    uploadStatus.style.display = "block";
-    setTimeout(() => {
-      uploadStatus.style.display = "none";
-    }, 3000);
-
-    // Check the status of the transcription every second
-    const intervalId = setInterval(() => {
-      fetch(`/v1/status/${data.task_id}`)
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.status === "done") {
-            // Display the transcription
-            clearInterval(intervalId);
-            const resultContainer = document.getElementById("resultContainer");
-            const result = document.getElementById("result");
-            result.innerText = data.transcript;
-            resultContainer.style.display = "block";
-            document.getElementById("cleanOutputBtn").style.display = "block";
-            taskIdContainer.style.display = "none";
-          }
-        });
-    }, 1000);
-  });
-
-  // Handle errors
-  xhr.addEventListener("error", () => {
-    console.error("Error:", xhr.statusText);
-  });
-
-  // Open and send the request
-  xhr.open("POST", "/v1/transcribe");
-  xhr.send(formData);
+      // Check the status of the transcription every second
+      const intervalId = setInterval(() => {
+        fetch(`/v1/status/${data.task_id}`)
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.status === "done") {
+              // Display the transcription
+              clearInterval(intervalId);
+              const resultContainer = document.getElementById("resultContainer");
+              const result = document.getElementById("result");
+              result.innerText = data.transcript;
+              resultContainer.style.display = "block";
+              document.getElementById("cleanOutputBtn").style.display = "block";
+              taskIdContainer.style.display = "none";
+            }
+          });
+      }, 1000);
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+    });
 }
 
 function cleanOutput() {
