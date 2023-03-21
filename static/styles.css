@@ -18,20 +18,27 @@ h1 {
   font-size: 2em;
 }
 
-form {
+.drop-area {
+  border: 2px dashed #ccc;
+  padding: 30px;
   margin-bottom: 20px;
+  text-align: center;
+  background-color: #fff;
+  border-radius: 5px;
+  cursor: pointer;
+  position: relative;
 }
 
-label {
+.drop-area.highlight {
+  background-color: #f0f0f0;
+}
+
+#selectedFileName {
   display: block;
-  margin-bottom: 10px;
+  margin-top: 10px;
+  font-style: italic;
 }
 
-input[type="file"] {
-  margin-bottom: 10px;
-}
-
-button[type="submit"],
 button[type="button"] {
   background-color: #4caf50;
   border: none;
@@ -46,7 +53,6 @@ button[type="button"] {
   border-radius: 5px;
 }
 
-button[type="submit"]:hover,
 button[type="button"]:hover {
   background-color: #3e8e41;
 }
@@ -67,20 +73,4 @@ button[type="button"]:hover {
 
 #resultContainer {
   background-color: #f9f9f9;
-}
-
-@media (max-width: 768px) {
-  h1 {
-    font-size: 1.5em;
-  }
-
-  form {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  input[type="file"] {
-    width: 100%;
-  }
 }

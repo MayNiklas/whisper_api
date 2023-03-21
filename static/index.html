@@ -9,11 +9,12 @@
 
 <body class="container">
   <h1>Transcribe Audio</h1>
-  <form>
-    <label for="audioFile">Select an audio file:</label>
-    <input type="file" id="audioFile">
-    <button type="button" onclick="transcribe()">Transcribe</button>
-  </form>
+  <div id="dropArea" class="drop-area">
+    <p>Drag and drop an audio file here or click to select</p>
+    <input type="file" id="audioFile" hidden>
+    <span id="selectedFileName">No file selected</span>
+  </div>
+  <button type="button" onclick="transcribe()">Transcribe</button>
   <div id="taskIdContainer" style="display: none">
     <p><strong>Task ID:</strong> <span id="taskId"></span></p>
   </div>
