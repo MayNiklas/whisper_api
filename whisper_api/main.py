@@ -63,6 +63,7 @@ def worker(pipe):
     """
 
     from . import convert
+    from .model_holder import clean_model, preload
 
     while True:
         job = pipe.recv()
@@ -72,6 +73,21 @@ def worker(pipe):
                 "result": convert.transcribe(job["file"], job["language"]),
             }
         )
+        # clean the model from memory
+        clean_model(conn1)
+
+        ######################################################################################
+        # When preload is disabled, after 60 seconds of inactivity, the model will be
+        # cleaned from memory.This will free up ressources on a shared system.
+        # Keep in mind: This will also increase the time it takes to transcribe a new file.
+        # After this thread is killed, a new one will be created.
+        ######################################################################################
+
+        # if preload is disabled
+        if not preload:
+            # if no task is left in queue,
+            if not pipe.poll(120):
+                break
 
 
 @app.post("/v1/transcribe")
@@ -170,6 +186,11 @@ async def process_tasks():
             task.audiofile.close()
 
             print("Task done: " + str(task.uuid))
+
+        if p.is_alive() is False:
+            print("Worker thread died. Restarting...")
+            p = multiprocessing.Process(target=worker, args=(conn1,))
+            p.start()
 
 
 @app.on_event("startup")
