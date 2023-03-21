@@ -69,6 +69,21 @@ button[type="button"]:hover {
   background-color: #f9f9f9;
 }
 
+.drop-area {
+  border: 2px dashed #ccc;
+  border-radius: 5px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 10px;
+  cursor: pointer;
+  background-color: #f0f0f0; /* Add a background color to the drop area */
+}
+
+.drop-area:hover {
+  border-color: #4caf50;
+  background-color: #e0e0e0; /* Change the background color on hover */
+}
+
 @media (max-width: 768px) {
   h1 {
     font-size: 1.5em;

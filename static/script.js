@@ -1,10 +1,9 @@
-function transcribe() {
-  // Clear the output container
-  const outputContainer = document.getElementById("resultContainer");
-  outputContainer.style.display = "none";
-  outputContainer.querySelector("#result").innerHTML = "";
+function handleFileInput(file) {
+  const fileNameDisplay = document.getElementById("selectedFileName");
+  fileNameDisplay.textContent = file ? `Selected file: ${file.name}` : "";
+}
 
-  // Get the selected file
+function transcribe() {
   const fileInput = document.getElementById("audioFile");
   const file = fileInput.files[0];
   if (!file) {
@@ -60,4 +59,54 @@ function cleanOutput() {
   const taskIdContainer = document.getElementById("taskIdContainer");
   taskIdContainer.style.display = "none";
   taskIdContainer.querySelector("#taskId").innerHTML = "";
+
+  // Clear the selected file name
+  const fileNameDisplay = document.getElementById("selectedFileName");
+  fileNameDisplay.textContent = "";
 }
+
+// Add event listeners for drag and drop events
+const dropArea = document.getElementById("dropArea");
+const fileInput = document.getElementById("audioFile");
+
+dropArea.addEventListener("click", (event) => {
+  fileInput.click();
+});
+
+dropArea.addEventListener("dragover", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  dropArea.classList.add("drop-area-hover");
+});
+
+dropArea.addEventListener("dragleave", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  dropArea.classList.remove("drop-area-hover");
+});
+
+dropArea.addEventListener("drop", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  dropArea.classList.remove("drop-area-hover");
+
+  const files = event.dataTransfer.files;
+  if (files.length) {
+    const file = files[0];
+    handleFileInput(file);
+
+    // Automatically start the transcription
+    transcribe();
+  }
+});
+
+// Add event listener for file input change
+fileInput.addEventListener("change", (event) => {
+  const files = event.target.files;
+  if (files.length) {
+    const file = files[0];
+    handleFileInput(file);
+  } else {
+    handleFileInput(null);
+  }
+});

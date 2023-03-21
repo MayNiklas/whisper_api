@@ -10,8 +10,10 @@
 <body class="container">
   <h1>Transcribe Audio</h1>
   <form>
-    <label for="audioFile">Select an audio file:</label>
-    <input type="file" id="audioFile">
+    <label>Select an audio file:</label>
+    <div id="dropArea" class="drop-area" tabindex="0">Click or drag and drop an audio file here</div>
+    <p id="selectedFileName" class="selected-file-name"></p>
+    <input type="file" id="audioFile" style="display:none;">
     <button type="button" onclick="transcribe()">Transcribe</button>
   </form>
   <div id="taskIdContainer" style="display: none">
@@ -21,7 +23,7 @@
     <h2>Transcription:</h2>
     <div id="result"></div>
   </div>
-  <button type="button" id="cleanOutputBtn" onclick="cleanOutput()">Clean Output</button>
+  <button type="button" id="cleanOutputBtn" onclick="cleanOutput()" style="display: none;">Clean Output</button>
   <script src="script.js"></script>
 </body>
 
