@@ -1,59 +1,76 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const dropArea = document.getElementById("dropArea");
+// Get DOM elements
+const dropArea = document.getElementById("dropArea");
+const audioFileInput = document.getElementById("audioFile");
+const selectedFileName = document.getElementById("selectedFileName");
 
-  dropArea.addEventListener("dragover", handleDragOver);
-  dropArea.addEventListener("drop", handleDrop);
-  dropArea.addEventListener("click", handleClick);
+// Add click event listener to the drop area to trigger file selection
+dropArea.addEventListener("click", () => {
+  audioFileInput.click();
+});
 
-  function handleDragOver(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    dropArea.classList.add("dragging");
-  }
-
-  function handleDrop(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    dropArea.classList.remove("dragging");
-
-    if (event.dataTransfer.items && event.dataTransfer.items.length > 0) {
-      const file = event.dataTransfer.items[0].getAsFile();
-      if (file) {
-        transcribe(file);
-      } else {
-        alert("Please drop a valid audio file.");
-      }
-    }
-  }
-
-  function handleClick() {
-    const fileInput = document.getElementById("audioFile");
-    fileInput.click();
+// Update the selected file name when a file is selected
+audioFileInput.addEventListener("change", (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    selectedFileName.innerText = file.name;
   }
 });
 
-function transcribe(file) {
-  // Create a FormData object
-  const formData = new FormData();
+// Add drag and drop event listeners
+dropArea.addEventListener("dragenter", preventDefaults, false);
+dropArea.addEventListener("dragleave", preventDefaults, false);
+dropArea.addEventListener("dragover", preventDefaults, false);
+dropArea.addEventListener("drop", handleDrop, false);
 
-  // Check if a file is provided
-  if (file) {
-    // Append the provided file to FormData
-    formData.append("file", file, file.name);
-  } else {
-    // Get the file input and selected file
-    const fileInput = document.getElementById("audioFile");
-    const selectedFile = fileInput.files[0];
+// Prevent default behavior for drag and drop events
+function preventDefaults(event) {
+  event.preventDefault();
+  event.stopPropagation();
+}
 
-    // Check if a file is selected
-    if (!selectedFile) {
-      alert("Please select an audio file.");
-      return;
-    }
+// Add/remove highlight class on dragenter and dragleave events
+dropArea.addEventListener("dragenter", () => {
+  dropArea.classList.add("highlight");
+}, false);
+dropArea.addEventListener("dragleave", () => {
+  dropArea.classList.remove("highlight");
+}, false);
 
-    // Append the selected file to FormData
-    formData.append("file", selectedFile, selectedFile.name);
+// Handle the drop event
+function handleDrop(event) {
+  preventDefaults(event);
+
+  const dt = event.dataTransfer;
+  const file = dt.files[0];
+
+  // Remove the highlight class and set the input's files property
+  dropArea.classList.remove("highlight");
+  audioFileInput.files = dt.files;
+
+  // Update the selected file name
+  selectedFileName.innerText = file.name;
+
+  // Automatically start the transcription
+  transcribe();
+}
+
+function transcribe() {
+  // Clear the output container
+  const outputContainer = document.getElementById("resultContainer");
+  outputContainer.style.display = "none";
+  outputContainer.querySelector("#result").innerHTML = "";
+
+  // Get the selected file
+  const fileInput = document.getElementById("audioFile");
+  const file = fileInput.files[0];
+  if (!file) {
+    alert("Please select an audio file.");
+    return;
   }
+
+  // Create a FormData object and append the file to it
+  const formData = new FormData();
+  formData.append("file", file, file.name);
 
   // Send a POST request to the server to initiate transcription
   fetch("/v1/transcribe", {
@@ -92,61 +109,21 @@ function transcribe(file) {
 }
 
 function cleanOutput() {
+  // Get the output container and hide it
   const outputContainer = document.getElementById("resultContainer");
   outputContainer.style.display = "none";
+
+  // Clear the result content
   outputContainer.querySelector("#result").innerHTML = "";
+
+  // Hide the clean output button
   document.getElementById("cleanOutputBtn").style.display = "none";
+
+  // Hide the task ID container and clear its content
   const taskIdContainer = document.getElementById("taskIdContainer");
   taskIdContainer.style.display = "none";
   taskIdContainer.querySelector("#taskId").innerHTML = "";
 
-  // Clear the selected file name
-  const fileNameDisplay = document.getElementById("selectedFileName");
-  fileNameDisplay.textContent = "";
+  // Reset the selected file name
+  selectedFileName.innerText = "No file selected";
 }
-
-// Add event listeners for drag and drop events
-const dropArea = document.getElementById("dropArea");
-const fileInput = document.getElementById("audioFile");
-
-dropArea.addEventListener("click", (event) => {
-  fileInput.click();
-});
-
-dropArea.addEventListener("dragover", (event) => {
-  event.preventDefault();
-  event.stopPropagation();
-  dropArea.classList.add("drop-area-hover");
-});
-
-dropArea.addEventListener("dragleave", (event) => {
-  event.preventDefault();
-  event.stopPropagation();
-  dropArea.classList.remove("drop-area-hover");
-});
-
-dropArea.addEventListener("drop", (event) => {
-  event.preventDefault();
-  event.stopPropagation();
-  dropArea.classList.remove("drop-area-hover");
-
-  const files = event.dataTransfer.files;
-  if (files.length) {
-    const file = files[0];
-    handleFileInput(file);
-
-    // Automatically start the transcription
-    transcribe();
-  }
-});
-
-// Add event listener for file input change
-fileInput.addEventListener("change", (event) => {
-  const files = event.target.files;
-  if (files.length) {
-    const file = files[0];
-    handleFileInput(file);
-  } else {
-    handleFileInput(null);
-  }
-});

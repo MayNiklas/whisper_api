@@ -18,21 +18,25 @@ h1 {
   font-size: 2em;
 }
 
-/* Drop area styles */
-#dropArea {
+.drop-area {
   border: 2px dashed #ccc;
-  border-radius: 5px;
-  background-color: #f9f9f9;
-  padding: 20px;
-  text-align: center;
+  padding: 30px;
   margin-bottom: 20px;
+  text-align: center;
+  background-color: #fff;
+  border-radius: 5px;
   cursor: pointer;
+  position: relative;
 }
 
-/* Highlight drop area during dragging */
-#dropArea.dragging {
-  border-color: #4caf50;
-  background-color: #f0fff0;
+.drop-area.highlight {
+  background-color: #f0f0f0;
+}
+
+#selectedFileName {
+  display: block;
+  margin-top: 10px;
+  font-style: italic;
 }
 
 button[type="button"] {
@@ -62,12 +66,11 @@ button[type="button"]:hover {
   background-color: #fff;
 }
 
-#resultContainer {
-  background-color: #f9f9f9;
+#cleanOutputBtn {
+  display: none;
+  margin-bottom: 20px;
 }
 
-@media (max-width: 768px) {
-  h1 {
-    font-size: 1.5em;
-  }
+#resultContainer {
+  background-color: #f9f9f9;
 }

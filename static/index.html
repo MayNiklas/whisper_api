@@ -8,34 +8,21 @@
 </head>
 
 <body class="container">
-  <!-- Heading -->
   <h1>Transcribe Audio</h1>
-
-  <!-- Drop area for file -->
-  <div id="dropArea">
-    <p>Drop your audio file here or click to select</p>
+  <div id="dropArea" class="drop-area">
+    <p>Drag and drop an audio file here or click to select</p>
+    <input type="file" id="audioFile" hidden>
+    <span id="selectedFileName">No file selected</span>
   </div>
-
-  <!-- Hidden file input to trigger file selection -->
-  <input type="file" id="audioFile" style="display:none;">
-
-  <!-- Transcribe button -->
   <button type="button" onclick="transcribe()">Transcribe</button>
-
-  <!-- Task ID container -->
   <div id="taskIdContainer" style="display: none">
     <p><strong>Task ID:</strong> <span id="taskId"></span></p>
   </div>
-
-  <!-- Result container -->
   <div id="resultContainer" style="display: none">
     <h2>Transcription:</h2>
     <div id="result"></div>
   </div>
-
-  <!-- Clean output button -->
-  <button type="button" id="cleanOutputBtn" onclick="cleanOutput()" style="display:none;">Clean Output</button>
-
+  <button type="button" id="cleanOutputBtn" onclick="cleanOutput()">Clean Output</button>
   <script src="script.js"></script>
 </body>
 
