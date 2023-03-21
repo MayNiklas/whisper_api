@@ -8,22 +8,49 @@
 </head>
 
 <body class="container">
+  <!-- Main heading -->
   <h1>Transcribe Audio</h1>
-  <form>
-    <label>Select an audio file:</label>
-    <div id="dropArea" class="drop-area" tabindex="0">Click or drag and drop an audio file here</div>
-    <p id="selectedFileName" class="selected-file-name"></p>
-    <input type="file" id="audioFile" style="display:none;">
-    <button type="button" onclick="transcribe()">Transcribe</button>
-  </form>
+
+  <!-- Drop area for drag and drop -->
+  <div id="dropArea" class="drop-area">Drop audio file here or click to select</div>
+
+  <!-- Hidden file input for programmatic triggering -->
+  <input type="file" id="audioFile" style="display: none;">
+
+  <!-- Display the name of the selected file -->
+  <p id="selectedFileName"></p>
+
+  <!-- Transcribe button -->
+  <button type="button" onclick="transcribe()">Transcribe</button>
+
+  <!-- Progress bar container -->
+  <div id="progressContainer" style="display:none;">
+    <label>Upload progress:</label>
+    <div id="progressBar" class="progress-bar">
+      <div id="progress" class="progress"></div>
+    </div>
+  </div>
+
+  <!-- Upload status container -->
+  <div id="uploadStatus" style="display: none;">
+    <span class="checkmark">&#10004;</span> Upload done!
+  </div>
+
+  <!-- Task ID container -->
   <div id="taskIdContainer" style="display: none">
     <p><strong>Task ID:</strong> <span id="taskId"></span></p>
   </div>
+
+  <!-- Result container -->
   <div id="resultContainer" style="display: none">
     <h2>Transcription:</h2>
     <div id="result"></div>
   </div>
-  <button type="button" id="cleanOutputBtn" onclick="cleanOutput()" style="display: none;">Clean Output</button>
+
+  <!-- Clean output button -->
+  <button type="button" id="cleanOutputBtn" onclick="cleanOutput()">Clean Output</button>
+
+  <!-- Include the script.js file -->
   <script src="script.js"></script>
 </body>
 
