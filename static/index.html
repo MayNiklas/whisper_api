@@ -8,33 +8,19 @@
 </head>
 
 <body class="container">
-  <!-- Main heading -->
+  <!-- Heading -->
   <h1>Transcribe Audio</h1>
 
-  <!-- Drop area for drag and drop -->
-  <div id="dropArea" class="drop-area">Drop audio file here or click to select</div>
+  <!-- Drop area for file -->
+  <div id="dropArea">
+    <p>Drop your audio file here or click to select</p>
+  </div>
 
-  <!-- Hidden file input for programmatic triggering -->
-  <input type="file" id="audioFile" style="display: none;">
-
-  <!-- Display the name of the selected file -->
-  <p id="selectedFileName"></p>
+  <!-- Hidden file input to trigger file selection -->
+  <input type="file" id="audioFile" style="display:none;">
 
   <!-- Transcribe button -->
   <button type="button" onclick="transcribe()">Transcribe</button>
-
-  <!-- Progress bar container -->
-  <div id="progressContainer" style="display:none;">
-    <label>Upload progress:</label>
-    <div id="progressBar" class="progress-bar">
-      <div id="progress" class="progress"></div>
-    </div>
-  </div>
-
-  <!-- Upload status container -->
-  <div id="uploadStatus" style="display: none;">
-    <span class="checkmark">&#10004;</span> Upload done!
-  </div>
 
   <!-- Task ID container -->
   <div id="taskIdContainer" style="display: none">
@@ -48,9 +34,8 @@
   </div>
 
   <!-- Clean output button -->
-  <button type="button" id="cleanOutputBtn" onclick="cleanOutput()">Clean Output</button>
+  <button type="button" id="cleanOutputBtn" onclick="cleanOutput()" style="display:none;">Clean Output</button>
 
-  <!-- Include the script.js file -->
   <script src="script.js"></script>
 </body>
 

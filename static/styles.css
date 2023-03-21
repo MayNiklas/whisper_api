@@ -18,20 +18,23 @@ h1 {
   font-size: 2em;
 }
 
-form {
+/* Drop area styles */
+#dropArea {
+  border: 2px dashed #ccc;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  padding: 20px;
+  text-align: center;
   margin-bottom: 20px;
+  cursor: pointer;
 }
 
-label {
-  display: block;
-  margin-bottom: 10px;
+/* Highlight drop area during dragging */
+#dropArea.dragging {
+  border-color: #4caf50;
+  background-color: #f0fff0;
 }
 
-input[type="file"] {
-  margin-bottom: 10px;
-}
-
-button[type="submit"],
 button[type="button"] {
   background-color: #4caf50;
   border: none;
@@ -46,7 +49,6 @@ button[type="button"] {
   border-radius: 5px;
 }
 
-button[type="submit"]:hover,
 button[type="button"]:hover {
   background-color: #3e8e41;
 }
@@ -60,11 +62,6 @@ button[type="button"]:hover {
   background-color: #fff;
 }
 
-#cleanOutputBtn {
-  display: none;
-  margin-bottom: 20px;
-}
-
 #resultContainer {
   background-color: #f9f9f9;
 }
@@ -73,48 +70,4 @@ button[type="button"]:hover {
   h1 {
     font-size: 1.5em;
   }
-
-  form {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  input[type="file"] {
-    width: 100%;
-  }
-}
-
-/* Drop area styles */
-.drop-area {
-  border: 2px dashed #ccc;
-  border-radius: 5px;
-  padding: 20px;
-  text-align: center;
-  cursor: pointer;
-  margin-bottom: 10px;
-}
-
-.drop-area-hover {
-  border-color: #4caf50;
-  background-color: #f0fff4;
-}
-
-.selected-file-name {
-  margin-bottom: 20px;
-}
-
-/* Add progress bar styles */
-.progress-bar {
-  width: 100%;
-  height: 20px;
-  background-color: #e0e0e0;
-  border-radius: 5px;
-  overflow: hidden;
-}
-
-.progress {
-  height: 100%;
-  background-color: #4caf50;
-  width: 0%;
 }
