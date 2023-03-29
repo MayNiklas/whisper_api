@@ -33,7 +33,10 @@ if __name__ == "__main__":
     When started as a script, download all international models.
     """
 
-    models = ["large", "medium", "base", "small", "tiny"]
+    # models = ["large", "medium", "base", "small", "tiny"]
+
+    # I currently only test with the large model
+    models = ["large"]
 
     threads = []
 
