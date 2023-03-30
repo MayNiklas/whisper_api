@@ -11,6 +11,132 @@
   };
 
   outputs = { self, nixpkgs, flake-utils, ... }:
+    {
+
+      nixosModules.whisper_api = { lib, pkgs, config, ... }:
+        with lib;
+        let
+          cfg = config.services.whisper_api;
+          whisper_api = self.packages.${pkgs.system}.whisper_api_withCUDA;
+        in
+        {
+
+          options.services.whisper_api = {
+
+            enable = mkEnableOption "whisper_api";
+
+            preload = mkOption {
+              type = types.bool;
+              default = false;
+              description = ''
+                Whether to preload the model.
+              '';
+            };
+
+            dataDir = mkOption {
+              type = types.str;
+              default = "/var/lib/whisper_api";
+              description = ''
+                The directory where whisper_api stores its data files.
+              '';
+            };
+
+            listen = mkOption {
+              type = types.str;
+              default = "127.0.0.1";
+              description = ''
+                The address on which whisper_api listens.
+              '';
+            };
+
+            port = mkOption {
+              type = types.port;
+              default = 3001;
+              description = ''
+                The port on which whisper_api listens.
+              '';
+            };
+
+            openFirewall = mkOption {
+              type = types.bool;
+              default = false;
+              description = lib.mdDoc ''
+                Open the appropriate ports in the firewall for whisper_api.
+              '';
+            };
+
+            envfile = mkOption {
+              type = types.str;
+              default = "/var/src/secrets/whisper_api/envfile";
+              description = ''
+                The location of the envfile containing secrets
+              '';
+            };
+
+            user = mkOption {
+              type = types.str;
+              default = "whisper_api";
+              description = "User account under which whisper_api services run.";
+            };
+
+            group = mkOption {
+              type = types.str;
+              default = "whisper_api";
+              description = "Group under which which whisper_api services run.";
+            };
+
+          };
+
+          config = mkIf cfg.enable {
+
+            systemd.services.whisper_api = {
+              description = "A whisper API.";
+              wantedBy = [ "multi-user.target" ];
+              environment = {
+                PRELOAD = mkIf cfg.preload "true";
+                LISTEN = cfg.listen;
+                PORT = "${toString cfg.port}";
+              };
+              serviceConfig = mkMerge [
+                {
+                  # EnvironmentFile = [ cfg.envfile ];
+                  User = cfg.user;
+                  Group = cfg.group;
+                  WorkingDirectory = "${whisper_api.src}";
+                  ExecStart = "${whisper_api}/bin/whisper_api";
+                  Restart = "on-failure";
+                }
+              ];
+            };
+
+            users.users = mkIf
+              (cfg.user == "whisper_api")
+              {
+                whisper_api = {
+                  isSystemUser = true;
+                  createHome = true;
+                  home = cfg.dataDir;
+                  group = "whisper_api";
+                  description = "whisper_api system user";
+                };
+              };
+
+            users.groups = mkIf (cfg.group == "whisper_api") {
+              whisper_api = { };
+            };
+
+            networking.firewall = mkIf (cfg.openFirewall && cfg.listen != "127.0.0.1") {
+              allowedTCPPorts = [ cfg.port ];
+            };
+
+          };
+          meta = { maintainers = with lib.maintainers; [ MayNiklas ]; };
+
+        };
+    }
+
+    //
+
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
@@ -85,7 +211,7 @@
           whisper_cli = pkgs.python3Packages.buildPythonPackage rec {
             pname = "whisper_cli";
             # get version from version.py
-            version = (pkgs.lib.strings.removePrefix ''__version__ = "''
+            version = (pkgs.lib.strings.removePrefix '' __version__ = "''
               (pkgs.lib.strings.removeSuffix ''
                 "
               ''

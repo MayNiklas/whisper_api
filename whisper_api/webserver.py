@@ -1,3 +1,5 @@
+import os
+
 import uvicorn
 
 from .main import app
@@ -15,4 +17,6 @@ def start():
     http://127.0.0.1:3001/redoc
     """
 
-    uvicorn.run(app, host="127.0.0.1", port=3001)
+    uvicorn.run(
+        app, host=os.getenv("LISTEN", "127.0.0.1"), port=os.getenv("PORT", 3001)
+    )
