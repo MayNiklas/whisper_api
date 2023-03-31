@@ -10,6 +10,7 @@ repos:
       - id: detect-private-key
       - id: end-of-file-fixer
       - id: pretty-format-json
+        exclude: .devcontainer/devcontainer.json
       - id: requirements-txt-fixer
       - id: trailing-whitespace
 

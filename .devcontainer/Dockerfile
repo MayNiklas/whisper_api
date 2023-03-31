@@ -18,4 +18,4 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 COPY requirements.txt /tmp/requirements.txt
 
 RUN pip3 install --upgrade pip && \
-    pip3 install -r  /tmp/requirements.txt 
+    pip3 install -r  /tmp/requirements.txt
