@@ -222,6 +222,27 @@
                   (self: super: {
                     openai-triton = pkgs-triton.python3.pkgs.openai-triton;
                     tiktoken = pkgs-tiktoken.python3.pkgs.tiktoken;
+                    latest-openai-whisper = (pkgs.python3.pkgs.openai-whisper.overrideAttrs
+                      (finalAttrs: previousAttrs:
+                        {
+                          version = "20230314";
+                          src = pkgs.fetchFromGitHub {
+                            owner = "openai";
+                            repo = "whisper";
+                            rev = "refs/tags/v20230314";
+                            hash = "sha256-qQCELjRFeRCT1k1CBc3netRtFvt+an/EbkrgnmiX/mc=";
+                          };
+                          propagatedBuildInputs = with pkgs.python3Packages;
+                            previousAttrs.propagatedBuildInputs ++ [
+                              numba
+                              pkgs-triton.python3.pkgs.openai-triton
+                              pkgs-tiktoken.python3.pkgs.tiktoken
+                            ];
+                          postPatch = ''
+                            sed -i 's/tiktoken==0.3.1/tiktoken==0.3.3/' requirements.txt
+                          '';
+                        }
+                      ));
                   })
                 ];
               };
@@ -256,27 +277,7 @@
                   multipart
                   torch
                   uvicorn
-                  (openai-whisper.overrideAttrs
-                    (finalAttrs: previousAttrs:
-                      {
-                        version = "20230314";
-                        src = pkgs.fetchFromGitHub {
-                          owner = "openai";
-                          repo = "whisper";
-                          rev = "refs/tags/v20230314";
-                          hash = "sha256-qQCELjRFeRCT1k1CBc3netRtFvt+an/EbkrgnmiX/mc=";
-                        };
-                        propagatedBuildInputs = with python3Packages;
-                          previousAttrs.propagatedBuildInputs ++ [
-                            numba
-                            openai-triton
-                            tiktoken
-                          ];
-                        postPatch = ''
-                          sed -i 's/tiktoken==0.3.1/tiktoken==0.3.3/' requirements.txt
-                        '';
-                      }
-                    ))
+                  latest-openai-whisper
                 ];
                 doCheck = false;
                 meta = with lib; {

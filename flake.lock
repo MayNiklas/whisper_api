@@ -33,11 +33,11 @@
     },
     "nixpkgs-tiktoken": {
       "locked": {
-        "lastModified": 1680252386,
-        "narHash": "sha256-yQnjoROcRbiIOGfKN+xI+lshNg5pU51jPvrBvmTzhdI=",
+        "lastModified": 1680257680,
+        "narHash": "sha256-VaTHDMtZw1B72IQ0Gmcdw5ENOpOOWRF1YB1Ep7epM6k=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "f7cb9035cfbce90dcb766ddde43192c05df3f9f1",
+        "rev": "9b3b1c23c1bbad4cd0b0d7151667035eed7dcc1f",
         "type": "github"
       },
       "original": {
