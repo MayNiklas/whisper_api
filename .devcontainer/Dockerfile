@@ -19,3 +19,5 @@ COPY requirements.txt /tmp/requirements.txt
 
 RUN pip3 install --upgrade pip && \
     pip3 install -r  /tmp/requirements.txt
+
+CMD git config --global --add safe.directory /workspaces/whisper_api
