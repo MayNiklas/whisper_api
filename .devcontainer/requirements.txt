@@ -1,0 +1,6 @@
+black
+fastapi
+openai-whisper
+pre-commit
+python-multipart
+uvicorn
