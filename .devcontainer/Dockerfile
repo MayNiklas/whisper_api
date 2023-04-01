@@ -7,6 +7,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
         curl \
         ffmpeg \
         git \
+        nvtop \
         python3 \
         python3-pip \
         python3-setuptools \
@@ -19,5 +20,7 @@ COPY requirements.txt /tmp/requirements.txt
 
 RUN pip3 install --upgrade pip && \
     pip3 install -r  /tmp/requirements.txt
+
+RUN python3 whisper_api/download_models.py
 
 CMD git config --global --add safe.directory /workspaces/whisper_api
