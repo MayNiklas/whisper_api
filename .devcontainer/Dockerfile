@@ -21,6 +21,8 @@ COPY requirements.txt /tmp/requirements.txt
 RUN pip3 install --upgrade pip && \
     pip3 install -r  /tmp/requirements.txt
 
-RUN python3 whisper_api/download_models.py
+COPY download_models.py /download_models.py
+RUN python3 /download_models.py && \
+    rm /download_models.py
 
 CMD git config --global --add safe.directory /workspaces/whisper_api
