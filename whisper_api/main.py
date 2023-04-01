@@ -142,6 +142,25 @@ async def status(task_id: str):
                 }
 
 
+@app.get("/v1/srt/{task_id}")
+async def srt(task_id: str):
+    """
+    Get the SRT file of a task.
+    :param task_id: ID of the task.
+    :return: SRT file of the task.
+    """
+    for task in tasks:
+        if str(task.uuid) == task_id:
+            if task.status == "pending" or task.status == "processing":
+                return {
+                    "task_id": task.uuid,
+                    "time_uploaded": task.time_uploaded,
+                    "status": task.status,
+                }
+            else:
+                return FileResponse(path=task.srt.name, filename=task.srt.name)
+
+
 # serve static folder
 @app.get("/{file_path:path}")
 async def static(file_path: str):
