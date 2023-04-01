@@ -19,6 +19,7 @@ class Task:
         self.uuid = uuid.uuid4()
         self.time_uploaded = datetime.now()
         self.audiofile = NamedTemporaryFile()
+        self.srt = NamedTemporaryFile(mode="w", suffix=".srt")
         self.language = None
         self.status = "pending"
         self.result = None

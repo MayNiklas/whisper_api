@@ -185,6 +185,14 @@ async def process_tasks():
             task.status = "done"
             task.audiofile.close()
 
+            ### Write SRT file and save the location in the task object (task.srt)
+            # TODO: Need to implement a way to download the SRT file!
+            # Only compatible with newer versions of whisper
+            from whisper.utils import WriteSRT
+
+            srtWriter = WriteSRT("/tmp")
+            srtWriter.write_result(res["result"], task.srt)
+
             print("Task done: " + str(task.uuid))
 
         if p.is_alive() is False:
