@@ -158,7 +158,17 @@ async def srt(task_id: str):
                     "status": task.status,
                 }
             else:
-                return FileResponse(path=task.srt.name, filename=task.srt.name)
+                # Only compatible with newer versions of whisper
+                from whisper.utils import WriteSRT
+
+                srt_file = NamedTemporaryFile(mode="w", suffix=".srt", delete=False)
+
+                srtWriter = WriteSRT("/tmp")
+                srtWriter.write_result(task.result, srt_file)
+
+                # TODO: return content of srt_file
+                # -> SRT file can be deleted instantly
+                return FileResponse(path=srt_file.name)
 
 
 # serve static folder
@@ -203,14 +213,6 @@ async def process_tasks():
             task.result = res["result"]
             task.status = "done"
             task.audiofile.close()
-
-            ### Write SRT file and save the location in the task object (task.srt)
-            # TODO: Need to implement a way to download the SRT file!
-            # Only compatible with newer versions of whisper
-            from whisper.utils import WriteSRT
-
-            srtWriter = WriteSRT("/tmp")
-            srtWriter.write_result(res["result"], task.srt)
 
             print("Task done: " + str(task.uuid))
 
