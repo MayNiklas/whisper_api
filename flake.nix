@@ -1,8 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixpkgs-triton.url = "github:SomeoneSerge/nixpkgs/torch20";
-    nixpkgs-tiktoken.url = "github:nixos/nixpkgs/master";
+    nixpkgs.url = "github:nixos/nixpkgs/master";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -12,7 +10,7 @@
     extra-substituters = "https://cache.lounge.rocks?priority=100";
   };
 
-  outputs = { self, nixpkgs, nixpkgs-triton, nixpkgs-tiktoken, flake-utils, ... }:
+  outputs = { self, nixpkgs, flake-utils, ... }:
     {
 
       nixosModules.whisper_api = { lib, pkgs, config, ... }:
@@ -209,83 +207,6 @@
               };
             in
             pkgs.python3Packages.callPackage ./default.nix { };
-
-          whisper_api_current_version =
-            let
-              pkgs = import nixpkgs {
-                inherit system;
-                config = {
-                  allowUnfree = true;
-                  cudaSupport = true;
-                };
-                overlays = [
-                  (self: super: {
-                    openai-triton = pkgs-triton.python3.pkgs.openai-triton;
-                    tiktoken = pkgs-tiktoken.python3.pkgs.tiktoken;
-                    latest-openai-whisper = (pkgs.python3.pkgs.openai-whisper.overrideAttrs
-                      (finalAttrs: previousAttrs:
-                        {
-                          version = "20230314";
-                          src = pkgs.fetchFromGitHub {
-                            owner = "openai";
-                            repo = "whisper";
-                            rev = "refs/tags/v20230314";
-                            hash = "sha256-qQCELjRFeRCT1k1CBc3netRtFvt+an/EbkrgnmiX/mc=";
-                          };
-                          propagatedBuildInputs = with pkgs.python3Packages;
-                            previousAttrs.propagatedBuildInputs ++ [
-                              numba
-                              pkgs-triton.python3.pkgs.openai-triton
-                              pkgs-tiktoken.python3.pkgs.tiktoken
-                            ];
-                          postPatch = ''
-                            sed -i 's/tiktoken==0.3.1/tiktoken==0.3.3/' requirements.txt
-                          '';
-                        }
-                      ));
-                  })
-                ];
-              };
-              pkgs-triton = import nixpkgs-triton {
-                inherit system;
-                config = {
-                  allowUnfree = true;
-                  cudaSupport = true;
-                };
-              };
-              pkgs-tiktoken = import nixpkgs-tiktoken {
-                inherit system;
-                config = {
-                  allowUnfree = true;
-                  cudaSupport = true;
-                };
-              };
-            in
-            with pkgs;
-            python3Packages.buildPythonPackage
-              rec  {
-                pname = "whisper_api";
-                # get version from version.py
-                version = (lib.strings.removePrefix ''__version__ = "''
-                  (lib.strings.removeSuffix ''
-                    "
-                  ''
-                    (builtins.readFile ./whisper_api/version.py)));
-                src = ./.;
-                propagatedBuildInputs = with python3Packages; [
-                  fastapi
-                  multipart
-                  torch
-                  uvicorn
-                  latest-openai-whisper
-                ];
-                doCheck = false;
-                meta = with lib; {
-                  description = "A simple API for OpenAI's Whisper";
-                  homepage = "https://github.com/MayNiklas/whisper_api";
-                  maintainers = with maintainers; [ MayNiklas ];
-                };
-              };
 
           whisper_cli = pkgs.python3Packages.buildPythonPackage rec {
             pname = "whisper_cli";
