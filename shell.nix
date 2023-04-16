@@ -4,7 +4,20 @@
 # nix develop .#withoutCUDA
 # -> without CUDA support
 
-{ pkgs ? import <nixpkgs> { } }:
+{ pkgs ? import
+    (
+      let
+        lock = builtins.fromJSON (builtins.readFile ./flake.lock);
+      in
+      builtins.fetchGit {
+        name = "whisper-revision";
+        url = "https://github.com/NixOS/nixpkgs/";
+        ref = "refs/heads/nixos-unstable";
+        rev = "${lock.nodes.nixpkgs.locked.rev}";
+      }
+    )
+    { config = { allowUnfree = true; cudaSupport = true; }; }
+}:
 let
   python-with-packages = pkgs.python3.withPackages
     (p: with p; [
