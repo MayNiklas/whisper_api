@@ -182,7 +182,7 @@
 
         packages = flake-utils.lib.flattenTree rec {
 
-          whisper_api = pkgs.python3Packages.callPackage ./default.nix { };
+          whisper_api = pkgs.python39Packages.callPackage ./default.nix { };
 
           whisper_api_withCUDA =
             let
@@ -194,7 +194,7 @@
                 };
               };
             in
-            pkgs.python3Packages.callPackage ./default.nix { };
+            pkgs.python39Packages.callPackage ./default.nix { };
 
           whisper_api_withoutCUDA =
             let
@@ -206,31 +206,7 @@
                 };
               };
             in
-            pkgs.python3Packages.callPackage ./default.nix { };
-
-          whisper_cli = pkgs.python3Packages.buildPythonPackage rec {
-            pname = "whisper_cli";
-            # get version from version.py
-            version = (pkgs.lib.strings.removePrefix '' __version__ = "''
-              (pkgs.lib.strings.removeSuffix ''
-                "
-              ''
-                (builtins.readFile ./whisper_api/version.py)));
-            src = ./.;
-            propagatedBuildInputs = with pkgs.python3Packages; [
-              requests
-            ];
-            preBuild = ''
-              rm requirements.txt
-              touch requirements.txt
-            '';
-            doCheck = false;
-            meta = with pkgs.lib; {
-              description = "A simple API for OpenAI's Whisper";
-              homepage = "https://github.com/MayNiklas/whisper_api";
-              maintainers = with maintainers; [ MayNiklas ];
-            };
-          };
+            pkgs.python39Packages.callPackage ./default.nix { };
 
         };
       });
