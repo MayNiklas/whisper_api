@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from tempfile import NamedTemporaryFile
-from typing import Union
+from typing import Union, Optional
 from uuid import uuid4
 
 from fastapi import UploadFile
@@ -12,13 +12,13 @@ from whisper_api.data_models.data_types import status_str_t, task_type_str_t
 
 class TaskResponse(BaseModel):
     task_id: str
-    transcript: str
-    language: str
+    transcript: Optional[str]
+    source_language: Optional[str]
     task_type: task_type_str_t
     status: str
     time_uploaded: datetime
-    processing_time: datetime
-    time_processing_finished: datetime
+    processing_time: Optional[datetime]
+    time_processing_finished: Optional[datetime]
 
 
 @dataclass
@@ -48,13 +48,16 @@ class Task:
     def to_transmit_full(self) -> TaskResponse:
         if self.status == "pending" or self.status == "processing":
             return TaskResponse(
-                task_id=self.uuid, time_uploaded=self.time_uploaded, status=self.status
+                task_id=self.uuid,
+                time_uploaded=self.time_uploaded,
+                status=self.status,
+                task_type=self.task_type,
             )
 
         return TaskResponse(
             task_id=self.uuid,
             transcript=self.result["text"],
-            language=self.result["language"],
+            source_language=self.result["language"],
             task_type=self.task_type,
             status=self.status,
             time_uploaded=self.time_uploaded,
