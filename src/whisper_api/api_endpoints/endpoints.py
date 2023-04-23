@@ -23,8 +23,8 @@ class EndPoints:
 
     def add_endpoints(self):
         self.app.add_api_route(f"{V1_PREFIX}/status", self.status)
-        self.app.add_api_route(f"{V1_PREFIX}/translate", self.translate)
-        self.app.add_api_route(f"{V1_PREFIX}/transcribe", self.transcribe)
+        self.app.add_api_route(f"{V1_PREFIX}/translate", self.translate, methods=["POST"])
+        self.app.add_api_route(f"{V1_PREFIX}/transcribe", self.transcribe, methods=["POST"])
 
     def add_task(self, task):
         self.tasks[task.uuid] = task
@@ -50,13 +50,22 @@ class EndPoints:
 
         return task.to_transmit_full
 
-    def __start_task(self, file: UploadFile, source_language: str, task_type: str):
-        task = Task(file, source_language, task_type)
+    async def __upload_file_to_named_temp_file(self, file: UploadFile) -> NamedTemporaryFile:
+        named_temp_file = NamedTemporaryFile()
+        named_temp_file.write(await file.read())
+        return named_temp_file
+
+    async def __start_task(self, file: UploadFile, source_language: str, task_type: str) -> Task:
+
+        named_file = await self.__upload_file_to_named_temp_file(file)
+        task = Task(named_file, source_language, task_type)
         self.add_task(task)
 
         self.conn_to_child.send(
-            {"uuid": task.uuid, "file": task.audiofile.name, "action": task_type, "language": task.language}
+            {"uuid": task.uuid, "file": task.audiofile.name, "action": task_type, "language": task.source_language}
         )
+
+        return task
 
     async def transcribe(self, file: UploadFile, source_language: str = None):
 
@@ -67,7 +76,9 @@ class EndPoints:
                 detail="file is not an audio file",
             )
 
-        self.__start_task(file, source_language, "transcribe")
+        task = await self.__start_task(file, source_language, "transcribe")
+
+        return task.to_transmit_full
 
     async def translate(self, file: UploadFile, source_language: str = None):
         if source_language is None:
@@ -76,5 +87,10 @@ class EndPoints:
                 detail="language not specified",
             )
 
-        self.__start_task(file, source_language, "translate")
+        task = await self.__start_task(file, source_language, "translate")
+
+        return task.to_transmit_full
+
+
+
 
