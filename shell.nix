@@ -19,7 +19,7 @@
     { config = { allowUnfree = true; cudaSupport = true; }; }
 }:
 let
-  python-with-packages = pkgs.python3.withPackages
+  python-with-packages = pkgs.python39.withPackages
     (p: with p; [
       fastapi
       multipart
