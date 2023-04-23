@@ -17,7 +17,7 @@ buildPythonPackage rec {
     (lib.strings.removeSuffix ''
       "
     ''
-      (builtins.readFile ./whisper_api/version.py)));
+      (builtins.readFile ./src/whisper_api/version.py)));
 
   src = ./.;
 

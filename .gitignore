@@ -1,3 +1,9 @@
+# own data folder
+data/
+
+# jetbrains
+.idea/
+
 # nix specific
 result
 
