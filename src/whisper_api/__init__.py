@@ -1,3 +1,4 @@
+import multiprocessing
 import os
 import sys
 
@@ -42,6 +43,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# create Pipe for communication between main and worker thread
+conn_to_parent, conn_to_child = multiprocessing.Pipe(duplex=True)
 
 def start():
     import uvicorn
