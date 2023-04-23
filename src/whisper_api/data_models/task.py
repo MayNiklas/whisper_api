@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Union
 from uuid import uuid4
 
+from fastapi import UploadFile
 from pydantic import BaseModel
 
 
@@ -18,19 +19,16 @@ class TaskResponse(BaseModel):
 
 @dataclass
 class Task:
-    audiofile: str
+    audiofile: UploadFile
     language: str
-    status: str
-    result: dict
+    status: str = "pending"
+    result: dict = None
     time_uploaded: datetime = None
     time_processing_started = None
     time_processing_finished = None
 
     def __post_init__(self):
-        self.uuid = uuid4()
-        self.audiofile = ""
-        self.language = ""
-        self.status = "pending"
+        self.uuid = uuid4().hex
         self.result = {}
         self.time_uploaded = self.time_uploaded or datetime.now()
         self.time_processing_started = None
