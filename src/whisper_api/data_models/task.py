@@ -23,8 +23,8 @@ class TaskResponse(BaseModel):
 
 @dataclass
 class Task:
-    audiofile: Union[UploadFile, NamedTemporaryFile]
-    language: str
+    audiofile: NamedTemporaryFile
+    source_language: Optional[str]
     task_type: task_type_str_t
     status: status_str_t = "pending"
     result: dict = None
@@ -33,11 +33,6 @@ class Task:
     time_processing_finished = None
 
     def __post_init__(self):
-        # write content of given file into a temporary file
-        if isinstance(self.audiofile, UploadFile):
-            named_temp_file = NamedTemporaryFile()
-            named_temp_file.write(await self.audiofile.read())
-            self.audiofile: NamedTemporaryFile = named_temp_file
         self.uuid = uuid4().hex
         self.result = {}
         self.time_uploaded = self.time_uploaded or datetime.now()
