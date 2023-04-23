@@ -7,7 +7,7 @@ from fastapi import APIRouter, UploadFile, FastAPI, HTTPException, status
 from pydantic import BaseModel
 from starlette.responses import HTMLResponse, FileResponse
 
-from whisper_api.data_models.data_types import uuid_hex_t
+from whisper_api.data_models.data_types import uuid_hex_t, task_type_str_t
 from whisper_api.data_models.task import Task, TaskResponse
 
 V1_PREFIX = "/api/v1"
@@ -55,7 +55,7 @@ class EndPoints:
         named_temp_file.write(await file.read())
         return named_temp_file
 
-    async def __start_task(self, file: UploadFile, source_language: str, task_type: str) -> Task:
+    async def __start_task(self, file: UploadFile, source_language: str, task_type: task_type_str_t) -> Task:
 
         named_file = await self.__upload_file_to_named_temp_file(file)
         task = Task(named_file, source_language, task_type)
