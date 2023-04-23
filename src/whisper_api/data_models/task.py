@@ -7,11 +7,14 @@ from uuid import uuid4
 from fastapi import UploadFile
 from pydantic import BaseModel
 
+from whisper_api.data_models.data_types import status_str_t, task_type_str_t
+
 
 class TaskResponse(BaseModel):
     task_id: str
     transcript: str
     language: str
+    task_type: task_type_str_t
     status: str
     time_uploaded: datetime
     processing_time: datetime
@@ -22,7 +25,8 @@ class TaskResponse(BaseModel):
 class Task:
     audiofile: Union[UploadFile, NamedTemporaryFile]
     language: str
-    status: str = "pending"
+    task_type: task_type_str_t
+    status: status_str_t = "pending"
     result: dict = None
     time_uploaded: datetime = None
     time_processing_started = None
@@ -51,6 +55,7 @@ class Task:
             task_id=self.uuid,
             transcript=self.result["text"],
             language=self.result["language"],
+            task_type=self.task_type,
             status=self.status,
             time_uploaded=self.time_uploaded,
             processing_time=self.time_processing_started,
