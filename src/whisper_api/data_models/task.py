@@ -6,18 +6,14 @@ from uuid import uuid4
 from pydantic import BaseModel
 
 
-class TaskInProcessOrPending(BaseModel):
-    task_id: str
-    time_uploaded: datetime
-    status: str
-
-
-class TaskResult(BaseModel):
+class TaskResponse(BaseModel):
     task_id: str
     transcript: str
     language: str
     status: str
-    processing_time: float
+    time_uploaded: datetime
+    processing_time: datetime
+    time_processing_finished: datetime
 
 
 @dataclass
@@ -41,16 +37,18 @@ class Task:
         self.time_processing_finished = None
 
     @property
-    def to_transmit_full(self) -> Union[TaskInProcessOrPending, TaskResult]:
+    def to_transmit_full(self) -> TaskResponse:
         if self.status == "pending" or self.status == "processing":
-            return TaskInProcessOrPending(
+            return TaskResponse(
                 task_id=self.uuid, time_uploaded=self.time_uploaded, status=self.status
             )
 
-        return TaskResult(
+        return TaskResponse(
             task_id=self.uuid,
             transcript=self.result["text"],
             language=self.result["language"],
             status=self.status,
-            processing_time=self.time_processing_finished - self.time_processing_started,
+            time_uploaded=self.time_uploaded,
+            processing_time=self.time_processing_started,
+            time_processing_finished=self.time_processing_finished,
         )
