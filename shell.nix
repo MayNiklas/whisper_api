@@ -42,6 +42,7 @@ pkgs.mkShell
 
   shellHook = ''
     export PYTHONPATH=${python-with-packages}/${python-with-packages.sitePackages}
+    echo "PYTHONPATH=$PYTHONPATH"
   '';
 
 }
