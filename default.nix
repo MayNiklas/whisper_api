@@ -31,6 +31,10 @@ buildPythonPackage rec {
 
   doCheck = false;
 
+  pythonImportsCheck = [
+    "whisper_api"
+  ];
+
   meta = with lib; {
     description = "A simple API for OpenAI's Whisper";
     homepage = "https://github.com/MayNiklas/whisper_api";
