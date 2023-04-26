@@ -26,6 +26,10 @@ let
       openai-whisper
       torch
       uvicorn
+    ] ++
+    # only needed for development
+    [
+      autopep8
     ]);
 in
 pkgs.mkShell
