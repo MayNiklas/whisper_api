@@ -7,17 +7,19 @@
 , multipart
 , openai-whisper
 , uvicorn
+
+  # tests
+, pytestCheckHook
 }:
+
 buildPythonPackage rec {
-
   pname = "whisper_api";
-
-  # get version from version.py
   version = (lib.strings.removePrefix ''__version__ = "''
     (lib.strings.removeSuffix ''
       "
     ''
       (builtins.readFile ./src/whisper_api/version.py)));
+  format = "setuptools";
 
   src = ./.;
 
@@ -29,7 +31,9 @@ buildPythonPackage rec {
     uvicorn
   ];
 
-  doCheck = false;
+  nativeCheckInputs = [
+    pytestCheckHook
+  ];
 
   pythonImportsCheck = [
     "whisper_api"

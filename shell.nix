@@ -30,6 +30,7 @@ let
     # only needed for development
     [
       autopep8
+      pytest
     ]);
 in
 pkgs.mkShell
@@ -46,6 +47,7 @@ pkgs.mkShell
 
   shellHook = ''
     export PYTHONPATH=${python-with-packages}/${python-with-packages.sitePackages}
+    echo ${python-with-packages}
     echo "PYTHONPATH=$PYTHONPATH"
   '';
 
