@@ -1,10 +1,12 @@
+import datetime as dt
 from multiprocessing.connection import Connection
 from typing import Literal, Optional
 
 import torch
 import whisper
 
-from whisper_api.data_models.data_types import model_sizes_str_t
+from whisper_api.data_models.data_types import model_sizes_str_t, task_type_str_t, whisper_result_dict_t, time_t
+from whisper_api.data_models.task import TaskResult
 
 vram_model_map: dict[model_sizes_str_t, int] = {
     "large": 10,
@@ -84,6 +86,23 @@ class Decoder:
 
     def transcribe(self, audio_path: str, language: str) -> dict:
         raise NotImplementedError("CPU decoding is not implemented yet")
+    def __run_model(self, audio_path: str, task: task_type_str_t,
+                    source_language: Optional[str],
+                    model_size: model_sizes_str_t = None) -> TaskResult:
+        """
+        'Generic' function to run the model and centralize the needed logic
+        This is used by transcribe() and translate()
+        For args see transcribe() and translate()
+
+        Returns:
+            the result of the whisper models transcription/translation and the transcription time in seconds
+        """
+
+        model = self.load_model(model_size)
+        start = dt.datetime.now()
+        result = model.transcribe(audio_path, language=source_language, task=task)
+        end = dt.datetime.now()
+        return TaskResult(**result, start_time=start, end_time=end)
 
     def translate(self, text: str, language: str) -> dict:
         raise NotImplementedError("CPU decoding is not implemented yet")
