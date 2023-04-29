@@ -7,7 +7,8 @@ from uuid import uuid4
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass as pydantic_dataclass
 
-from whisper_api.data_models.data_types import status_str_t, task_type_str_t, named_temp_file_name_t, uuid_hex_t
+from whisper_api.data_models.data_types import status_str_t, task_type_str_t, named_temp_file_name_t, uuid_hex_t, \
+    model_sizes_str_t
 
 
 class TaskResponse(BaseModel):
@@ -28,6 +29,7 @@ class TaskResult:
     text: str
     language: str
     segment_level_details: list[dict[str, int]]
+    used_model_size: model_sizes_str_t
     start_time: dt.datetime
     end_time: dt.datetime
 
@@ -45,6 +47,7 @@ class Task:
     whisper_result: Optional[TaskResult] = None
     time_uploaded: dt.datetime = None
     uuid: uuid_hex_t = None
+    target_model_size: Optional[model_sizes_str_t] = None
 
     def __post_init__(self):
         self.uuid = self.uuid or uuid4().hex
@@ -69,6 +72,8 @@ class Task:
             time_uploaded=self.time_uploaded,
             processing_time=self.whisper_result.processing_time_s,
             time_processing_finished=self.whisper_result.end_time,
+            target_model_size=self.target_model_size
+
         )
 
     @property
@@ -97,7 +102,8 @@ if __name__ == '__main__':
                                   language="en",
                                   segment_level_details=[],
                                   start_time=dt.datetime.now(),
-                                  end_time=dt.datetime.now())
+                                  end_time=dt.datetime.now(),
+                                  used_model_size="base")
     serialized = t.to_json
     new_task = Task.from_json(serialized)
 
