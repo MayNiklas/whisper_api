@@ -19,30 +19,28 @@ vram_model_map: dict[model_sizes_str_t, int] = {
 class Decoder:
 
     @staticmethod
-    def init_and_run(task_pipe: Connection, conn_to_parent: Connection, keep_model_loaded: bool = True):
+    def init_and_run(pipe_to_parent: Connection, keep_model_loaded: bool = True):
         """
         Initialize the decoder and run it
         Args:
-            task_pipe: pipe to receive tasks from the parent process
-            conn_to_parent: pipe to pass results to parent process
+            pipe_to_parent: pipe to receive tasks from the parent process
             keep_model_loaded: if model should be kept in memory after loading
 
         Returns:
 
         """
-        decoder = Decoder(task_pipe, conn_to_parent, keep_model_loaded)
+
+        decoder = Decoder(pipe_to_parent, keep_model_loaded)
         decoder.run()
 
-    def __init__(self, task_pipe: Connection, conn_to_parent: Connection, keep_model_loaded: bool = True):
+    def __init__(self, pipe_to_parent: Connection, keep_model_loaded: bool = True):
         """
         Holding and managing the whisper model
         Args:
-            task_pipe: pipe to receive tasks from the parent process
-            conn_to_parent: pipe to pass results to parent process
+            pipe_to_parent: pipe to receive tasks from the parent process
             keep_model_loaded: if model should be kept in memory after loading
         """
-        self.task_queue = task_pipe
-        self.conn_to_parent = conn_to_parent
+        self.pipe_to_parent = pipe_to_parent
 
         # TODO: do something useful with this (unloading model)
         self.keep_model_loaded = keep_model_loaded
@@ -61,11 +59,14 @@ class Decoder:
         Returns:
 
         """
+        print(f"Decoder is listening for messages")
         while True:
-            msg = self.task_queue.recv()
+            msg = self.pipe_to_parent.recv()
+
+            print(f"Got message: {msg}")
 
             task_name = msg.get("task_name", None)
-            val = task_name.get("data", None)
+            val = msg.get("data", None)
 
             if task_name is None:
                 print(f"Decoder received {msg=}, weird... continuing")
@@ -73,7 +74,7 @@ class Decoder:
 
             elif task_name == "exit":
                 print("Decoder received exit, exiting process.")
-                break
+                exit(0)
 
             # guarding against all messages that are not decode messages
             if task_name != "decode":
@@ -92,7 +93,7 @@ class Decoder:
 
             # update state and send to parent
             task.status = "processing"
-            self.conn_to_parent.send(task.to_json)
+            self.pipe_to_parent.send(task.to_json)
 
             # start processing
             whisper_result = self.__run_model(audio_path=task.audiofile_name,
@@ -107,7 +108,7 @@ class Decoder:
             else:
                 task.status = "failed"
 
-            self.conn_to_parent.send(task.to_json)
+            self.pipe_to_parent.send(task.to_json)
 
     def get_max_model_name_for_gpu(self) -> Optional[model_sizes_str_t]:
         """

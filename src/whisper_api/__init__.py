@@ -55,9 +55,9 @@ app.add_middleware(
 )
 
 # create Pipe for communication between main and worker thread
-conn_to_parent, conn_to_child = multiprocessing.Pipe(duplex=True)
+parent_side, child_side = multiprocessing.Pipe()
 
-api_end_points = EndPoints(app, task_dict, open_audio_files_dict, conn_to_child)
+api_end_points = EndPoints(app, task_dict, open_audio_files_dict, parent_side)
 
 
 @app.on_event("startup")
@@ -65,12 +65,13 @@ def listen_to_child():
     """ Start decode-process, listen to it and update the task_dict accordingly """
 
     decoder_process = multiprocessing.Process(target=decoder.Decoder.init_and_run,
-                                              args=(conn_to_child, conn_to_parent, KEEP_MODEL_IN_MEMORY)
+                                              args=(child_side, KEEP_MODEL_IN_MEMORY)
                                               )
     decoder_process.start()
 
     while True:
-        task_update_json = conn_to_parent.recv()
+        task_update_json = parent_side.recv()
+        print(f"got frim cild: {task_update_json}")
         task = Task.from_json(task_update_json)
 
         task_dict[task.uuid] = task
