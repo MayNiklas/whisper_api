@@ -5,8 +5,9 @@ from typing import Union, Optional
 from uuid import uuid4
 
 from pydantic import BaseModel
+from pydantic.dataclasses import dataclass as pydantic_dataclass
 
-from whisper_api.data_models.data_types import status_str_t, task_type_str_t
+from whisper_api.data_models.data_types import status_str_t, task_type_str_t, named_temp_file_name_t
 
 
 class TaskResponse(BaseModel):
@@ -21,8 +22,8 @@ class TaskResponse(BaseModel):
     time_processing_finished: Optional[dt.datetime]
 
 
-@dataclass
-class TaskResult(BaseModel):
+@pydantic_dataclass
+class TaskResult:
     """ The result of a whisper translation/ transcription plus additional information"""
     text: str
     language: str
