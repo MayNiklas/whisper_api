@@ -30,16 +30,16 @@ class EndPoints:
         self.app.add_api_route(f"{V1_PREFIX}/translate", self.translate, methods=["POST"])
         self.app.add_api_route(f"{V1_PREFIX}/transcribe", self.transcribe, methods=["POST"])
 
-    def add_task(self, task):
+    def add_task(self, task: Task):
         self.tasks[task.uuid] = task
 
-    def get_task(self, task_id):
+    def get_task(self, task_id: uuid_hex_t):
         return self.tasks[task_id]
 
-    def delete_task(self, task_id):
+    def delete_task(self, task_id: uuid_hex_t):
         del self.tasks[task_id]
 
-    async def status(self, task_id: str) -> TaskResponse:
+    async def status(self, task_id: uuid_hex_t) -> TaskResponse:
         """
         Get the status of a task.
         :param task_id: ID of the task.

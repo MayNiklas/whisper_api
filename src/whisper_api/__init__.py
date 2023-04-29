@@ -25,7 +25,7 @@ description = """
 Whisper API transcribes audio files.
 """
 
-task_dict = {}
+task_dict: dict[uuid_hex_t, Task] = {}
 # TODO: implement closing of file in callback function
 open_audio_files_dict: dict[named_temp_file_name_t, NamedTemporaryFile] = {}
 
