@@ -7,6 +7,7 @@ import whisper
 
 from whisper_api.data_models.data_types import model_sizes_str_t, task_type_str_t
 from whisper_api.data_models.task import TaskResult, Task
+from whisper_api.environment import DEVELOP_MODE
 
 vram_model_map: dict[model_sizes_str_t, int] = {
     "large": 10,
@@ -120,6 +121,9 @@ class Decoder:
         Returns: name of the model
 
         """
+        if DEVELOP_MODE:
+            return "base"
+
         for model_name, model_size in vram_model_map.items():
             if self.gpu_vram >= model_size * 1e9:
                 print(f"Max usable model: '{model_name}'")
