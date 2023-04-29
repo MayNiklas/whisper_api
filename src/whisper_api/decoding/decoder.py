@@ -57,15 +57,17 @@ class Decoder:
         Args:
             model_size: size of the model to load - must fit on the GPU
 
-        Returns: the loaded model
+        Returns: the loaded model, None if models does not fit on GPU
 
         """
+        # try to find best model if no model is specified
         if model_size is None:
             print("No model size specified, trying to find the largest model that fits the GPU")
             model_size = self.get_max_model_name_for_gpu()
             if model_size is None:
                 raise NotImplementedError("No model fits the GPU. CPU decoding is not implemented yet.")
 
+        # check if correct model is already loaded
         if self.model is not None and self.last_loaded_model_size == model_size:
             print(f" Target model '{model_size}' already loaded")
             return self.model
@@ -86,7 +88,8 @@ class Decoder:
 
     def __run_model(self, audio_path: str, task: task_type_str_t,
                     source_language: Optional[str],
-                    model_size: model_sizes_str_t = None) -> TaskResult:
+                    model_size: model_sizes_str_t = None,
+                    auto_find_model_on_fail_to_load_target=True) -> Optional[TaskResult]:
         """
         'Generic' function to run the model and centralize the needed logic
         This is used by transcribe() and translate()
@@ -96,15 +99,26 @@ class Decoder:
             the result of the whisper models transcription/translation and the transcription time in seconds
         """
 
+        # load model
         model = self.load_model(model_size)
+
+        # if load failed try to find a better one if auto_find_model_on_fail_to_load_target is set
+        if model is None:
+            if not auto_find_model_on_fail_to_load_target:
+                print("Could not load model, returning...")
+                return None
+            else:
+                self.load_model()
+
+        # start decoding
         start = dt.datetime.now()
         result = model.transcribe(audio_path, language=source_language, task=task)
         end = dt.datetime.now()
-        return TaskResult(**result, start_time=start, end_time=end)
+        return TaskResult(**result, start_time=start, end_time=end, used_model_size=self.last_loaded_model_size)
 
     def transcribe(self, audio_path: str,
                    source_language: Optional[str],
-                   model_size: model_sizes_str_t = None) -> TaskResult:
+                   model_size: model_sizes_str_t = None) -> Optional[TaskResult]:
         """
         Transcribe an audio file in its source language
         Args:
@@ -122,7 +136,7 @@ class Decoder:
 
     def translate(self, audio_path: str,
                   source_language: Optional[str],
-                  model_size: model_sizes_str_t = None) -> TaskResult:
+                  model_size: model_sizes_str_t = None) -> Optional[TaskResult]:
         """
         Translate a given audio file to english
         Args:
