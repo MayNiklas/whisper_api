@@ -4,21 +4,35 @@ from tempfile import NamedTemporaryFile
 from typing import Union, Optional
 from uuid import uuid4
 
-from fastapi import UploadFile
 from pydantic import BaseModel
 
-from whisper_api.data_models.data_types import status_str_t, task_type_str_t
+from whisper_api.data_models.data_types import status_str_t, task_type_str_t, time_t, delta_time_t
 
 
 class TaskResponse(BaseModel):
+    """ The class that is returned via the API"""
     task_id: str
     transcript: Optional[str]
     source_language: Optional[str]
     task_type: task_type_str_t
     status: str
     time_uploaded: dt.datetime
-    processing_time: Optional[dt.datetime]
+    processing_time: int
     time_processing_finished: Optional[dt.datetime]
+
+
+@dataclass
+class TaskResult(BaseModel):
+    """ The result of a whisper translation/ transcription plus additional information"""
+    text: str
+    language: str
+    segment_level_details: list[dict[str, int]]
+    start_time: dt.datetime
+    end_time: dt.datetime
+
+    @property
+    def processing_time_s(self) -> int:
+        return (self.end_time - self.start_time).seconds
 
 
 @dataclass
@@ -27,14 +41,11 @@ class Task:
     source_language: Optional[str]
     task_type: task_type_str_t
     status: status_str_t = "pending"
-    result: dict = None
+    whisper_result: Optional[TaskResult] = None
     time_uploaded: dt.datetime = None
-    time_processing_started: Optional[dt.datetime] = None
-    time_processing_finished: Optional[dt.datetime] = None
 
     def __post_init__(self):
         self.uuid = uuid4().hex
-        self.result = {}
         self.time_uploaded = self.time_uploaded or dt.datetime.now()
         self.time_processing_started = None
         self.time_processing_finished = None
@@ -51,11 +62,11 @@ class Task:
 
         return TaskResponse(
             task_id=self.uuid,
-            transcript=self.result["text"],
-            source_language=self.result["language"],
+            transcript=self.whisper_result.text,
+            source_language=self.whisper_result.language,
             task_type=self.task_type,
             status=self.status,
             time_uploaded=self.time_uploaded,
-            processing_time=self.time_processing_started,
-            time_processing_finished=self.time_processing_finished,
+            processing_time=self.whisper_result.processing_time_s,
+            time_processing_finished=self.whisper_result.end_time,
         )
