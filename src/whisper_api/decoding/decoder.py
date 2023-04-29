@@ -18,6 +18,21 @@ vram_model_map: dict[model_sizes_str_t, int] = {
 
 class Decoder:
 
+    @staticmethod
+    def init_and_run(task_pipe: Connection, conn_to_parent: Connection, keep_model_loaded: bool = True):
+        """
+        Initialize the decoder and run it
+        Args:
+            task_pipe: pipe to receive tasks from the parent process
+            conn_to_parent: pipe to pass results to parent process
+            keep_model_loaded: if model should be kept in memory after loading
+
+        Returns:
+
+        """
+        decoder = Decoder(task_pipe, conn_to_parent, keep_model_loaded)
+        decoder.run()
+
     def __init__(self, task_pipe: Connection, conn_to_parent: Connection, keep_model_loaded: bool = True):
         """
         Holding and managing the whisper model
