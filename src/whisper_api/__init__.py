@@ -1,11 +1,14 @@
 import multiprocessing
 import os
 import sys
+from tempfile import NamedTemporaryFile
 
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from whisper_api.api_endpoints.endpoints import EndPoints
+from whisper_api.data_models.data_types import named_temp_file_name_t, uuid_hex_t
+from whisper_api.data_models.task import Task
 
 if __package__ is None and not hasattr(sys, "frozen"):
     import os.path
@@ -23,6 +26,8 @@ Whisper API transcribes audio files.
 """
 
 task_dict = {}
+# TODO: implement closing of file in callback function
+open_audio_files_dict: dict[named_temp_file_name_t, NamedTemporaryFile] = {}
 
 app = FastAPI(
     title="Whisper API",
@@ -50,7 +55,7 @@ app.add_middleware(
 # create Pipe for communication between main and worker thread
 conn_to_parent, conn_to_child = multiprocessing.Pipe(duplex=True)
 
-api_end_points = EndPoints(app, task_dict, conn_to_child)
+api_end_points = EndPoints(app, task_dict, open_audio_files_dict, conn_to_child)
 
 
 def start():

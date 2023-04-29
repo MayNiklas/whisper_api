@@ -7,15 +7,19 @@ from fastapi import APIRouter, UploadFile, FastAPI, HTTPException, status
 from pydantic import BaseModel
 from starlette.responses import HTMLResponse, FileResponse
 
-from whisper_api.data_models.data_types import uuid_hex_t, task_type_str_t
+from whisper_api.data_models.data_types import uuid_hex_t, task_type_str_t, named_temp_file_name_t
 from whisper_api.data_models.task import Task, TaskResponse
 
 V1_PREFIX = "/api/v1"
 
 
 class EndPoints:
-    def __init__(self, app: FastAPI, tasks_dict: dict[uuid_hex_t, Task], conn_to_child: Connection):
+    def __init__(self, app: FastAPI,
+                 tasks_dict: dict[uuid_hex_t, Task],
+                 open_audio_files_dict: dict[named_temp_file_name_t, NamedTemporaryFile],
+                 conn_to_child: Connection):
         self.tasks = tasks_dict
+        self.open_audio_files_dict = open_audio_files_dict
         self.app = app
         self.conn_to_child = conn_to_child
 
@@ -58,7 +62,7 @@ class EndPoints:
     async def __start_task(self, file: UploadFile, source_language: str, task_type: task_type_str_t) -> Task:
 
         named_file = await self.__upload_file_to_named_temp_file(file)
-        self.open_audio_files[named_file.name] = named_file
+        self.open_audio_files_dict[named_file.name] = named_file
         task = Task(named_file, source_language, task_type)
         self.add_task(task)
 
@@ -92,6 +96,4 @@ class EndPoints:
 
         return task.to_transmit_full
 
-
-
-
+    # TODO: implement closing of file in callback function
