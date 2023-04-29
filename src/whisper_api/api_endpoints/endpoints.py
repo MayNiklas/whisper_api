@@ -1,7 +1,7 @@
 from asyncio import tasks
 from multiprocessing.connection import Connection
 from tempfile import NamedTemporaryFile
-from typing import Union
+from typing import Union, Optional
 
 from fastapi import APIRouter, UploadFile, FastAPI, HTTPException, status
 from pydantic import BaseModel
@@ -67,7 +67,7 @@ class EndPoints:
 
         return task
 
-    async def transcribe(self, file: UploadFile, source_language: str = None):
+    async def transcribe(self, file: UploadFile, source_language: Optional[str] = None):
 
         # validate that the file is an audio file
         if not file.content_type.startswith("audio/"):
@@ -80,7 +80,7 @@ class EndPoints:
 
         return task.to_transmit_full
 
-    async def translate(self, file: UploadFile, source_language: str = None):
+    async def translate(self, file: UploadFile, source_language: Optional[str] = None):
         if source_language is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
