@@ -84,8 +84,6 @@ class Decoder:
 
         return self.model
 
-    def transcribe(self, audio_path: str, language: str) -> dict:
-        raise NotImplementedError("CPU decoding is not implemented yet")
     def __run_model(self, audio_path: str, task: task_type_str_t,
                     source_language: Optional[str],
                     model_size: model_sizes_str_t = None) -> TaskResult:
@@ -104,5 +102,38 @@ class Decoder:
         end = dt.datetime.now()
         return TaskResult(**result, start_time=start, end_time=end)
 
-    def translate(self, text: str, language: str) -> dict:
-        raise NotImplementedError("CPU decoding is not implemented yet")
+    def transcribe(self, audio_path: str,
+                   source_language: Optional[str],
+                   model_size: model_sizes_str_t = None) -> TaskResult:
+        """
+        Transcribe an audio file in its source language
+        Args:
+            audio_path: path to the audio file
+            source_language: language of the audio file
+            model_size: target model size, if None the largest model that fits the GPU is used
+
+        Returns:
+                the result of the whisper models transcription
+        """
+        # transcribe the file
+        transcription_result = self.__run_model(audio_path, "transcribe", source_language, model_size)
+
+        return transcription_result
+
+    def translate(self, audio_path: str,
+                  source_language: Optional[str],
+                  model_size: model_sizes_str_t = None) -> TaskResult:
+        """
+        Translate a given audio file to english
+        Args:
+            audio_path: path to the audio file
+            source_language: language of the audio file
+            model_size: target model size, if None the largest model that fits the GPU is used
+
+        Returns:
+                the result of the whisper models translation (to english)
+        """
+        # translate the file
+        translation_result = self.__run_model(audio_path, "translate", source_language, model_size)
+
+        return translation_result
