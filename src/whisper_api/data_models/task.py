@@ -38,7 +38,7 @@ class TaskResult:
 
 @dataclass
 class Task:
-    audiofile: NamedTemporaryFile
+    audiofile_name: named_temp_file_name_t
     source_language: Optional[str]
     task_type: task_type_str_t
     status: status_str_t = "pending"

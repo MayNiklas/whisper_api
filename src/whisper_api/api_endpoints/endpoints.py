@@ -58,11 +58,12 @@ class EndPoints:
     async def __start_task(self, file: UploadFile, source_language: str, task_type: task_type_str_t) -> Task:
 
         named_file = await self.__upload_file_to_named_temp_file(file)
+        self.open_audio_files[named_file.name] = named_file
         task = Task(named_file, source_language, task_type)
         self.add_task(task)
 
         self.conn_to_child.send(
-            {"uuid": task.uuid, "file": task.audiofile.name, "action": task_type, "language": task.source_language}
+            {"uuid": task.uuid, "file": task.audiofile_name.name, "action": task_type, "language": task.source_language}
         )
 
         return task
