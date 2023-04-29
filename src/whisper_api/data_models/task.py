@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+import datetime as dt
 from tempfile import NamedTemporaryFile
 from typing import Union, Optional
 from uuid import uuid4
@@ -16,9 +16,9 @@ class TaskResponse(BaseModel):
     source_language: Optional[str]
     task_type: task_type_str_t
     status: str
-    time_uploaded: datetime
-    processing_time: Optional[datetime]
-    time_processing_finished: Optional[datetime]
+    time_uploaded: dt.datetime
+    processing_time: Optional[dt.datetime]
+    time_processing_finished: Optional[dt.datetime]
 
 
 @dataclass
@@ -28,14 +28,14 @@ class Task:
     task_type: task_type_str_t
     status: status_str_t = "pending"
     result: dict = None
-    time_uploaded: datetime = None
-    time_processing_started = None
-    time_processing_finished = None
+    time_uploaded: dt.datetime = None
+    time_processing_started: Optional[dt.datetime] = None
+    time_processing_finished: Optional[dt.datetime] = None
 
     def __post_init__(self):
         self.uuid = uuid4().hex
         self.result = {}
-        self.time_uploaded = self.time_uploaded or datetime.now()
+        self.time_uploaded = self.time_uploaded or dt.datetime.now()
         self.time_processing_started = None
         self.time_processing_finished = None
 
