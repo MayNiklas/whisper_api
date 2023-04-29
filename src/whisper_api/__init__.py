@@ -1,5 +1,5 @@
 import multiprocessing
-import os
+import signal
 import sys
 from tempfile import NamedTemporaryFile
 
@@ -64,14 +64,33 @@ api_end_points = EndPoints(app, task_dict, open_audio_files_dict, parent_side)
 def listen_to_child():
     """ Start decode-process, listen to it and update the task_dict accordingly """
 
+    def signal_worker_to_exit():
+        """ Terminate child and hope it dies """
+        print("Shutting down decoder process...")
+        decoder_process.terminate()
+        decoder_process.join()
+        print("Child is dead.")
+
+    # start child
     decoder_process = multiprocessing.Process(target=decoder.Decoder.init_and_run,
-                                              args=(child_side, KEEP_MODEL_IN_MEMORY)
+                                              args=(child_side, KEEP_MODEL_IN_MEMORY),
+                                              name="Decoder-Process",
+                                              daemon=True
                                               )
     decoder_process.start()
 
+    # register handlers to kill it
+    signal.signal(signal.SIGINT, signal_worker_to_exit)  # Handle Control + C
+    signal.signal(signal.SIGTERM, signal_worker_to_exit)  # Handle 'kill' command
+    signal.signal(signal.SIGHUP, signal_worker_to_exit)  # Handle terminal closure
+
     while True:
-        task_update_json = parent_side.recv()
-        print(f"got frim cild: {task_update_json}")
+        try:
+            task_update_json = parent_side.recv()
+        except KeyboardInterrupt:
+            signal_worker_to_exit()
+            exit(0)
+
         task = Task.from_json(task_update_json)
 
         task_dict[task.uuid] = task

@@ -31,7 +31,11 @@ class Decoder:
         """
 
         decoder = Decoder(pipe_to_parent, keep_model_loaded)
-        decoder.run()
+        try:
+            decoder.run()
+        # stop process 'gracefully' when KeyboardInterrupt
+        except KeyboardInterrupt:
+            exit(0)
 
     def __init__(self, pipe_to_parent: Connection, keep_model_loaded: bool = True):
         """
