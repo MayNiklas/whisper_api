@@ -5,7 +5,7 @@ from typing import Literal, Optional
 import torch
 import whisper
 
-from whisper_api.data_models.data_types import model_sizes_str_t, task_type_str_t, whisper_result_dict_t, time_t
+from whisper_api.data_models.data_types import model_sizes_str_t, task_type_str_t
 from whisper_api.data_models.task import TaskResult
 
 vram_model_map: dict[model_sizes_str_t, int] = {

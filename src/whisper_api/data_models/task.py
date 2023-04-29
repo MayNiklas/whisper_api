@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel
 
-from whisper_api.data_models.data_types import status_str_t, task_type_str_t, time_t, delta_time_t
+from whisper_api.data_models.data_types import status_str_t, task_type_str_t
 
 
 class TaskResponse(BaseModel):
