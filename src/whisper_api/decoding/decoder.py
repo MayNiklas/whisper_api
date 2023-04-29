@@ -6,7 +6,7 @@ import torch
 import whisper
 
 from whisper_api.data_models.data_types import model_sizes_str_t, task_type_str_t
-from whisper_api.data_models.task import TaskResult
+from whisper_api.data_models.task import TaskResult, Task
 
 vram_model_map: dict[model_sizes_str_t, int] = {
     "large": 10,
@@ -39,6 +39,60 @@ class Decoder:
             raise NotImplementedError("CPU decoding is not implemented yet")
 
         self.gpu_vram = torch.cuda.mem_get_info()[0]
+
+    def run(self):
+        """
+        Read from task_queue, process tasks and send results to parent process
+        Returns:
+
+        """
+        while True:
+            msg = self.task_queue.recv()
+
+            task_name = msg.get("task_name", None)
+            val = task_name.get("data", None)
+
+            if task_name is None:
+                print(f"Decoder received {msg=}, weird... continuing")
+                continue
+
+            elif task_name == "exit":
+                print("Decoder received exit, exiting process.")
+                break
+
+            # guarding against all messages that are not decode messages
+            if task_name != "decode":
+                print(f"Can't handle message: '{msg=}'")
+                continue
+
+            # the json must be a decode task from here on
+            # all other cases are caught above
+
+            # reconstruct task from json
+            try:
+                task = Task.from_json(val)
+            except Exception as e:
+                print(f"Could not parse task from json (continuing): '{e}'")
+                continue
+
+            # update state and send to parent
+            task.status = "processing"
+            self.conn_to_parent.send(task.to_json)
+
+            # start processing
+            whisper_result = self.__run_model(audio_path=task.audiofile_name,
+                                              task=task.task_type,
+                                              source_language=task.source_language,
+                                              model_size=task.target_model_size)
+
+            # set result and send to parent
+            if whisper_result is not None:
+                task.whisper_result = whisper_result
+                task.status = "finished"
+            else:
+                task.status = "failed"
+
+            self.conn_to_parent.send(task.to_json)
 
     def get_max_model_name_for_gpu(self) -> Optional[model_sizes_str_t]:
         """
