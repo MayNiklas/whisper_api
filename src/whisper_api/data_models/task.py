@@ -7,7 +7,7 @@ from uuid import uuid4
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass as pydantic_dataclass
 
-from whisper_api.data_models.data_types import status_str_t, task_type_str_t, named_temp_file_name_t
+from whisper_api.data_models.data_types import status_str_t, task_type_str_t, named_temp_file_name_t, uuid_hex_t
 
 
 class TaskResponse(BaseModel):
@@ -44,12 +44,11 @@ class Task:
     status: status_str_t = "pending"
     whisper_result: Optional[TaskResult] = None
     time_uploaded: dt.datetime = None
+    uuid: uuid_hex_t = None
 
     def __post_init__(self):
-        self.uuid = uuid4().hex
+        self.uuid = self.uuid or uuid4().hex
         self.time_uploaded = self.time_uploaded or dt.datetime.now()
-        self.time_processing_started = None
-        self.time_processing_finished = None
 
     @property
     def to_transmit_full(self) -> TaskResponse:
@@ -71,3 +70,36 @@ class Task:
             processing_time=self.whisper_result.processing_time_s,
             time_processing_finished=self.whisper_result.end_time,
         )
+
+    @property
+    def to_json(self) -> dict:
+        json_cls = {**self.__dict__,
+                    "whisper_result": self.whisper_result.__dict__,
+                    "audiofile_name": self.audiofile_name
+                    }
+
+        return json_cls
+
+    @staticmethod
+    def from_json(serialized_task: dict) -> "Task":
+        """ Create a Task object from a json dict """
+        json_cls = {**serialized_task,
+                    "whisper_result": TaskResult(**serialized_task["whisper_result"]),
+                    "audiofile_name": serialized_task["audiofile_name"]
+                    }
+
+        return Task(**json_cls)
+
+
+if __name__ == '__main__':
+    t = Task(NamedTemporaryFile().name, "en", "transcribe")
+    t.whisper_result = TaskResult(text="hello",
+                                  language="en",
+                                  segment_level_details=[],
+                                  start_time=dt.datetime.now(),
+                                  end_time=dt.datetime.now())
+    serialized = t.to_json
+    new_task = Task.from_json(serialized)
+
+    print(new_task)
+    print(t == new_task)
