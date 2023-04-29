@@ -66,9 +66,8 @@ class EndPoints:
         task = Task(named_file, source_language, task_type)
         self.add_task(task)
 
-        self.conn_to_child.send(
-            {"uuid": task.uuid, "file": task.audiofile_name.name, "action": task_type, "language": task.source_language}
-        )
+        # send task into queue
+        self.conn_to_child.send({"task": "decode", "data": task.to_json})
 
         return task
 
