@@ -69,6 +69,8 @@ class Decoder:
         while True:
             # wait for tasks, if no task after time specified in UNLOAD_MODEL_AFTER_S, unload model
             # None means no timeout so model will never unload
+            # TODO: if user sets 0 it will result in busy waiting
+            #  maybe think of better solution than pinning the unload to the poll timeout
             if not self.pipe_to_parent.poll(self.unload_model_after_s):
                 # can only trigger if timeout is set
                 self.__unload_model()
