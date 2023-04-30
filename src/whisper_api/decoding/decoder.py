@@ -1,4 +1,5 @@
 import datetime as dt
+import gc
 from multiprocessing.connection import Connection
 from typing import Literal, Optional
 
@@ -7,7 +8,7 @@ import whisper
 
 from whisper_api.data_models.data_types import model_sizes_str_t, task_type_str_t
 from whisper_api.data_models.task import TaskResult, Task
-from whisper_api.environment import DEVELOP_MODE
+from whisper_api.environment import DEVELOP_MODE, UNLOAD_MODEL_AFTER_S
 
 vram_model_map: dict[model_sizes_str_t, int] = {
     "large": 10,
@@ -66,6 +67,13 @@ class Decoder:
         """
         print(f"Decoder is listening for messages")
         while True:
+            # wait for tasks, if no task after time specified in UNLOAD_MODEL_AFTER_S, unload model
+            # None means no timeout so model will never unload
+            if not self.pipe_to_parent.poll(UNLOAD_MODEL_AFTER_S):
+                # can only trigger if timeout is set
+                self.__unload_model()
+                continue
+
             msg = self.pipe_to_parent.recv()
 
             print(f"Got message: {msg}")
@@ -86,7 +94,7 @@ class Decoder:
                 print(f"Can't handle message: '{msg=}'")
                 continue
 
-            # the json must be a decode task from here on
+            # the json must be a decode-task from here on
             # all other cases are caught above
 
             # reconstruct task from json
@@ -114,6 +122,19 @@ class Decoder:
                 task.status = "failed"
 
             self.pipe_to_parent.send(task.to_json)
+
+    def __unload_model(self):
+        """
+        Unload the model from memory (as good as possible)
+        """
+        if self.model is None:
+            print(f"Tried to unload model, but None is loaded")
+
+        print(f"Unloading model '{self.last_loaded_model_size}'")
+        self.model = None
+        gc.collect()
+        torch.cuda.empty_cache()
+        print(f"Model '{self.last_loaded_model_size}' unloaded")
 
     def get_max_model_name_for_gpu(self) -> Optional[model_sizes_str_t]:
         """
