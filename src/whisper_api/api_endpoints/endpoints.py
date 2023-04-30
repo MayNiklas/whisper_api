@@ -3,6 +3,7 @@ from multiprocessing.connection import Connection
 from tempfile import NamedTemporaryFile
 from typing import Union, Optional
 
+import ffmpeg
 from fastapi import APIRouter, UploadFile, FastAPI, HTTPException, status
 from pydantic import BaseModel
 from starlette.responses import HTMLResponse, FileResponse
@@ -62,6 +63,14 @@ class EndPoints:
     async def __start_task(self, file: UploadFile, source_language: str, task_type: task_type_str_t) -> Task:
 
         named_file = await self.__upload_file_to_named_temp_file(file)
+
+        # test that file has audio track
+        if not self.is_file_audio(named_file.name):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"File has no audio track."
+            )
+
         self.open_audio_files_dict[named_file.name] = named_file
         task = Task(named_file.name, source_language, task_type)
         self.add_task(task)
@@ -73,7 +82,6 @@ class EndPoints:
         return task
 
     async def transcribe(self, file: UploadFile, language: Optional[str] = None):
-
         task = await self.__start_task(file, language, "transcribe")
 
         return task.to_transmit_full
@@ -83,4 +91,22 @@ class EndPoints:
         task = await self.__start_task(file, language, "translate")
 
         return task.to_transmit_full
+
+    @staticmethod
+    def is_file_audio(file_path: str) -> bool:
+        """
+        Check if the file contains audio stream.
+        :param file_path: path to file
+        :return: True if file contains audio, False otherwise.
+        """
+
+        try:
+            probe = ffmpeg.probe(file_path)
+            audio_stream = next(
+                (stream for stream in probe['streams'] if stream['codec_type'] == 'audio'), None)
+            return audio_stream is not None
+
+        except ffmpeg.Error as e:
+            print(e.stderr)
+            return False
 
