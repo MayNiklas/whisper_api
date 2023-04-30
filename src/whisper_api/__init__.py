@@ -17,7 +17,7 @@ if __package__ is None and not hasattr(sys, "frozen"):
     sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
 
 
-from whisper_api.environment import API_PORT, API_LISTEN, KEEP_MODEL_IN_MEMORY
+from whisper_api.environment import API_PORT, API_LISTEN, UNLOAD_MODEL_AFTER_S
 from whisper_api.version import __version__
 from whisper_api.api_endpoints import endpoints
 
@@ -73,7 +73,7 @@ def listen_to_child():
 
     # start child
     decoder_process = multiprocessing.Process(target=decoder.Decoder.init_and_run,
-                                              args=(child_side, KEEP_MODEL_IN_MEMORY),
+                                              args=(child_side, UNLOAD_MODEL_AFTER_S),
                                               name="Decoder-Process",
                                               daemon=True
                                               )

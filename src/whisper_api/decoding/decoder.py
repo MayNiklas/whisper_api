@@ -8,7 +8,7 @@ import whisper
 
 from whisper_api.data_models.data_types import model_sizes_str_t, task_type_str_t
 from whisper_api.data_models.task import TaskResult, Task
-from whisper_api.environment import DEVELOP_MODE, UNLOAD_MODEL_AFTER_S
+from whisper_api.environment import DEVELOP_MODE, LOAD_MODEL_ON_STARTUP
 
 vram_model_map: dict[model_sizes_str_t, int] = {
     "large": 10,
@@ -21,37 +21,37 @@ vram_model_map: dict[model_sizes_str_t, int] = {
 class Decoder:
 
     @staticmethod
-    def init_and_run(pipe_to_parent: Connection, keep_model_loaded: bool = True):
+    def init_and_run(pipe_to_parent: Connection, unload_model_after_s: bool = True):
         """
         Initialize the decoder and run it
         Args:
             pipe_to_parent: pipe to receive tasks from the parent process
-            keep_model_loaded: if model should be kept in memory after loading
+            unload_model_after_s: if model should be kept in memory after loading
 
         Returns:
 
         """
 
-        decoder = Decoder(pipe_to_parent, keep_model_loaded)
+        decoder = Decoder(pipe_to_parent, unload_model_after_s)
         try:
             decoder.run()
         # stop process 'gracefully' when KeyboardInterrupt
         except KeyboardInterrupt:
             exit(0)
 
-    def __init__(self, pipe_to_parent: Connection, keep_model_loaded: bool = True):
+    def __init__(self, pipe_to_parent: Connection, unload_model_after_s: bool = True):
         """
         Holding and managing the whisper model
         Args:
             pipe_to_parent: pipe to receive tasks from the parent process
-            keep_model_loaded: if model should be kept in memory after loading
+            unload_model_after_s: if model should be kept in memory after loading
         """
         self.pipe_to_parent = pipe_to_parent
 
         # TODO: do something useful with this (unloading model)
-        self.keep_model_loaded = keep_model_loaded
+        self.unload_model_after_s = unload_model_after_s
 
-        self.model: whisper.Whisper = None
+        self.model: whisper.Whisper = self.load_model() if LOAD_MODEL_ON_STARTUP else None
         self.last_loaded_model_size: model_sizes_str_t = None
 
         if not torch.cuda.is_available():
@@ -69,7 +69,7 @@ class Decoder:
         while True:
             # wait for tasks, if no task after time specified in UNLOAD_MODEL_AFTER_S, unload model
             # None means no timeout so model will never unload
-            if not self.pipe_to_parent.poll(UNLOAD_MODEL_AFTER_S):
+            if not self.pipe_to_parent.poll(self.unload_model_after_s):
                 # can only trigger if timeout is set
                 self.__unload_model()
                 continue
@@ -180,7 +180,7 @@ class Decoder:
         print("Loading model...")
         try:
             # TODO: is this the right place to use keep_model_loaded?
-            self.model = whisper.load_model(name=model_size, in_memory=self.keep_model_loaded)
+            self.model = whisper.load_model(name=model_size, in_memory=self.unload_model_after_s)
             self.last_loaded_model_size = model_size
 
         except torch.cuda.OutOfMemoryError:
