@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from whisper_api.api_endpoints.endpoints import EndPoints
+from whisper_api.api_endpoints.threadsafe_dict import ThreadSafeDict
 from whisper_api.data_models.data_types import named_temp_file_name_t, uuid_hex_t
 from whisper_api.data_models.task import Task
 
@@ -27,9 +28,11 @@ description = """
 Whisper API transcribes audio files.
 """
 
-task_dict: dict[uuid_hex_t, Task] = {}
+print(description)
+
+task_dict: ThreadSafeDict[uuid_hex_t, Task] = ThreadSafeDict()
 # TODO: implement closing of file in callback function
-open_audio_files_dict: dict[named_temp_file_name_t, NamedTemporaryFile] = {}
+open_audio_files_dict: ThreadSafeDict[named_temp_file_name_t, NamedTemporaryFile] = ThreadSafeDict()
 
 app = FastAPI(
     title="Whisper API",
