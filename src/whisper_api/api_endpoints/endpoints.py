@@ -45,7 +45,7 @@ class EndPoints:
         :param task_id: ID of the task.
         :return: Status of the task.
         """
-        task = self.get_task(task_id, None)
+        task = self.get_task(task_id)
         if task is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
