@@ -163,6 +163,7 @@ class Decoder:
 
         """
         if DEVELOP_MODE:
+            print(f"DEVELOPMENT MODE SET - USING 'base' MODEL")
             return "base"
 
         for model_name, model_size in vram_model_map.items():
@@ -197,7 +198,7 @@ class Decoder:
             print(f" Target model '{model_size}' already loaded")
             return self.model
 
-        print("Loading model...")
+        print(f"Loading model '{model_size}'...")
         try:
             # TODO: is this the right place to use keep_model_loaded?
             self.model = whisper.load_model(name=model_size, in_memory=self.unload_model_after_s)
