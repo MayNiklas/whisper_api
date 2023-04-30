@@ -46,18 +46,18 @@ class Decoder:
             pipe_to_parent: pipe to receive tasks from the parent process
             unload_model_after_s: if model should be kept in memory after loading
         """
+        if not torch.cuda.is_available():
+            raise NotImplementedError("CPU decoding is not implemented yet")
+        
         self.pipe_to_parent = pipe_to_parent
 
         # TODO: do something useful with this (unloading model)
         self.unload_model_after_s = unload_model_after_s
 
+        self.gpu_vram = torch.cuda.mem_get_info()[0]
+
         self.model: whisper.Whisper = self.load_model() if LOAD_MODEL_ON_STARTUP else None
         self.last_loaded_model_size: model_sizes_str_t = None
-
-        if not torch.cuda.is_available():
-            raise NotImplementedError("CPU decoding is not implemented yet")
-
-        self.gpu_vram = torch.cuda.mem_get_info()[0]
 
     def run(self):
         """
