@@ -1,6 +1,8 @@
 import datetime as dt
 import gc
+import signal
 from multiprocessing.connection import Connection
+from types import FrameType
 from typing import Literal, Optional
 
 import torch
@@ -48,8 +50,13 @@ class Decoder:
         """
         if not torch.cuda.is_available():
             raise NotImplementedError("CPU decoding is not implemented yet")
-        
+
         self.pipe_to_parent = pipe_to_parent
+
+        # register signal handlers
+        signal.signal(signal.SIGINT, self.clean_up_and_exit)   # Handle Control + C
+        signal.signal(signal.SIGTERM, self.clean_up_and_exit)  # Handle .terminate() from parent process
+        signal.signal(signal.SIGHUP, self.clean_up_and_exit)   # Handle terminal closure
 
         # TODO: do something useful with this (unloading model)
         self.unload_model_after_s = unload_model_after_s
@@ -140,6 +147,14 @@ class Decoder:
         gc.collect()
         torch.cuda.empty_cache()
         print(f"Model '{self.last_loaded_model_size}' unloaded")
+
+    def clean_up_and_exit(self, signum: int, frame: Optional[FrameType]):
+        """
+        Clean up and exit the process
+        """
+        print(f"Exit was called {signum=}")
+        self.__unload_model()
+        exit(0)
 
     def get_max_model_name_for_gpu(self) -> Optional[model_sizes_str_t]:
         """
