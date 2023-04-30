@@ -74,13 +74,6 @@ class EndPoints:
 
     async def transcribe(self, file: UploadFile, language: Optional[str] = None):
 
-        # validate that the file is an audio file
-        if not file.content_type.startswith("audio/"):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="file is not an audio file",
-            )
-
         task = await self.__start_task(file, language, "transcribe")
 
         return task.to_transmit_full
