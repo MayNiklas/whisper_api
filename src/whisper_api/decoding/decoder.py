@@ -160,6 +160,12 @@ class Decoder:
 
         """
         # try to find best model if no model is specified
+        # we do this every time since the iteration doesn't cost any significant time
+        # and a check for the value of last_loaded_model would add unnecessary complexity
+        # like what if it was set manually for only last run? - how do we account for that?
+        # if the optimal model was decided by that loop we'll have the same result in no time
+        # if other model shall be used this case wouldn't even trigger because model_size wouldn't be None
+        # I wrote this paragraph especially because I confused myself with it again and again ~
         if model_size is None:
             print("No model size specified, trying to find the largest model that fits the GPU")
             model_size = self.get_max_model_name_for_gpu()
