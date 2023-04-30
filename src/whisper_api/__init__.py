@@ -39,7 +39,6 @@ init global variables
 """
 
 task_dict: ThreadSafeDict[uuid_hex_t, Task] = ThreadSafeDict()
-# TODO: implement closing of file in callback function
 open_audio_files_dict: ThreadSafeDict[named_temp_file_name_t, NamedTemporaryFile] = ThreadSafeDict()
 
 

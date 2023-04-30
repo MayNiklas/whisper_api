@@ -84,4 +84,3 @@ class EndPoints:
 
         return task.to_transmit_full
 
-    # TODO: implement closing of file in callback function

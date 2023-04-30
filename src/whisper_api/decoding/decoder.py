@@ -58,7 +58,6 @@ class Decoder:
         signal.signal(signal.SIGTERM, self.clean_up_and_exit)  # Handle .terminate() from parent process
         signal.signal(signal.SIGHUP, self.clean_up_and_exit)   # Handle terminal closure
 
-        # TODO: do something useful with this (unloading model)
         self.unload_model_after_s = unload_model_after_s
 
         self.gpu_vram = torch.cuda.mem_get_info()[0]
