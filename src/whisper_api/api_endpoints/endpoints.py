@@ -63,11 +63,12 @@ class EndPoints:
 
         named_file = await self.__upload_file_to_named_temp_file(file)
         self.open_audio_files_dict[named_file.name] = named_file
-        task = Task(named_file, source_language, task_type)
+        task = Task(named_file.name, source_language, task_type)
         self.add_task(task)
 
         # send task into queue
-        self.conn_to_child.send({"task": "decode", "data": task.to_json})
+        task_dict = {"task_name": "decode", "data": task.to_json}
+        self.conn_to_child.send(task_dict)
 
         return task
 
