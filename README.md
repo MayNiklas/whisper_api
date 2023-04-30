@@ -86,6 +86,15 @@ nix run .#whisper_api
 ```
 
 ## Settings
+| parameter                   | description                                                  | possible values                |
+|-----------------------------|--------------------------------------------------------------|--------------------------------|
+| `PORT="3001"`               | Port the API is available under                              | any number of port interval    |
+| `LISTEN="127.0.0.1"`        | Address the API is available under                           | any IP or domain you own       |
+| `LOAD_MODEL_ON_STARTUP="1"` | If model shall be loaded on startup                          | `1` (yes) or `0` (no)          |
+| `DEVELOP_MODE="0"`          | Develop mode defaults to smallest model to save time         | `1` (yes) or `0` (no)          | 
+| `UNLOAD_MODEL_AFTER_S`      | If set the model gets unloaded after inactivity of t seconds | any int (0 for instant unload) |
+
+Warning: If `UNLOAD_MODEL_AFTER_S` is set to `0` the model will not only be unloaded nearly instantly, it internally also results in busy waiting!
 
 ```bash
 # enable development mode -> use small models
