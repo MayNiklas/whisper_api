@@ -64,9 +64,9 @@ class Decoder:
         self.gpu_vram = torch.cuda.mem_get_info()[0]
 
         self.model: whisper.Whisper = None
+        self.last_loaded_model_size: model_sizes_str_t = None
         if LOAD_MODEL_ON_STARTUP:
             self.model: whisper.Whisper = self.load_model()
-        self.last_loaded_model_size: model_sizes_str_t = None
 
     def run(self):
         """
