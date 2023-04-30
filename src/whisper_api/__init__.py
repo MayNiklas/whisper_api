@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from whisper_api.api_endpoints.endpoints import EndPoints
-from whisper_api.api_endpoints.threadsafe_dict import ThreadSafeDict
+from whisper_api.data_models.threadsafe_dict import ThreadSafeDict
 from whisper_api.data_models.data_types import named_temp_file_name_t, uuid_hex_t
 from whisper_api.data_models.task import Task
 
