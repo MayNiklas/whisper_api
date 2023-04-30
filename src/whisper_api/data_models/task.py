@@ -19,7 +19,7 @@ class TaskResponse(BaseModel):
     task_type: task_type_str_t
     status: str
     time_uploaded: dt.datetime
-    processing_time: int
+    processing_duration: Optional[int]
     time_processing_finished: Optional[dt.datetime]
 
 
@@ -34,7 +34,7 @@ class WhisperResult:
     end_time: dt.datetime
 
     @property
-    def processing_time_s(self) -> int:
+    def processing_duration_s(self) -> int:
         return (self.end_time - self.start_time).seconds
 
 
@@ -70,7 +70,7 @@ class Task:
             task_type=self.task_type,
             status=self.status,
             time_uploaded=self.time_uploaded,
-            processing_time=self.whisper_result.processing_time_s,
+            processing_duration=self.whisper_result.processing_duration_s,
             time_processing_finished=self.whisper_result.end_time,
             target_model_size=self.target_model_size
 
