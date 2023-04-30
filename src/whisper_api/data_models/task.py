@@ -24,11 +24,11 @@ class TaskResponse(BaseModel):
 
 
 @pydantic_dataclass
-class TaskResult:
+class WhisperResult:
     """ The result of a whisper translation/ transcription plus additional information"""
     text: str
     language: str
-    segment_level_details: list[dict[str, int]]
+    # segments: list[dict[str, int]]
     used_model_size: model_sizes_str_t
     start_time: dt.datetime
     end_time: dt.datetime
@@ -44,7 +44,7 @@ class Task:
     source_language: Optional[str]
     task_type: task_type_str_t
     status: status_str_t = "pending"
-    whisper_result: Optional[TaskResult] = None
+    whisper_result: Optional[WhisperResult] = None
     time_uploaded: dt.datetime = None
     uuid: uuid_hex_t = None
     target_model_size: Optional[model_sizes_str_t] = None
@@ -88,8 +88,9 @@ class Task:
     @staticmethod
     def from_json(serialized_task: dict) -> "Task":
         """ Create a Task object from a json dict """
+        whisper_result = serialized_task["whisper_result"]
         json_cls = {**serialized_task,
-                    "whisper_result": TaskResult(**serialized_task["whisper_result"]),
+                    "whisper_result": WhisperResult(**whisper_result) if whisper_result else None,
                     "audiofile_name": serialized_task["audiofile_name"]
                     }
 
@@ -98,12 +99,12 @@ class Task:
 
 if __name__ == '__main__':
     t = Task(NamedTemporaryFile().name, "en", "transcribe")
-    t.whisper_result = TaskResult(text="hello",
-                                  language="en",
-                                  segment_level_details=[],
-                                  start_time=dt.datetime.now(),
-                                  end_time=dt.datetime.now(),
-                                  used_model_size="base")
+    t.whisper_result = WhisperResult(text="hello",
+                                     language="en",
+                                     # segments=[],
+                                     start_time=dt.datetime.now(),
+                                     end_time=dt.datetime.now(),
+                                     used_model_size="base")
     serialized = t.to_json
     new_task = Task.from_json(serialized)
 

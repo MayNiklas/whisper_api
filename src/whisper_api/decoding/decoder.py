@@ -9,7 +9,7 @@ import torch
 import whisper
 
 from whisper_api.data_models.data_types import model_sizes_str_t, task_type_str_t
-from whisper_api.data_models.task import TaskResult, Task
+from whisper_api.data_models.task import WhisperResult, Task
 from whisper_api.environment import DEVELOP_MODE, LOAD_MODEL_ON_STARTUP
 
 vram_model_map: dict[model_sizes_str_t, int] = {
@@ -215,7 +215,7 @@ class Decoder:
     def __run_model(self, audio_path: str, task: task_type_str_t,
                     source_language: Optional[str],
                     model_size: model_sizes_str_t = None,
-                    auto_find_model_on_fail_to_load_target=True) -> Optional[TaskResult]:
+                    auto_find_model_on_fail_to_load_target=True) -> Optional[WhisperResult]:
         """
         'Generic' function to run the model and centralize the needed logic
         This is used by transcribe() and translate()
@@ -240,11 +240,11 @@ class Decoder:
         start = dt.datetime.now()
         result = model.transcribe(audio_path, language=source_language, task=task)
         end = dt.datetime.now()
-        return TaskResult(**result, start_time=start, end_time=end, used_model_size=self.last_loaded_model_size)
+        return WhisperResult(**result, start_time=start, end_time=end, used_model_size=self.last_loaded_model_size)
 
     def transcribe(self, audio_path: str,
                    source_language: Optional[str],
-                   model_size: model_sizes_str_t = None) -> Optional[TaskResult]:
+                   model_size: model_sizes_str_t = None) -> Optional[WhisperResult]:
         """
         Transcribe an audio file in its source language
         Args:
@@ -262,7 +262,7 @@ class Decoder:
 
     def translate(self, audio_path: str,
                   source_language: Optional[str],
-                  model_size: model_sizes_str_t = None) -> Optional[TaskResult]:
+                  model_size: model_sizes_str_t = None) -> Optional[WhisperResult]:
         """
         Translate a given audio file to english
         Args:
