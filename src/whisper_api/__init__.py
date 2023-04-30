@@ -1,7 +1,9 @@
 import multiprocessing
 import signal
 import sys
+import threading
 from tempfile import NamedTemporaryFile
+from typing import Callable
 
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
@@ -63,9 +65,36 @@ parent_side, child_side = multiprocessing.Pipe()
 api_end_points = EndPoints(app, task_dict, open_audio_files_dict, parent_side)
 
 
+def listen_to_decoder(pipe_to_listen_to: multiprocessing.connection.Connection,
+                      worker_exit_fn: Callable[[], None]):
+    """ listen to decode process and update the task_dict accordingly """
+    while True:
+        try:
+            task_update_json = pipe_to_listen_to.recv()
+        except KeyboardInterrupt:
+            worker_exit_fn()
+            exit(0)
+
+        task = Task.from_json(task_update_json)
+
+        task_dict[task.uuid] = task
+
+        # when task is done (no matter if finished or failed) close and delete the audio file
+        if task.status == "finished" or task.status == "failed":
+            open_audio_files_dict[task.audiofile_name].close()
+            del open_audio_files_dict[task.audiofile_name]
+
+# do this all after API has started, so the init of the initial process is done
+# otherwise we get this beautiful RuntimeError:
+# 'An attempt has been made to start a new process before the
+# current process has finished its bootstrapping phase'
 @app.on_event("startup")
-def listen_to_child():
-    """ Start decode-process, listen to it and update the task_dict accordingly """
+def setup_decoder_process_and_listener_thread():
+    """
+    Handles the whole multiprocessing and threading stuff to get:
+    - a decoder process
+    - a listener thread for the pipe to the decoder process
+    """
 
     def signal_worker_to_exit():
         """ Terminate child and hope it dies """
@@ -87,21 +116,14 @@ def listen_to_child():
     signal.signal(signal.SIGTERM, signal_worker_to_exit)  # Handle 'kill' command
     signal.signal(signal.SIGHUP, signal_worker_to_exit)  # Handle terminal closure
 
-    while True:
-        try:
-            task_update_json = parent_side.recv()
-        except KeyboardInterrupt:
-            signal_worker_to_exit()
-            exit(0)
+    # start thread to listen to decoder process pipe
+    decoder_process_listen_thread = threading.Thread(target=listen_to_decoder,
+                                                     args=(parent_side, signal_worker_to_exit),
+                                                     name="Decoder-Listen-Thread",
+                                                     daemon=True)
+    decoder_process_listen_thread.start()
 
-        task = Task.from_json(task_update_json)
 
-        task_dict[task.uuid] = task
-
-        # when task is done (no matter if finished or failed) close and delete the audio file
-        if task.status == "finished" or task.status == "failed":
-            open_audio_files_dict[task.audiofile_name].close()
-            del open_audio_files_dict[task.audiofile_name]
 
 
 def start():
