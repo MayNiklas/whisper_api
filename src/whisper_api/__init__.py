@@ -32,9 +32,19 @@ Whisper API transcribes audio files.
 
 print(description)
 
+
+"""
+init global variables
+"""
+
 task_dict: ThreadSafeDict[uuid_hex_t, Task] = ThreadSafeDict()
 # TODO: implement closing of file in callback function
 open_audio_files_dict: ThreadSafeDict[named_temp_file_name_t, NamedTemporaryFile] = ThreadSafeDict()
+
+
+"""
+Init API
+"""
 
 app = FastAPI(
     title="Whisper API",
@@ -58,6 +68,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+"""
+Setup decoder process
+"""
 
 # create Pipe for communication between main and worker thread
 parent_side, child_side = multiprocessing.Pipe()
@@ -84,6 +98,12 @@ def listen_to_decoder(pipe_to_listen_to: multiprocessing.connection.Connection,
             open_audio_files_dict[task.audiofile_name].close()
             del open_audio_files_dict[task.audiofile_name]
 
+
+"""
+Dispatch decoder process and listener thread
+"""
+
+
 # do this all after API has started, so the init of the initial process is done
 # otherwise we get this beautiful RuntimeError:
 # 'An attempt has been made to start a new process before the
@@ -103,7 +123,7 @@ def setup_decoder_process_and_listener_thread():
         decoder_process.join()
         print("Child is dead.")
 
-    # start child
+    # start decoder process
     decoder_process = multiprocessing.Process(target=decoder.Decoder.init_and_run,
                                               args=(child_side, UNLOAD_MODEL_AFTER_S),
                                               name="Decoder-Process",
@@ -124,6 +144,9 @@ def setup_decoder_process_and_listener_thread():
     decoder_process_listen_thread.start()
 
 
+"""
+Hook for uvicorn
+"""
 
 
 def start():
