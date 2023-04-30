@@ -84,11 +84,6 @@ class EndPoints:
 
         return task.to_transmit_full
 
-        if source_language is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="language not specified",
-            )
     async def translate(self, file: UploadFile, language: Optional[str] = None):
 
         task = await self.__start_task(file, language, "translate")
