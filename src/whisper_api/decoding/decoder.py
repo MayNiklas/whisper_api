@@ -129,6 +129,7 @@ class Decoder:
         """
         if self.model is None:
             print(f"Tried to unload model, but None is loaded")
+            return
 
         print(f"Unloading model '{self.last_loaded_model_size}'")
         self.model = None
