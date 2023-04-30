@@ -86,13 +86,13 @@ class Decoder:
 
             msg = self.pipe_to_parent.recv()
 
-            print(f"Got message: {msg}")
+            # print(f"Got message: {msg}")
 
             task_name = msg.get("task_name", None)
             val = msg.get("data", None)
 
             if task_name is None:
-                print(f"Decoder received {msg=}, weird... continuing")
+                print(f"Decoder received '{task_name=}', weird... continuing - data: {msg=}")
                 continue
 
             elif task_name == "exit":
@@ -222,7 +222,7 @@ class Decoder:
             # TODO maybe prevent this case from happening again and again if max only fits in ideal circumstances
             # loaded model is the largest possible model
             elif self.last_loaded_model_size == possible_sizes[0]:
-                print(f" Target model '{possible_sizes[0]}' already loaded")
+                print(f"Target model '{possible_sizes[0]}' already loaded")
                 return self.model
 
             # we've got a not wanted model in our memory - purge it
@@ -279,10 +279,16 @@ class Decoder:
             else:
                 self.load_model()
 
+        print(f"Start decode of '{audio_path}' with model '{model_size}', {task=}")
+
         # start decoding
         start = dt.datetime.now()
         result = model.transcribe(audio_path, language=source_language, task=task)
         end = dt.datetime.now()
+
+        print(f"Finished decode of '{audio_path}' with model '{model_size}', {task=}")
+        # print(f"{result['segments']=}")
+
         return WhisperResult(**result, start_time=start, end_time=end, used_model_size=self.last_loaded_model_size)
 
     def transcribe(self, audio_path: str,
