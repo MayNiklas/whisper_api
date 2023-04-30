@@ -79,7 +79,7 @@ class Task:
     @property
     def to_json(self) -> dict:
         json_cls = {**self.__dict__,
-                    "whisper_result": self.whisper_result.__dict__,
+                    "whisper_result": self.whisper_result.__dict__ if self.whisper_result else None,
                     "audiofile_name": self.audiofile_name
                     }
 
