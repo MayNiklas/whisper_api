@@ -156,59 +156,103 @@ class Decoder:
         self.__unload_model()
         exit(0)
 
-    def get_max_model_name_for_gpu(self) -> Optional[model_sizes_str_t]:
+    def get_possible_model_names_for_gpu(self) -> Optional[list[model_sizes_str_t]]:
         """
         Get the largest model that fits on the GPU
-        Returns: name of the model
+        Returns: list of all possible models in descending size order
 
         """
         if DEVELOP_MODE:
-            print(f"DEVELOPMENT MODE SET - USING 'base' MODEL")
-            return "base"
+            print(f"DEVELOPMENT MODE SET - RETURNING 'base' MODEL")
+            return ["base"]
 
+        potential_models = []
         for model_name, model_size in vram_model_map.items():
             if self.gpu_vram >= model_size * 1e9:
-                print(f"Max usable model: '{model_name}'")
-                return model_name
+                # print(f"Potential model: '{model_name}'")
+                potential_models.append(model_name)
 
-    def load_model(self, model_size: model_sizes_str_t = None) -> Optional[whisper.Whisper]:
+        return potential_models
+
+    def __try_load(self, model_size: model_sizes_str_t) -> Optional[model_sizes_str_t]:
         """
-        Load a model into memory. If no model size is specified, the largest model that fits the GPU is loaded.
+        Try to load a given model, set self.model and self.last_loaded_model_size if successful
         Args:
-            model_size: size of the model to load - must fit on the GPU
+            model_size: requested model size
+
+        Returns: model name if success else None
+
+        """
+        print(f"Trying to load model {model_size}")
+        try:
+            self.model = whisper.load_model(name=model_size, in_memory=self.unload_model_after_s)
+            self.last_loaded_model_size = model_size
+            print(f"Successfully loaded model '{model_size}'")
+            return model_size
+
+        except torch.cuda.OutOfMemoryError:
+            print(f"Model '{model_size}' currently doesn't fit device.")
+            return
+
+    def load_model(self, requested_model_size: model_sizes_str_t = None) -> whisper.Whisper:
+        """
+        Load a model into memory. If no model size is specified, the largest model that currently fits the GPU is loaded
+        
+        Note: if requested_model_size doesn't fit, a smaller one will be chosen!
+        Args:
+            requested_model_size: size of the model to load - must fit on the GPU
 
         Returns: the loaded model, None if models does not fit on GPU
 
+        Raises: NotImplementedError if no model fits on GPU (and CPU decoding is not implemented yet)
+
         """
-        # try to find best model if no model is specified
-        # we do this every time since the iteration doesn't cost any significant time
-        # and a check for the value of last_loaded_model would add unnecessary complexity
-        # like what if it was set manually for only last run? - how do we account for that?
-        # if the optimal model was decided by that loop we'll have the same result in no time
-        # if other model shall be used this case wouldn't even trigger because model_size wouldn't be None
-        # I wrote this paragraph especially because I confused myself with it again and again ~
-        if model_size is None:
-            print("No model size specified, trying to find the largest model that fits the GPU")
-            model_size = self.get_max_model_name_for_gpu()
-            if model_size is None:
-                raise NotImplementedError("No model fits the GPU. CPU decoding is not implemented yet.")
+
+        # get all potentially fitting models
+        possible_sizes = self.get_possible_model_names_for_gpu()
+        if len(possible_sizes) < 1:
+            raise NotImplementedError("No model fits the GPU. CPU decoding is not implemented yet.")
 
         # check if correct model is already loaded
-        if self.model is not None and self.last_loaded_model_size == model_size:
-            print(f" Target model '{model_size}' already loaded")
-            return self.model
+        if self.model is not None:
+            # model is the requested one (and not None - prevents hiccups on first run)
+            if requested_model_size == self.last_loaded_model_size and requested_model_size is not None:
+                print(f"Target model '{requested_model_size}' already loaded")
+                return self.model
 
-        print(f"Loading model '{model_size}'...")
-        try:
-            # TODO: is this the right place to use keep_model_loaded?
-            self.model = whisper.load_model(name=model_size, in_memory=self.unload_model_after_s)
-            self.last_loaded_model_size = model_size
+            # TODO maybe prevent this case from happening again and again if max only fits in ideal circumstances
+            # loaded model is the largest possible model
+            elif self.last_loaded_model_size == possible_sizes[0]:
+                print(f" Target model '{possible_sizes[0]}' already loaded")
+                return self.model
 
-        except torch.cuda.OutOfMemoryError:
-            print(f"Model '{model_size}' is too large for this device.")
-            return
+            # we've got a not wanted model in our memory - purge it
+            print(f"Got not wanted model in memory ('{self.last_loaded_model_size}'), unloading it...")
+            self.__unload_model()
 
-        print("Model loaded successfully!")
+        # try to load the model asked for if given
+        if requested_model_size is not None:
+            print(f"Trying to load requested model size '{requested_model_size}'")
+
+            # try to load model, if model is loaded return the set self.model
+            if self.__try_load(requested_model_size) is not None:
+                return self.model
+
+            print(f"Requested model '{requested_model_size}' doesn't fit.")
+
+        print("No model loaded. Trying to find the largest model that currently fits the GPU")
+        print(f"LOAD. Current state: {self.last_loaded_model_size=}, {self.model=}")
+
+        # iterate over all possible models, try to find the largest one that currently fits
+        for model_size in possible_sizes:
+            model_size = self.__try_load(model_size)
+            if model_size is not None:
+                break
+
+        else:
+            raise NotImplementedError("No model currently fits the GPU. CPU decoding is not implemented yet.")
+
+        print(f"Model '{model_size}' loaded successfully!")
 
         return self.model
 
