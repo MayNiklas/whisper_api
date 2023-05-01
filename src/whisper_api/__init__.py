@@ -10,6 +10,7 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from whisper_api.api_endpoints.endpoints import EndPoints
+from whisper_api.data_models.temp_dict import TempDict
 from whisper_api.frontend.endpoints import Frontend
 from whisper_api.data_models.threadsafe_dict import ThreadSafeDict
 from whisper_api.data_models.data_types import named_temp_file_name_t, uuid_hex_t
@@ -22,7 +23,8 @@ if __package__ is None and not hasattr(sys, "frozen"):
     sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
 
 
-from whisper_api.environment import API_PORT, API_LISTEN, UNLOAD_MODEL_AFTER_S
+from whisper_api.environment import API_PORT, API_LISTEN, UNLOAD_MODEL_AFTER_S, DELETE_RESULTS_AFTER_M, \
+    RUN_RESULT_EXPIRY_CHECK_M, REFRESH_EXPIRATION_TIME_ON_USAGE
 from whisper_api.version import __version__
 from whisper_api.api_endpoints import endpoints
 
@@ -39,7 +41,11 @@ print(description)
 init global variables
 """
 
-task_dict: ThreadSafeDict[uuid_hex_t, Task] = ThreadSafeDict()
+task_dict: TempDict[uuid_hex_t, Task] = TempDict(expiration_time_m=DELETE_RESULTS_AFTER_M,
+                                                 refresh_expiration_time_on_usage=REFRESH_EXPIRATION_TIME_ON_USAGE,
+                                                 auto_gc_interval_s=RUN_RESULT_EXPIRY_CHECK_M * 60,
+                                                 )
+
 open_audio_files_dict: ThreadSafeDict[named_temp_file_name_t, NamedTemporaryFile] = ThreadSafeDict()
 
 

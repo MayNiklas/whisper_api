@@ -86,15 +86,19 @@ nix run .#whisper_api
 ```
 
 ## Settings
-| parameter                   | description                                                  | possible values                |
-|-----------------------------|--------------------------------------------------------------|--------------------------------|
-| `PORT="3001"`               | Port the API is available under                              | any number of port interval    |
-| `LISTEN="127.0.0.1"`        | Address the API is available under                           | any IP or domain you own       |
-| `LOAD_MODEL_ON_STARTUP="1"` | If model shall be loaded on startup                          | `1` (yes) or `0` (no)          |
-| `DEVELOP_MODE="0"`          | Develop mode defaults to smallest model to save time         | `1` (yes) or `0` (no)          | 
-| `UNLOAD_MODEL_AFTER_S`      | If set the model gets unloaded after inactivity of t seconds | any int (0 for instant unload) |
+| parameter                           | description                                                  | possible values                  |
+|-------------------------------------|--------------------------------------------------------------|----------------------------------|
+| `PORT="3001"`                       | Port the API is available under                              | any number of port interval      |
+| `LISTEN="127.0.0.1"`                | Address the API is available under                           | any IP or domain you own         |
+| `LOAD_MODEL_ON_STARTUP="1"`         | If model shall be loaded on startup                          | `1` (yes) or `0` (no)            |
+| `DEVELOP_MODE="0"`                  | Develop mode defaults to smallest model to save time         | `1` (yes) or `0` (no)            | 
+| `UNLOAD_MODEL_AFTER_S`              | If set the model gets unloaded after inactivity of t seconds | any int (0 for instant unload)   |
+| `DELETE_RESULTS_AFTER_M`            | Time after which results are deleted from internal storage   | any int                          |
+| `EXPAND_RESULT_LIFESPAN_ON_USAGE_M` | If result is used expand lifetime                            | `1` (yes) or `0` (no)            |
+| `RUN_RESULT_EXPIRY_CHECK_M`         | Interval in which timeout checks shall be executed           | any int (0 enables lazy timeout) |
 
 Warning: If `UNLOAD_MODEL_AFTER_S` is set to `0` the model will not only be unloaded nearly instantly, it internally also results in busy waiting!
+All ints are assumed to be unsigned.
 
 ```bash
 # enable development mode -> use small models
