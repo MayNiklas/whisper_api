@@ -1,1 +1,1 @@
-include static/
+include src/whisper_api/frontend/static/*

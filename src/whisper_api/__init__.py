@@ -10,6 +10,7 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from whisper_api.api_endpoints.endpoints import EndPoints
+from whisper_api.frontend.endpoints import Frontend
 from whisper_api.data_models.threadsafe_dict import ThreadSafeDict
 from whisper_api.data_models.data_types import named_temp_file_name_t, uuid_hex_t
 from whisper_api.data_models.task import Task
@@ -77,6 +78,7 @@ Setup decoder process
 parent_side, child_side = multiprocessing.Pipe()
 
 api_end_points = EndPoints(app, task_dict, open_audio_files_dict, parent_side)
+frontend = Frontend(app)
 
 
 def listen_to_decoder(pipe_to_listen_to: multiprocessing.connection.Connection,
