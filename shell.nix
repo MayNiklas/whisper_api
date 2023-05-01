@@ -49,6 +49,10 @@ pkgs.mkShell
     export PYTHONPATH=${python-with-packages}/${python-with-packages.sitePackages}
     echo ${python-with-packages}
     echo "PYTHONPATH=$PYTHONPATH"
+
+    # cd src
+    # uvicorn whisper_api:app --reload --host 127.0.0.1 --port 3001
+    # exit 0
   '';
 
 }

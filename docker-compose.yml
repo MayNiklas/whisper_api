@@ -1,6 +1,7 @@
 version: "3.9"
 services:
   api:
+    image: "mayniklas/whisper_api:latest"
     build:
       context: .
       # use Dockerfile.gpu when using a NVIDIA GPU
@@ -9,7 +10,9 @@ services:
       - "3001:3001"
     environment:
       - PORT=3001
-      - PRELOAD=false
+      - LOAD_MODEL_ON_STARTUP=1
+      # - UNLOAD_MODEL_AFTER_S=300
+      # - DEVELOP_MODE=0
     # Uncomment the following lines when using a NVIDIA GPU
     deploy:
       resources:
