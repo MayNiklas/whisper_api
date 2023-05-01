@@ -287,9 +287,11 @@ class Decoder:
         end = dt.datetime.now()
 
         print(f"Finished decode of '{audio_path}' with model '{model_size}', {task=}")
-        # print(f"{result['segments']=}")
 
-        return WhisperResult(**result, start_time=start, end_time=end, used_model_size=self.last_loaded_model_size)
+        return WhisperResult(**result,
+                             start_time=start,
+                             end_time=end,
+                             used_model_size=self.last_loaded_model_size)
 
     def transcribe(self, audio_path: str,
                    source_language: Optional[str],
