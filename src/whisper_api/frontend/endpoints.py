@@ -28,7 +28,7 @@ class Frontend:
         # just trying out if it works as expected!
         if request.headers.get('X-Email'):
             user = {}
-            user['name'] = request.headers.get('X-Name')
+            user['user'] = request.headers.get('X-User')
             user['email'] = request.headers.get('X-Email')
 
         if file_path == "":
