@@ -4,7 +4,7 @@ from tempfile import NamedTemporaryFile
 from typing import Union, Optional
 
 import ffmpeg
-from fastapi import APIRouter, UploadFile, FastAPI, HTTPException, status
+from fastapi import APIRouter, Request, UploadFile, FastAPI, HTTPException, status
 from pydantic import BaseModel
 from starlette.responses import HTMLResponse, FileResponse
 
@@ -30,6 +30,7 @@ class EndPoints:
         self.app.add_api_route(f"{V1_PREFIX}/status", self.status)
         self.app.add_api_route(f"{V1_PREFIX}/translate", self.translate, methods=["POST"])
         self.app.add_api_route(f"{V1_PREFIX}/transcribe", self.transcribe, methods=["POST"])
+        self.app.add_api_route(f"{V1_PREFIX}/userinfo", self.userinfo)
 
     def add_task(self, task: Task):
         self.tasks[task.uuid] = task
@@ -92,6 +93,29 @@ class EndPoints:
 
         return task.to_transmit_full
 
+    async def userinfo(self, request: Request = None):
+
+        return self.get_userinfo(request)
+
+    @staticmethod
+    def get_userinfo(request: Request = None) -> dict[str, str, str]:
+        """
+        Get user info from request headers.
+        :param request: request object
+        :return: dict with user info
+        """
+        user = {}
+
+        if request.headers.get('X-Email'):
+            user['email'] = request.headers.get('X-Email')
+
+        if request.headers.get('X-User'):
+            user['user'] = request.headers.get('X-User')
+
+        user['user_agent'] = request.headers.get('User-Agent')
+
+        return user
+
     @staticmethod
     def is_file_audio(file_path: str) -> bool:
         """
@@ -109,4 +133,3 @@ class EndPoints:
         except ffmpeg.Error as e:
             print(e.stderr)
             return False
-
