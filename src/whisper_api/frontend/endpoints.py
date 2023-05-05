@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status,  Request
 from starlette.responses import FileResponse
 import os.path
 import sys
@@ -17,12 +17,19 @@ class Frontend:
     def add_endpoints(self):
         self.app.add_api_route("/{file_path:path}", self.frontend)
 
-    async def frontend(self, file_path: str):
+    async def frontend(self, file_path: str, request: Request):
         """
         Serve static files e.g. the frontend.
         :param file_path: Path to the file.
         :return: File.
         """
+
+        # this has no effect yet!
+        # just trying out if it works as expected!
+        if request.headers.get('X-Email'):
+            user = {}
+            user['name'] = request.headers.get('X-Name')
+            user['email'] = request.headers.get('X-Email')
 
         if file_path == "":
             file_path = "index.html"
