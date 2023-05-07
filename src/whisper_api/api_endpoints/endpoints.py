@@ -5,6 +5,7 @@ from typing import Union, Optional
 
 import ffmpeg
 from fastapi import APIRouter, Request, UploadFile, FastAPI, HTTPException, status
+from fastapi.responses import FileResponse, StreamingResponse
 
 from whisper_api.data_models.temp_dict import TempDict
 from whisper_api.data_models.data_types import uuid_hex_t, task_type_str_t, named_temp_file_name_t
@@ -110,11 +111,14 @@ class EndPoints:
                 },
             )
 
-        srt = task.whisper_result.srt
+        headers = {
+            "Content-Disposition": f"attachment; "
+                                   f"filename={task.original_file_name}_{task.whisper_result.output_language}.srt",
+            "Content-Type": "text/plain",
+        }
 
-        print(srt)
-
-        return {"srt": srt}
+        srt_buffer = task.whisper_result.get_srt_buffer()
+        return StreamingResponse(iter(srt_buffer.readline, ""), headers=headers)
 
     async def transcribe(self, file: UploadFile, language: Optional[str] = None):
         task = await self.__start_task(file, language, "transcribe")
