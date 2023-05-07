@@ -279,14 +279,14 @@ class Decoder:
             else:
                 self.load_model()
 
-        print(f"Start decode of '{audio_path}' with model '{model_size}', {task=}")
+        print(f"Start decode of '{audio_path}' with model '{self.last_loaded_model_size}', {task=}")
 
         # start decoding
         start = dt.datetime.now()
         result = model.transcribe(audio_path, language=source_language, task=task)
         end = dt.datetime.now()
 
-        print(f"Finished decode of '{audio_path}' with model '{model_size}', {task=}")
+        print(f"Finished decode of '{audio_path}' with model '{self.last_loaded_model_size}', {task=}")
 
         return WhisperResult(**result,
                              start_time=start,
