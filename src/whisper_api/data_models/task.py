@@ -41,8 +41,7 @@ class WhisperResult:
     def processing_duration_s(self) -> int:
         return (self.end_time - self.start_time).seconds
 
-    @property
-    def srt(self) -> str:
+    def get_srt_buffer(self) -> io.StringIO:
         """ The result text in SRT format """
         # setup buffer
         buffer = io.StringIO()
@@ -53,11 +52,10 @@ class WhisperResult:
         # trigger writing
         srt_writer.write_result(self.__dict__, buffer)
 
-        # reset file pointer to the beginning of file and read it
+        # reset file pointer to the beginning of file
         buffer.seek(0)
-        text = buffer.read()
 
-        return text
+        return buffer
 
 
 @dataclass
