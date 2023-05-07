@@ -5,9 +5,8 @@ from typing import Union, Optional
 
 import ffmpeg
 from fastapi import APIRouter, Request, UploadFile, FastAPI, HTTPException, status
-from pydantic import BaseModel
-from starlette.responses import HTMLResponse, FileResponse
 
+from whisper_api.data_models.temp_dict import TempDict
 from whisper_api.data_models.data_types import uuid_hex_t, task_type_str_t, named_temp_file_name_t
 from whisper_api.data_models.task import Task, TaskResponse
 
@@ -16,7 +15,7 @@ V1_PREFIX = "/api/v1"
 
 class EndPoints:
     def __init__(self, app: FastAPI,
-                 tasks_dict: dict[uuid_hex_t, Task],
+                 tasks_dict: TempDict[uuid_hex_t, Task],
                  open_audio_files_dict: dict[named_temp_file_name_t, NamedTemporaryFile],
                  conn_to_child: Connection):
         self.tasks = tasks_dict
