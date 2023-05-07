@@ -42,16 +42,20 @@ class WhisperResult:
 
     @property
     def srt(self) -> str:
-        temp_file = NamedTemporaryFile(mode="w+", delete=False)
-        print(temp_file.name)
+        """ The result text in SRT format """
+        # setup buffer
+        buffer = io.StringIO()
+        # ResultWriter base-class requires an output directory
+        # but WriteSRT's write_result function doesn't use it, it prints straight to the given buffer
         srt_writer = WriteSRT("/tmp")
-        srt_writer.write_result(self.__dict__, temp_file)
 
-        text = temp_file.read()
-        print("SRT:")
-        print(text)
-        temp_file.close()
-        os.remove(temp_file.name)
+        # trigger writing
+        srt_writer.write_result(self.__dict__, buffer)
+
+        # reset file pointer to the beginning of file and read it
+        buffer.seek(0)
+        text = buffer.read()
+
         return text
 
 
