@@ -70,6 +70,7 @@ class Task:
     time_uploaded: dt.datetime = None
     uuid: uuid_hex_t = None
     target_model_size: Optional[model_sizes_str_t] = None
+    original_file_name: str = "unknown"
 
     def __post_init__(self):
         self.uuid = self.uuid or uuid4().hex

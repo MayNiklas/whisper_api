@@ -73,7 +73,10 @@ class EndPoints:
             )
 
         self.open_audio_files_dict[named_file.name] = named_file
-        task = Task(named_file.name, source_language, task_type)
+        if file.filename is not None:
+            task = Task(named_file.name, source_language, task_type, original_file_name=file.filename)
+        else:
+            task = Task(named_file.name, source_language, task_type)
         self.add_task(task)
 
         # send task into queue
