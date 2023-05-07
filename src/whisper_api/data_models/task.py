@@ -30,7 +30,8 @@ class TaskResponse(BaseModel):
 class WhisperResult:
     """ The result of a whisper translation/ transcription plus additional information"""
     text: str
-    language: str
+    language: str  # spoken language
+    output_language: str  # language code of the output language (hopefully)  # TODO validate that always true
     segments: list[dict[str, Union[float, str, int, list[int]]]]
     used_model_size: model_sizes_str_t
     start_time: dt.datetime

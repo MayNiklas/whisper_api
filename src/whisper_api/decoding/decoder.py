@@ -291,7 +291,10 @@ class Decoder:
         return WhisperResult(**result,
                              start_time=start,
                              end_time=end,
-                             used_model_size=self.last_loaded_model_size)
+                             used_model_size=self.last_loaded_model_size,
+                             # TODO is this the correct code for translation?
+                             output_language="en_US" if task == "translate" else result["language"]
+                             )
 
     def transcribe(self, audio_path: str,
                    source_language: Optional[str],
