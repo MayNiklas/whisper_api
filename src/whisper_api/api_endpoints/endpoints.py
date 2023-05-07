@@ -30,6 +30,7 @@ class EndPoints:
         self.app.add_api_route(f"{V1_PREFIX}/translate", self.translate, methods=["POST"])
         self.app.add_api_route(f"{V1_PREFIX}/transcribe", self.transcribe, methods=["POST"])
         self.app.add_api_route(f"{V1_PREFIX}/userinfo", self.userinfo)
+        self.app.add_api_route(f"{V1_PREFIX}/srt", self.srt)
 
     def add_task(self, task: Task):
         self.tasks[task.uuid] = task
@@ -80,6 +81,37 @@ class EndPoints:
         self.conn_to_child.send(task_dict)
 
         return task
+
+    async def srt(self, task_id: uuid_hex_t):
+        """
+        Get the SRT file of a task.
+        :param task_id: ID of the task.
+        :return: SRT file of the task.
+        """
+        task = self.tasks.get(task_id, None)
+        # TODO maybe hold a set of tasks that were present but aren't any more for better message?
+        if task is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="task_id not found",
+            )
+
+        # TODO better way for central declaration of those states
+        if task.status in ["pending", "processing", "failed"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "task_id": task.uuid,
+                    "time_uploaded": task.time_uploaded,
+                    "status": task.status,
+                },
+            )
+
+        srt = task.whisper_result.srt
+
+        print(srt)
+
+        return {"srt": srt}
 
     async def transcribe(self, file: UploadFile, language: Optional[str] = None):
         task = await self.__start_task(file, language, "transcribe")

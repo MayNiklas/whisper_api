@@ -1,3 +1,5 @@
+import io
+import os
 from dataclasses import dataclass
 import datetime as dt
 from tempfile import NamedTemporaryFile
@@ -6,6 +8,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass as pydantic_dataclass
+from whisper.utils import WriteSRT
 
 from whisper_api.data_models.data_types import status_str_t, task_type_str_t, named_temp_file_name_t, uuid_hex_t, \
     model_sizes_str_t
@@ -36,6 +39,20 @@ class WhisperResult:
     @property
     def processing_duration_s(self) -> int:
         return (self.end_time - self.start_time).seconds
+
+    @property
+    def srt(self) -> str:
+        temp_file = NamedTemporaryFile(mode="w+", delete=False)
+        print(temp_file.name)
+        srt_writer = WriteSRT("/tmp")
+        srt_writer.write_result(self.__dict__, temp_file)
+
+        text = temp_file.read()
+        print("SRT:")
+        print(text)
+        temp_file.close()
+        os.remove(temp_file.name)
+        return text
 
 
 @dataclass
