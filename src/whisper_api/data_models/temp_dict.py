@@ -1,7 +1,7 @@
 import threading
 import time
 from collections import defaultdict
-from typing import TypeVar, Iterable, Optional, MutableMapping, Iterator, Union
+from typing import TypeVar, Iterable, Optional, MutableMapping, Iterator, Union, Callable
 
 """
 Threadsafe DataStructure that holds data for a given time and then discards it
@@ -115,20 +115,39 @@ class TempDict(MutableMapping[Identifier_t, Value_t]):
             self._clean_expired_items()
             return self.__data.__iter__()
 
-    def __getitem__(self, key: Identifier_t) -> Optional[Value_t]:
+    def __item_getter(self, key: Identifier_t, not_found_behavior: Callable) -> Optional[Value_t]:
         """ Returns None if key is not found """
         with self.lock:
             self._clean_expired_items()
 
             # test if key is entered
-            val = self.__data[key]
+            val = self.__data.get(key, None)
+            # if key is not found trigger given not_found_behavior
             if val is None:
-                return None
+                return not_found_behavior()
 
             if self.refresh_expiration_time_on_usage:
                 self.__extend_lifespan(key)
 
             return val[1]
+
+    def __getitem__(self, key: Identifier_t) -> Optional[Value_t]:
+        """ Raises KeyError if key is not found """
+        # getitem shall behave like normal dict -> raise KeyError if key is not found
+        def raise_key_error():
+            raise KeyError(f"Key {key} not found")
+
+        return self.__item_getter(key, not_found_behavior=lambda: raise_key_error())
+
+    def get(self, key: Identifier_t, default=...) -> Optional[Value_t]:
+        """ Raises KeyError if key is not found and no default is given """
+        # get function shall behave like normal dicts get function
+        def return_default():
+            if default is ...:
+                raise KeyError(f"Key {key} not found")
+            return default
+
+        return self.__item_getter(key, not_found_behavior=lambda: return_default())
 
     """
     Setters
