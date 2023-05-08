@@ -29,4 +29,4 @@ ENV PORT=3001 \
     LOAD_MODEL_ON_STARTUP=1 \
     DEVELOP_MODE=0
 
-CMD  whisper_api
+CMD  [ "/usr/local/bin/whisper_api" ]
