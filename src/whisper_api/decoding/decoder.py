@@ -62,8 +62,6 @@ class Decoder:
             use_gpu_if_available: if GPU should be used if available
             max_model_to_use: max model to use, may be None in GPU Mode
         """
-        if not torch.cuda.is_available():
-            raise NotImplementedError("CPU decoding is not implemented yet")
 
         self.pipe_to_parent = pipe_to_parent
 
@@ -71,6 +69,13 @@ class Decoder:
         signal.signal(signal.SIGINT, self.clean_up_and_exit)   # Handle Control + C
         signal.signal(signal.SIGTERM, self.clean_up_and_exit)  # Handle .terminate() from parent process
         signal.signal(signal.SIGHUP, self.clean_up_and_exit)   # Handle terminal closure
+
+        # determine mode to run in
+        self.max_model_to_use = max_model_to_use
+        self.use_gpu_if_available = use_gpu_if_available
+        self.gpu_mode = self.__is_gpu_mode(use_gpu_if_available)
+        if not self.gpu_mode and self.max_model_to_use is None:
+            raise ValueError("'MAX_MODEL' must be set in CPU mode")
 
         self.unload_model_after_s = unload_model_after_s
 
@@ -80,6 +85,20 @@ class Decoder:
         self.last_loaded_model_size: model_sizes_str_t = None
         if LOAD_MODEL_ON_STARTUP:
             self.model: whisper.Whisper = self.load_model()
+
+    @staticmethod
+    def __is_gpu_mode(use_gpu_if_available: bool):
+        """ Determine if GPU can and shall be used or not """
+        if not torch.cuda.is_available():
+            print("CUDA is not available, using CPU-mode")
+            return False
+
+        if not use_gpu_if_available:
+            print("GPU mode is disabled, using CPU-mode (CUDA would be available...)")
+            return False
+
+        print("Using GPU Mode")
+        return True
 
     def run(self):
         """
