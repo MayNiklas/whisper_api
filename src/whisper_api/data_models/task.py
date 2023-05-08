@@ -76,7 +76,8 @@ class Task:
 
     @property
     def to_transmit_full(self) -> TaskResponse:
-        if self.status == "pending" or self.status == "processing":
+        # TODO extract that list to a better place
+        if self.status in ["pending", "processing", "failed"]:
             return TaskResponse(
                 task_id=self.uuid,
                 time_uploaded=self.time_uploaded,

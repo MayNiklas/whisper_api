@@ -104,11 +104,7 @@ class EndPoints:
         if task.status in ["pending", "processing", "failed"]:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail={
-                    "task_id": task.uuid,
-                    "time_uploaded": task.time_uploaded,
-                    "status": task.status,
-                },
+                detail=task.to_transmit_full,
             )
 
         headers = {
