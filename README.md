@@ -86,23 +86,31 @@ nix run .#whisper_api
 ```
 
 ## Settings
-| parameter                           | description                                                  | possible values                  |
-|-------------------------------------|--------------------------------------------------------------|----------------------------------|
-| `PORT="3001"`                       | Port the API is available under                              | any number of port interval      |
-| `LISTEN="127.0.0.1"`                | Address the API is available under                           | any IP or domain you own         |
-| `LOAD_MODEL_ON_STARTUP="1"`         | If model shall be loaded on startup                          | `1` (yes) or `0` (no)            |
-| `DEVELOP_MODE="0"`                  | Develop mode defaults to smallest model to save time         | `1` (yes) or `0` (no)            | 
-| `UNLOAD_MODEL_AFTER_S`              | If set the model gets unloaded after inactivity of t seconds | any int (0 for instant unload)   |
-| `DELETE_RESULTS_AFTER_M`            | Time after which results are deleted from internal storage   | any int                          |
-| `EXPAND_RESULT_LIFESPAN_ON_USAGE_M` | If result is used expand lifetime                            | `1` (yes) or `0` (no)            |
-| `RUN_RESULT_EXPIRY_CHECK_M`         | Interval in which timeout checks shall be executed           | any int (0 enables lazy timeout) |
+| parameter                          | description                                                                         | possible values                  | default   |
+|------------------------------------|-------------------------------------------------------------------------------------|----------------------------------|-----------|
+| `PORT`                             | Port the API is available under                                                     | any number of port interval      | 3001      |
+| `LISTEN`                           | Address the API is available under                                                  | any IP or domain you own         | 127.0.0.1 |
+| `LOAD_MODEL_ON_STARTUP`            | If model shall be loaded on startup                                                 | `1` (yes) or `0` (no)            | 1         |
+| `DEVELOP_MODE`                     | Develop mode defaults to smallest model to save time                                | `1` (yes) or `0` (no)            | 0         | 
+| `UNLOAD_MODEL_AFTER_S`             | If set the model gets unloaded after inactivity of t seconds, unset means no unload | any int (0 for instant unload)   | unset     |
+| `DELETE_RESULTS_AFTER_M`           | Time after which results are deleted from internal storage                          | any int                          | 60        |
+| `REFRESH_EXPIRATION_TIME_ON_USAGE` | If result is used expand lifetime                                                   | `1` (yes) or `0` (no)            | 1         |
+| `RUN_RESULT_EXPIRY_CHECK_M`        | Interval in which timeout checks shall be executed                                  | any int (0 enables lazy timeout) | 5         |
+| `USE_GPU_IF_AVAILABLE`             | If GPU shall be used when available                                                 | `1` (yes) or `0` (no)            | 1         |
+| `MAX_MODEL`                        | Max model to be used for decoding, unset means best possible                        | name of official model or None   | unset     |
 
-Warning: If `UNLOAD_MODEL_AFTER_S` is set to `0` the model will not only be unloaded nearly instantly, it internally also results in busy waiting!
+#### Note
+The system will automatically try to use the GPU and the best possible model when `USE_GPU_IF_AVAILABLE` and `MAX_MODEL` are not set.
+###### CPU Mode
+`MAX_MODEL` must be set when CUDA is not available or explicitly disabled via `USE_GPU_IF_AVAILABLE`.
+
+##### Warning:
+If `UNLOAD_MODEL_AFTER_S` is set to `0` the model will not only be unloaded nearly instantly, it internally also results in busy waiting!
 All ints are assumed to be unsigned.
 
 ```bash
 # enable development mode -> use small models
-export DEV_MODE=True
+export DEVELOP_MODE=1
 ```
 
 ## Projects being used
