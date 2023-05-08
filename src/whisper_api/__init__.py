@@ -22,7 +22,7 @@ from whisper_api.data_models.threadsafe_dict import ThreadSafeDict
 from whisper_api.data_models.data_types import named_temp_file_name_t, uuid_hex_t
 from whisper_api.data_models.task import Task
 from whisper_api.environment import API_PORT, API_LISTEN, UNLOAD_MODEL_AFTER_S, DELETE_RESULTS_AFTER_M, \
-    RUN_RESULT_EXPIRY_CHECK_M, REFRESH_EXPIRATION_TIME_ON_USAGE
+    RUN_RESULT_EXPIRY_CHECK_M, REFRESH_EXPIRATION_TIME_ON_USAGE, USE_GPU_IF_AVAILABLE, MAX_MODEL
 from whisper_api.version import __version__
 from whisper_api.api_endpoints import endpoints
 
@@ -148,7 +148,7 @@ def setup_decoder_process_and_listener_thread():
 
     # start decoder process
     decoder_process = multiprocessing.Process(target=decoder.Decoder.init_and_run,
-                                              args=(child_side, UNLOAD_MODEL_AFTER_S),
+                                              args=(child_side, UNLOAD_MODEL_AFTER_S, USE_GPU_IF_AVAILABLE, MAX_MODEL),
                                               name="Decoder-Process",
                                               daemon=True
                                               )

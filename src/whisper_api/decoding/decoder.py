@@ -23,30 +23,44 @@ vram_model_map: dict[model_sizes_str_t, int] = {
 class Decoder:
 
     @staticmethod
-    def init_and_run(pipe_to_parent: Connection, unload_model_after_s: bool = True):
+    def init_and_run(pipe_to_parent: Connection,
+                     unload_model_after_s: bool = True,
+                     use_gpu_if_available: bool = True,
+                     max_model_to_use: model_sizes_str_t = None):
         """
         Initialize the decoder and run it
         Args:
             pipe_to_parent: pipe to receive tasks from the parent process
             unload_model_after_s: if model should be kept in memory after loading
+            use_gpu_if_available: if GPU should be used if available
+            max_model_to_use: max model to use, may be None in GPU Mode
 
         Returns:
 
         """
 
-        decoder = Decoder(pipe_to_parent, unload_model_after_s)
+        decoder = Decoder(pipe_to_parent,
+                          unload_model_after_s,
+                          use_gpu_if_available=use_gpu_if_available,
+                          max_model_to_use=max_model_to_use)
         try:
             decoder.run()
         # stop process 'gracefully' when KeyboardInterrupt
         except KeyboardInterrupt:
             exit(0)
 
-    def __init__(self, pipe_to_parent: Connection, unload_model_after_s: bool = True):
+    def __init__(self,
+                 pipe_to_parent: Connection,
+                 unload_model_after_s: bool = True,
+                 use_gpu_if_available: bool = True,
+                 max_model_to_use: model_sizes_str_t = None):
         """
         Holding and managing the whisper model
         Args:
             pipe_to_parent: pipe to receive tasks from the parent process
             unload_model_after_s: if model should be kept in memory after loading
+            use_gpu_if_available: if GPU should be used if available
+            max_model_to_use: max model to use, may be None in GPU Mode
         """
         if not torch.cuda.is_available():
             raise NotImplementedError("CPU decoding is not implemented yet")
