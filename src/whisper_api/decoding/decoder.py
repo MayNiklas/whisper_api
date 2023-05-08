@@ -19,6 +19,8 @@ vram_model_map: dict[model_sizes_str_t, int] = {
     "base": 1,
 }
 
+model_names = list(vram_model_map.keys())
+
 
 class Decoder:
 
@@ -228,20 +230,42 @@ class Decoder:
 
     def load_model(self, gpu_mode: bool, requested_model_size: model_sizes_str_t = None) -> whisper.Whisper:
         """
-        Load a model into memory. If no model size is specified, the largest model that currently fits the GPU is loaded
-        
-        Note: if requested_model_size doesn't fit, a smaller one will be chosen!
+        Load a model into memory.
+
+        GPU Mode
+            Trying to load given model, if it doesn't fit, try to load the next smaller model that fits
+            If no model is given (None), the largest model that fits is loaded
+
+        CPU Mode
+            A model size must be specified, if the model doesn't fit, the largest (smaller) model that fits is loaded
+
         Args:
-            requested_model_size: size of the model to load - must fit on the GPU
+            gpu_mode: decide whether to load model on GPU or CPU
+            requested_model_size: size of the model to load (optional in GPU mode, required in CPU mode)
+                                  if model doesn't fit, all models will be tried until one fits
 
-        Returns: the loaded model, None if models does not fit on GPU
+        Returns:
+            the loaded model, None if models does not fit on the mode's device
 
-        Raises: NotImplementedError if no model fits on GPU (and CPU decoding is not implemented yet)
+        Raises:
+            NotImplementedError if no model fits on GPU (and CPU decoding is not implemented yet)
+            ValueError if no model size is given in CPU mode
 
         """
 
         # get all potentially fitting models
-        possible_sizes = self.get_possible_model_names_for_gpu()
+        if gpu_mode:
+            # auto-detect possible models
+            print(f"CUDA is available, trying to work on GPU.")
+            possible_sizes = self.get_possible_model_names_for_gpu()
+        else:
+            # take requested model and below in CPU mode
+            if requested_model_size is None:
+                raise ValueError("Max model size must be specified in CPU mode")
+
+            print(f"CUDA is NOT available, trying to work on CPU.")
+            possible_sizes = model_names[model_names.index(requested_model_size):]
+
         if len(possible_sizes) < 1:
             raise NotImplementedError("No model fits the GPU. CPU decoding is not implemented yet.")
 
@@ -281,9 +305,19 @@ class Decoder:
             if model_size is not None:
                 break
 
+        # okay. raise. but now we just need to determine the exception's description
         else:
-            raise NotImplementedError("No model currently fits the GPU. CPU decoding is not implemented yet.")
+            if gpu_mode:
+                raise MemoryError(
+                    "No model currently fits the GPU. Set 'USE_GPU_IF_AVAILABLE' to 0 to disable GPU mode."
+                )
+            else:
+                info = ("CUDA is available, but disabled by 'USE_GPU_IF_AVAILABLE'."
+                        if torch.cuda.is_available() else "CUDA is not available.")
 
+                raise MemoryError(f"No model currently fits the CPU. {info}")
+
+        # we made it - wuhu!
         print(f"Model '{model_size}' loaded successfully!")
 
         return self.model
