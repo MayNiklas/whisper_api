@@ -208,10 +208,11 @@ class Decoder:
 
         return potential_models
 
-    def __try_load(self, model_size: model_sizes_str_t) -> Optional[model_sizes_str_t]:
+    def __try_load(self, gpu_mode: bool, model_size: model_sizes_str_t) -> Optional[model_sizes_str_t]:
         """
         Try to load a given model, set self.model and self.last_loaded_model_size if successful
         Args:
+            gpu_mode: whether to address the gpu on model load
             model_size: requested model size
 
         Returns: model name if success else None
@@ -219,7 +220,11 @@ class Decoder:
         """
         print(f"Trying to load model {model_size}")
         try:
-            self.model = whisper.load_model(name=model_size, in_memory=self.unload_model_after_s)
+            if gpu_mode:
+                self.model = whisper.load_model(name=model_size, in_memory=self.unload_model_after_s)
+            else:
+                self.model = whisper.load_model(name=model_size, in_memory=self.unload_model_after_s, device="cpu")
+
             self.last_loaded_model_size = model_size
             print(f"Successfully loaded model '{model_size}'")
             return model_size
@@ -291,7 +296,7 @@ class Decoder:
             print(f"Trying to load requested model size '{requested_model_size}'")
 
             # try to load model, if model is loaded return the set self.model
-            if self.__try_load(requested_model_size) is not None:
+            if self.__try_load(gpu_mode, requested_model_size) is not None:
                 return self.model
 
             print(f"Requested model '{requested_model_size}' doesn't fit.")
@@ -301,7 +306,7 @@ class Decoder:
 
         # iterate over all possible models, try to find the largest one that currently fits
         for model_size in possible_sizes:
-            model_size = self.__try_load(model_size)
+            model_size = self.__try_load(gpu_mode, model_size)
             if model_size is not None:
                 break
 
