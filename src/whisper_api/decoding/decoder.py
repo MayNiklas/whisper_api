@@ -84,7 +84,7 @@ class Decoder:
         self.model: whisper.Whisper = None
         self.last_loaded_model_size: model_sizes_str_t = None
         if LOAD_MODEL_ON_STARTUP:
-            self.model: whisper.Whisper = self.load_model()
+            self.model: whisper.Whisper = self.load_model(self.gpu_mode, self.max_model_to_use)
 
     @staticmethod
     def __is_gpu_mode(use_gpu_if_available: bool):
@@ -226,7 +226,7 @@ class Decoder:
             print(f"Model '{model_size}' currently doesn't fit device.")
             return
 
-    def load_model(self, requested_model_size: model_sizes_str_t = None) -> whisper.Whisper:
+    def load_model(self, gpu_mode: bool, requested_model_size: model_sizes_str_t = None) -> whisper.Whisper:
         """
         Load a model into memory. If no model size is specified, the largest model that currently fits the GPU is loaded
         
@@ -296,13 +296,15 @@ class Decoder:
         'Generic' function to run the model and centralize the needed logic
         This is used by transcribe() and translate()
         For args see transcribe() and translate()
+        Args:
+            model_size: overwrites the decoder-wide set max_model_size
 
         Returns:
             the result of the whisper models transcription/translation and the transcription time in seconds
         """
 
         # load model
-        model = self.load_model(model_size)
+        model = self.load_model(self.gpu_mode, model_size or self.max_model_to_use)
 
         # if load failed try to find a better one if auto_find_model_on_fail_to_load_target is set
         if model is None:
@@ -310,7 +312,7 @@ class Decoder:
                 print("Could not load model, returning...")
                 return None
             else:
-                self.load_model()
+                self.load_model(self.gpu_mode, self.max_model_to_use)
 
         print(f"Start decode of '{audio_path}' with model '{self.last_loaded_model_size}', {task=}")
 
