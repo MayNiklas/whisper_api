@@ -129,11 +129,11 @@ def setup_decoder_process_and_listener_thread():
     def signal_worker_to_exit(signum: int, frame: Optional[FrameType]):
         """ Terminate child and hope it dies """
 
-        print(f"Got {signum=}")
+        logger.warning(f"Got {signum=}")
 
         pid = decoder_process.pid
 
-        print(f"Shutting down decoder process {pid=}...")
+        logger.info(f"Shutting down decoder process {pid=}...")
 
         # try it using multiprocessing
         decoder_process.terminate()  # uses SIGTERM
@@ -141,14 +141,14 @@ def setup_decoder_process_and_listener_thread():
 
         # is it alive? - use harder tools
         if decoder_process.is_alive():
-            print("Child did not die in time, trying to kill it using os...")
+            logger.info("Child did not die in time, trying to kill it using os...")
             os.kill(decoder_process.pid, signal.SIGKILL)
 
         decoder_process.join(2)  # wait again
         if decoder_process.is_alive():
-            print(f"Can't kill child {pid=}, giving up. Sorry.")
+            logger.error(f"Can't kill child {pid=}, giving up. Sorry.")
         else:
-            print("Child is dead.")
+            logger.info("Child is dead.")
 
     # start decoder process
     decoder_process = multiprocessing.Process(target=decoder.Decoder.init_and_run,
