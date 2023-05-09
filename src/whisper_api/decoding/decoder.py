@@ -179,7 +179,9 @@ class Decoder:
         print(f"Unloading model '{self.last_loaded_model_size}'")
         self.model = None
         gc.collect()
-        torch.cuda.empty_cache()
+        # clear CUDA cache as well when GPU mode
+        if self.gpu_mode:
+            torch.cuda.empty_cache()
         print(f"Model '{self.last_loaded_model_size}' unloaded")
 
     def clean_up_and_exit(self, signum: int, frame: Optional[FrameType]):
