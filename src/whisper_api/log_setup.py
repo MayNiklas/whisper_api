@@ -131,22 +131,22 @@ def configure_logging(_logger: logging.Logger,
 
     if log_pipe and file_logger_level:
         pipe_logger = PipedFileHandler(log_pipe, log_dir, log_file)
-        pipe_logger.setLevel(logging.DEBUG)
+        pipe_logger.setLevel(file_logger_level)
         pipe_logger.setFormatter(rich_formatter)
         _logger.addHandler(pipe_logger)
 
     elif file_logger_level:
-        file_logger_level = logging.FileHandler(f'{log_dir}/{log_file}' if log_dir else log_file)
-        file_logger_level.setLevel(logging.INFO)
-        file_logger_level.setFormatter(formatter)
-        _logger.addHandler(file_logger_level)
+        file_logger = logging.FileHandler(f'{log_dir}/{log_file}' if log_dir else log_file)
+        file_logger.setLevel(file_logger_level)
+        file_logger.setFormatter(formatter)
+        _logger.addHandler(file_logger)
 
     if console_logger_level:
         # logger for console prints
-        console_logger_level = logging.StreamHandler()
-        console_logger_level.setLevel(logging.DEBUG)
-        console_logger_level.setFormatter(formatter)
-        _logger.addHandler(console_logger_level)
+        console_logger = logging.StreamHandler()
+        console_logger.setLevel(console_logger_level)
+        console_logger.setFormatter(formatter)
+        _logger.addHandler(console_logger)
 
 
 if __name__ == '__main__':
