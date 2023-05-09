@@ -36,9 +36,6 @@ class EndPoints:
     def add_task(self, task: Task):
         self.tasks[task.uuid] = task
 
-    def get_task(self, task_id: uuid_hex_t):
-        return self.tasks[task_id]
-
     def delete_task(self, task_id: uuid_hex_t):
         del self.tasks[task_id]
 
@@ -48,7 +45,7 @@ class EndPoints:
         :param task_id: ID of the task.
         :return: Status of the task.
         """
-        task = self.get_task(task_id)
+        task = self.tasks.get(task_id, None)
         if task is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
