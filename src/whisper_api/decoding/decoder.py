@@ -95,8 +95,7 @@ class Decoder:
         if LOAD_MODEL_ON_STARTUP:
             self.model: whisper.Whisper = self.load_model(self.gpu_mode, self.max_model_to_use)
 
-    @staticmethod
-    def __is_gpu_mode(use_gpu_if_available: bool):
+    def __is_gpu_mode(self, use_gpu_if_available: bool):
         """ Determine if GPU can and shall be used or not """
         if not torch.cuda.is_available():
             print("CUDA is not available, using CPU-mode")
