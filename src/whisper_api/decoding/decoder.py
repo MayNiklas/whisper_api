@@ -272,17 +272,20 @@ class Decoder:
             # auto-detect possible models
             print(f"CUDA is available, trying to work on GPU.")
             possible_sizes = self.get_possible_model_names_for_gpu()
-        else:
+
+            # if no model fits switch back to cpu mode
+            if len(possible_sizes) < 1:
+                self.logger.warning(f"No model fits on GPU, falling back to CPU-mode.")
+                gpu_mode = False
+
+        if not gpu_mode:
             # take requested model and below in CPU mode
             if requested_model_size is None:
-                requested_model_size = CPU_FALLBACK_MODEL
                 print(f"No explicit model for CPU was specified using '{CPU_FALLBACK_MODEL=}'")
+                requested_model_size = self.max_model_to_use
 
             print(f"CUDA is NOT available, trying to work on CPU.")
             possible_sizes = model_names[model_names.index(requested_model_size):]
-
-        if len(possible_sizes) < 1:
-            raise NotImplementedError("No model fits the GPU. CPU decoding is not implemented yet.")
 
         # check if correct model is already loaded
         if self.model is not None:
