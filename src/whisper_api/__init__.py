@@ -22,11 +22,12 @@ from whisper_api.data_models.threadsafe_dict import ThreadSafeDict
 from whisper_api.data_models.data_types import named_temp_file_name_t, uuid_hex_t
 from whisper_api.data_models.task import Task
 from whisper_api.environment import API_PORT, API_LISTEN, UNLOAD_MODEL_AFTER_S, DELETE_RESULTS_AFTER_M, \
-    RUN_RESULT_EXPIRY_CHECK_M, REFRESH_EXPIRATION_TIME_ON_USAGE, USE_GPU_IF_AVAILABLE, MAX_MODEL
+    RUN_RESULT_EXPIRY_CHECK_M, REFRESH_EXPIRATION_TIME_ON_USAGE, USE_GPU_IF_AVAILABLE, MAX_MODEL, LOG_DIR, LOG_FILE
 from whisper_api.version import __version__
 from whisper_api.api_endpoints import endpoints
 
 import whisper_api.decoding.decoder as decoder
+from whisper_api.log_setup import logger, configure_logging
 
 description = """
 Whisper API transcribes audio files.
@@ -81,6 +82,8 @@ Setup decoder process
 # create Pipe for communication between main and worker thread
 parent_side, child_side = multiprocessing.Pipe()
 logging_entry_end, log_outry_end = multiprocessing.Pipe()
+
+configure_logging(logger, LOG_DIR, LOG_FILE,logging_entry_end)
 
 api_end_points = EndPoints(app, task_dict, open_audio_files_dict, parent_side)
 frontend = Frontend(app)
