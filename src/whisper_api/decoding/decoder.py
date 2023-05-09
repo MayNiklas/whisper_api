@@ -83,8 +83,6 @@ class Decoder:
 
         self.unload_model_after_s = unload_model_after_s
 
-        self.gpu_vram = torch.cuda.mem_get_info()[0]
-
         self.model: whisper.Whisper = None
         self.last_loaded_model_size: model_sizes_str_t = None
         if LOAD_MODEL_ON_STARTUP:
@@ -204,7 +202,7 @@ class Decoder:
 
         potential_models = []
         for model_name, model_size in vram_model_map.items():
-            if self.gpu_vram >= model_size * 1e9:
+            if torch.cuda.mem_get_info()[0] >= model_size * 1e9:
                 # print(f"Potential model: '{model_name}'")
                 potential_models.append(model_name)
 
