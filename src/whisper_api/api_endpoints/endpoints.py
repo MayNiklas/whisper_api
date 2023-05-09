@@ -10,6 +10,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from whisper_api.data_models.temp_dict import TempDict
 from whisper_api.data_models.data_types import uuid_hex_t, task_type_str_t, named_temp_file_name_t
 from whisper_api.data_models.task import Task, TaskResponse
+from whisper_api.log_setup import logger
 
 V1_PREFIX = "/api/v1"
 
@@ -47,6 +48,7 @@ class EndPoints:
         """
         task = self.tasks.get(task_id, None)
         if task is None:
+            logger.info(f"task_id '{task_id}' not found")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="task_id not valid",
@@ -65,6 +67,7 @@ class EndPoints:
 
         # test that file has audio track
         if not self.is_file_audio(named_file.name):
+            logger.info(f"File '{named_file.name}' has no audio track.")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"File has no audio track."
@@ -93,6 +96,7 @@ class EndPoints:
         task = self.tasks.get(task_id, None)
         # TODO maybe hold a set of tasks that were present but aren't any more for better message?
         if task is None:
+            logger.info(f"task_id '{task_id}' not found")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="task_id not found",
@@ -100,6 +104,7 @@ class EndPoints:
 
         # TODO better way for central declaration of those states
         if task.status in ["pending", "processing", "failed"]:
+            logger.info(f"task_id '{task_id}' not ready or failed, status: '{task.status}'")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=task.to_transmit_full,
@@ -163,5 +168,5 @@ class EndPoints:
             return audio_stream is not None
 
         except ffmpeg.Error as e:
-            print(e.stderr)
+            logger.warning(e.stderr)
             return False
