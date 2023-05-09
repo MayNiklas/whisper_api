@@ -10,7 +10,7 @@ import whisper
 
 from whisper_api.data_models.data_types import model_sizes_str_t, task_type_str_t
 from whisper_api.data_models.task import WhisperResult, Task
-from whisper_api.environment import DEVELOP_MODE, LOAD_MODEL_ON_STARTUP
+from whisper_api.environment import DEVELOP_MODE, LOAD_MODEL_ON_STARTUP, CPU_FALLBACK_MODEL
 
 vram_model_map: dict[model_sizes_str_t, int] = {
     "large": 10,
@@ -77,7 +77,9 @@ class Decoder:
         self.use_gpu_if_available = use_gpu_if_available
         self.gpu_mode = self.__is_gpu_mode(use_gpu_if_available)
         if not self.gpu_mode and self.max_model_to_use is None:
-            raise ValueError("'MAX_MODEL' must be set in CPU mode")
+            # take requested model and below in CPU mode
+            self.max_model_to_use = CPU_FALLBACK_MODEL
+            print(f"No explicit model for CPU was specified using '{CPU_FALLBACK_MODEL=}'")
 
         self.unload_model_after_s = unload_model_after_s
 
@@ -266,7 +268,8 @@ class Decoder:
         else:
             # take requested model and below in CPU mode
             if requested_model_size is None:
-                raise ValueError("Max model size must be specified in CPU mode")
+                requested_model_size = CPU_FALLBACK_MODEL
+                print(f"No explicit model for CPU was specified using '{CPU_FALLBACK_MODEL=}'")
 
             print(f"CUDA is NOT available, trying to work on CPU.")
             possible_sizes = model_names[model_names.index(requested_model_size):]
