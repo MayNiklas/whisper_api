@@ -24,6 +24,8 @@ class TaskResponse(BaseModel):
     time_uploaded: dt.datetime
     processing_duration: Optional[int]
     time_processing_finished: Optional[dt.datetime]
+    target_model_size: Optional[str]
+    used_model_size: Optional[str]
 
 
 @pydantic_dataclass
@@ -94,8 +96,8 @@ class Task:
             time_uploaded=self.time_uploaded,
             processing_duration=self.whisper_result.processing_duration_s,
             time_processing_finished=self.whisper_result.end_time,
-            target_model_size=self.target_model_size
-
+            target_model_size=self.target_model_size,
+            used_model_size=self.whisper_result.used_model_size,
         )
 
     @property
