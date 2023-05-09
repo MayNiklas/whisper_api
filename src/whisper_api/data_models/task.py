@@ -26,6 +26,7 @@ class TaskResponse(BaseModel):
     time_processing_finished: Optional[dt.datetime]
     target_model_size: Optional[str]
     used_model_size: Optional[str]
+    used_device: Optional[str]
 
 
 @pydantic_dataclass
@@ -38,6 +39,7 @@ class WhisperResult:
     used_model_size: model_sizes_str_t
     start_time: dt.datetime
     end_time: dt.datetime
+    used_device: str
 
     @property
     def processing_duration_s(self) -> int:
@@ -71,6 +73,7 @@ class Task:
     uuid: uuid_hex_t = None
     target_model_size: Optional[model_sizes_str_t] = None
     original_file_name: str = "unknown"
+    used_device: str = "unknown"
 
     def __post_init__(self):
         self.uuid = self.uuid or uuid4().hex
@@ -98,6 +101,7 @@ class Task:
             time_processing_finished=self.whisper_result.end_time,
             target_model_size=self.target_model_size,
             used_model_size=self.whisper_result.used_model_size,
+            used_device=self.whisper_result.used_device
         )
 
     @property

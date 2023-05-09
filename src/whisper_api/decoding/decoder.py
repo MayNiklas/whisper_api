@@ -367,7 +367,8 @@ class Decoder:
                              end_time=end,
                              used_model_size=self.last_loaded_model_size,
                              # TODO is this the correct code for translation?
-                             output_language="en_US" if task == "translate" else result["language"]
+                             output_language="en_US" if task == "translate" else result["language"],
+                             used_device="gpu" if self.gpu_mode else "cpu"
                              )
 
     def transcribe(self, audio_path: str,
