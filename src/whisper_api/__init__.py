@@ -80,6 +80,7 @@ Setup decoder process
 
 # create Pipe for communication between main and worker thread
 parent_side, child_side = multiprocessing.Pipe()
+logging_entry_end, log_outry_end = multiprocessing.Pipe()
 
 api_end_points = EndPoints(app, task_dict, open_audio_files_dict, parent_side)
 frontend = Frontend(app)
@@ -148,7 +149,7 @@ def setup_decoder_process_and_listener_thread():
 
     # start decoder process
     decoder_process = multiprocessing.Process(target=decoder.Decoder.init_and_run,
-                                              args=(child_side, UNLOAD_MODEL_AFTER_S, USE_GPU_IF_AVAILABLE, MAX_MODEL),
+                                              args=(child_side, logging_entry_end, UNLOAD_MODEL_AFTER_S, USE_GPU_IF_AVAILABLE, MAX_MODEL),
                                               name="Decoder-Process",
                                               daemon=True
                                               )
