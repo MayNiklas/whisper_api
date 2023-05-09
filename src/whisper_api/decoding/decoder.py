@@ -1,5 +1,6 @@
 import datetime as dt
 import gc
+import logging
 import signal
 from multiprocessing.connection import Connection
 from types import FrameType
@@ -26,7 +27,7 @@ class Decoder:
 
     @staticmethod
     def init_and_run(pipe_to_parent: Connection,
-                     log_pipe: Connection,
+                     logger: logging.Logger,
                      unload_model_after_s: bool = True,
                      use_gpu_if_available: bool = True,
                      max_model_to_use: model_sizes_str_t = None):
@@ -34,7 +35,7 @@ class Decoder:
         Initialize the decoder and run it
         Args:
             pipe_to_parent: pipe to receive tasks from the parent process
-            log_pipe: pipe to send logging trough
+            logger: logger to log with
             unload_model_after_s: if model should be kept in memory after loading
             use_gpu_if_available: if GPU should be used if available
             max_model_to_use: max model to use, may be None in GPU Mode
@@ -44,7 +45,7 @@ class Decoder:
         """
 
         decoder = Decoder(pipe_to_parent,
-                          log_pipe,
+                          logger,
                           unload_model_after_s,
                           use_gpu_if_available=use_gpu_if_available,
                           max_model_to_use=max_model_to_use)
@@ -56,22 +57,22 @@ class Decoder:
 
     def __init__(self,
                  pipe_to_parent: Connection,
-                 log_pipe: Connection,
+                 logger: logging.Logger,
                  unload_model_after_s: bool = True,
                  use_gpu_if_available: bool = True,
-                 max_model_to_use: model_sizes_str_t = None, ):
+                 max_model_to_use: model_sizes_str_t = None):
         """
         Holding and managing the whisper model
         Args:
             pipe_to_parent: pipe to receive tasks from the parent process
-            log_pipe: pipe to send logging trough
+            logger: logger to log with
             unload_model_after_s: if model should be kept in memory after loading
             use_gpu_if_available: if GPU should be used if available
             max_model_to_use: max model to use, may be None in GPU Mode
         """
 
         self.pipe_to_parent = pipe_to_parent
-        self.log_pipe = log_pipe
+        self.logger = logger
 
         # register signal handlers
         signal.signal(signal.SIGINT, self.clean_up_and_exit)   # Handle Control + C

@@ -152,7 +152,7 @@ def setup_decoder_process_and_listener_thread():
 
     # start decoder process
     decoder_process = multiprocessing.Process(target=decoder.Decoder.init_and_run,
-                                              args=(child_side, logging_entry_end, UNLOAD_MODEL_AFTER_S, USE_GPU_IF_AVAILABLE, MAX_MODEL),
+                                              args=(child_side, logger, UNLOAD_MODEL_AFTER_S, USE_GPU_IF_AVAILABLE, MAX_MODEL),
                                               name="Decoder-Process",
                                               daemon=True
                                               )
