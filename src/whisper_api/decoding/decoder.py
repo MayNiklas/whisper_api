@@ -338,8 +338,7 @@ class Decoder:
 
     def __run_model(self, audio_path: str, task: task_type_str_t,
                     source_language: Optional[str],
-                    model_size: model_sizes_str_t = None,
-                    auto_find_model_on_fail_to_load_target=True) -> Optional[WhisperResult]:
+                    model_size: model_sizes_str_t = None) -> Optional[WhisperResult]:
         """
         'Generic' function to run the model and centralize the needed logic
         This is used by transcribe() and translate()
@@ -354,13 +353,10 @@ class Decoder:
         # load model
         model = self.load_model(self.gpu_mode, model_size or self.max_model_to_use)
 
-        # if load failed try to find a better one if auto_find_model_on_fail_to_load_target is set
+        # load failed, load model should try everything to load one, so it's a lost cause
         if model is None:
-            if not auto_find_model_on_fail_to_load_target:
-                print("Could not load model, returning...")
-                return None
-            else:
-                self.load_model(self.gpu_mode, self.max_model_to_use)
+            self.logger.warning("Could not load any model, aborting task.")
+            return None
 
         self.logger.info(f"Start decode of '{audio_path}' with model '{self.last_loaded_model_size}', {task=}")
 
