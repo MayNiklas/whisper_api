@@ -271,7 +271,14 @@ class Decoder:
         if gpu_mode:
             # auto-detect possible models
             self.logger.debug(f"CUDA is available, trying to work on GPU.")
-            possible_sizes = self.get_possible_model_names_for_gpu()
+            # detect all models that fit gpu
+            if requested_model_size is None:
+                possible_sizes = self.get_possible_model_names_for_gpu()
+
+            # detect all models that fit GPU and are required model or below
+            else:
+                models_to_try = self.__get_models_below(requested_model_size)
+                possible_sizes = self.get_possible_model_names_for_gpu(models_to_try)
 
             # if no model fits switch back to cpu mode
             if len(possible_sizes) < 1:
