@@ -86,7 +86,7 @@ class Decoder:
         if not self.gpu_mode and self.max_model_to_use is None:
             # take requested model and below in CPU mode
             self.max_model_to_use = CPU_FALLBACK_MODEL
-            self.logger.warning(f"No explicit model for CPU was specified setting max model to '{CPU_FALLBACK_MODEL=}'")
+            self.logger.warning(f"No explicit model for CPU was specified setting max-model to '{CPU_FALLBACK_MODEL=}'")
 
         self.unload_model_after_s = unload_model_after_s
 
@@ -264,7 +264,7 @@ class Decoder:
         Args:
             gpu_mode: decide whether to load model on GPU or CPU
             requested_model_size: size of the model to load (optional in GPU mode, required in CPU mode)
-                                  if model doesn't fit, all models will be tried until one fits
+                                  if model doesn't fit, all models below will be tried until one fits
 
         Returns:
             the loaded model, None if models does not fit on the mode's device
@@ -297,7 +297,7 @@ class Decoder:
             # take requested model and below in CPU mode
             if requested_model_size is None:
                 requested_model_size = self.max_model_to_use
-                self.logger.info(f"No explicit model for CPU was specified trying '{self.max_model_to_use}'")
+                self.logger.info(f"No explicit model for CPU was specified trying '{self.max_model_to_use}' and below")
 
             possible_sizes = self.__get_models_below(requested_model_size)
 
