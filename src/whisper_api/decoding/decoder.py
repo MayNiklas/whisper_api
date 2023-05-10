@@ -196,11 +196,13 @@ class Decoder:
         self.__unload_model()
         exit(0)
 
-    def get_possible_model_names_for_gpu(self) -> Optional[list[model_sizes_str_t]]:
     def __get_models_below(self, model_name: model_sizes_str_t) -> list[model_sizes_str_t]:
         """ includes the given model itself """
         return model_names[model_names.index(model_name):]
 
+    def get_possible_model_names_for_gpu(self,
+                                         sizes_to_try: Optional[list[model_sizes_str_t]] = None
+                                         ) -> Optional[list[model_sizes_str_t]]:
         """
         Get the largest model that fits on the GPU
         Returns: list of all possible models in descending size order
@@ -210,8 +212,14 @@ class Decoder:
             self.logger.warning(f"DEVELOPMENT MODE SET - RETURNING 'base' MODEL")
             return ["base"]
 
+        # use only subset of models if specified
+        if sizes_to_try:
+            models_to_try_dict = {size: vram_model_map[size] for size in sizes_to_try}
+        else:
+            models_to_try_dict = vram_model_map
+
         potential_models = []
-        for model_name, model_size in vram_model_map.items():
+        for model_name, model_size in models_to_try_dict.items():
             if torch.cuda.mem_get_info()[0] >= model_size * 1e9:
                 potential_models.append(model_name)
 
