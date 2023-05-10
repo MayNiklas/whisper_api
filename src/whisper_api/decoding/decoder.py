@@ -257,6 +257,7 @@ class Decoder:
         GPU Mode
             Trying to load given model, if it doesn't fit, try to load the next smaller model that fits
             If no model is given (None), the largest model that fits is loaded
+            If no model fits GPU the system tries to load to CPU
 
         CPU Mode
             A model size must be specified, if the model doesn't fit, the largest (smaller) model that fits is loaded
@@ -270,8 +271,7 @@ class Decoder:
             the loaded model, None if models does not fit on the mode's device
 
         Raises:
-            NotImplementedError if no model fits on GPU (and CPU decoding is not implemented yet)
-            ValueError if no model size is given in CPU mode
+            MemoryError if no model can be loaded to either GPU or CPU
 
         """
 
@@ -296,6 +296,7 @@ class Decoder:
         if not gpu_mode:
             # take requested model and below in CPU mode
             if requested_model_size is None:
+                # CPU mode must have an explicit max-model-size
                 requested_model_size = self.max_model_to_use
                 self.logger.info(f"No explicit model for CPU was specified trying '{self.max_model_to_use}' and below")
 
@@ -370,7 +371,7 @@ class Decoder:
         """
 
         # load model
-        model = self.load_model(self.gpu_mode, model_size or self.max_model_to_use)
+        model = self.load_model(self.gpu_mode, model_size or self.max_model_to_use)  # model can still be None
 
         # load failed, load model should try everything to load one, so it's a lost cause
         if model is None:
