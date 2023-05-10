@@ -197,6 +197,10 @@ class Decoder:
         exit(0)
 
     def get_possible_model_names_for_gpu(self) -> Optional[list[model_sizes_str_t]]:
+    def __get_models_below(self, model_name: model_sizes_str_t) -> list[model_sizes_str_t]:
+        """ includes the given model itself """
+        return model_names[model_names.index(model_name):]
+
         """
         Get the largest model that fits on the GPU
         Returns: list of all possible models in descending size order
@@ -280,7 +284,7 @@ class Decoder:
                 requested_model_size = self.max_model_to_use
                 self.logger.info(f"No explicit model for CPU was specified trying '{self.max_model_to_use}'")
 
-            possible_sizes = model_names[model_names.index(requested_model_size):]
+            possible_sizes = self.__get_models_below(requested_model_size)
 
         # check if correct model is already loaded
         if self.model is not None:
