@@ -59,6 +59,15 @@
               '';
             };
 
+            maxModel = mkOption {
+              type = types.str;
+              default = "None";
+              description = ''
+                The maximum model size.
+                Choose between "tiny", "small", "medium" and "large"
+              '';
+            };
+
             dataDir = mkOption {
               type = types.str;
               default = "/var/lib/whisper_api";
@@ -92,7 +101,7 @@
                 PORT = "${toString cfg.port}";
                 LISTEN = cfg.listen;
                 LOAD_MODEL_ON_STARTUP = mkIf (cfg.loadModelOnStartup == false) "0";
-                MAX_MODEL = "large";
+                MAX_MODEL = mkIf (cfg.maxModel != "None") cfg.maxModel;
               };
               serviceConfig = mkMerge [
                 {
