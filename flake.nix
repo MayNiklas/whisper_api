@@ -27,14 +27,6 @@
 
             enable = mkEnableOption "whisper_api";
 
-            dataDir = mkOption {
-              type = types.str;
-              default = "/var/lib/whisper_api";
-              description = ''
-                The directory where whisper_api stores its data files.
-              '';
-            };
-
             listen = mkOption {
               type = types.str;
               default = "127.0.0.1";
@@ -56,6 +48,22 @@
               default = false;
               description = lib.mdDoc ''
                 Open the appropriate ports in the firewall for whisper_api.
+              '';
+            };
+
+            loadModelOnStartup = mkOption {
+              type = types.bool;
+              default = true;
+              description = ''
+                Whether to load the model on startup.
+              '';
+            };
+
+            dataDir = mkOption {
+              type = types.str;
+              default = "/var/lib/whisper_api";
+              description = ''
+                The directory where whisper_api stores its data files.
               '';
             };
 
@@ -81,8 +89,9 @@
               # TODO:
               # expose all environment variables as Nix options
               environment = {
-                LISTEN = cfg.listen;
                 PORT = "${toString cfg.port}";
+                LISTEN = cfg.listen;
+                LOAD_MODEL_ON_STARTUP = mkIf (cfg.loadModelOnStartup == false) "0";
                 MAX_MODEL = "large";
               };
               serviceConfig = mkMerge [
