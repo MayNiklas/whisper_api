@@ -13,11 +13,13 @@ from whisper_api.data_models.data_types import model_sizes_str_t, task_type_str_
 from whisper_api.data_models.task import WhisperResult, Task
 from whisper_api.environment import DEVELOP_MODE, LOAD_MODEL_ON_STARTUP, CPU_FALLBACK_MODEL
 
+
+gigabyte_factor = int(1e9)
 vram_model_map: dict[model_sizes_str_t, int] = {
-    "large": 10,
-    "medium": 5,
-    "small": 2,
-    "base": 1,
+    "large": 10 * gigabyte_factor,
+    "medium": 5 * gigabyte_factor,
+    "small": 2 * gigabyte_factor,
+    "base": 1 * gigabyte_factor,
 }
 
 model_names = list(vram_model_map.keys())
@@ -240,7 +242,7 @@ class Decoder:
         potential_models = []
         for model_name, model_size in models_to_try_dict.items():
             # sum free and allocated memory space to get the full VRAM capacity of GPU
-            if max_vram >= model_size * 1e9:
+            if max_vram >= model_size:
                 potential_models.append(model_name)
 
         return potential_models
