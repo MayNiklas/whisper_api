@@ -17,6 +17,8 @@
         with lib;
         let
           cfg = config.services.whisper_api;
+          # TODO:
+          # a CUDA / non-CUDA version option would be nice
           whisper_api = self.packages.${pkgs.system}.whisper_api_withCUDA;
         in
         {
@@ -76,6 +78,8 @@
             systemd.services.whisper_api = {
               description = "A whisper API.";
               wantedBy = [ "multi-user.target" ];
+              # TODO:
+              # expose all environment variables as Nix options
               environment = {
                 LISTEN = cfg.listen;
                 PORT = "${toString cfg.port}";
@@ -85,6 +89,11 @@
                 {
                   User = cfg.user;
                   Group = cfg.group;
+                  # TODO:
+                  # currently this causes a permission issue!
+                  # we need to manually run
+                  # `chown -R whisper_api:whisper_api /var/lib/whisper_api'
+                  # after the home directory is created.
                   WorkingDirectory = cfg.dataDir;
                   ExecStart = "${whisper_api}/bin/whisper_api";
                   Restart = "on-failure";
