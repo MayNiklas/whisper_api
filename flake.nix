@@ -25,14 +25,6 @@
 
             enable = mkEnableOption "whisper_api";
 
-            preload = mkOption {
-              type = types.bool;
-              default = false;
-              description = ''
-                Whether to preload the model.
-              '';
-            };
-
             dataDir = mkOption {
               type = types.str;
               default = "/var/lib/whisper_api";
@@ -65,14 +57,6 @@
               '';
             };
 
-            envfile = mkOption {
-              type = types.str;
-              default = "/var/src/secrets/whisper_api/envfile";
-              description = ''
-                The location of the envfile containing secrets
-              '';
-            };
-
             user = mkOption {
               type = types.str;
               default = "whisper_api";
@@ -93,16 +77,15 @@
               description = "A whisper API.";
               wantedBy = [ "multi-user.target" ];
               environment = {
-                PRELOAD = mkIf cfg.preload "true";
                 LISTEN = cfg.listen;
                 PORT = "${toString cfg.port}";
+                MAX_MODEL = "large";
               };
               serviceConfig = mkMerge [
                 {
-                  # EnvironmentFile = [ cfg.envfile ];
                   User = cfg.user;
                   Group = cfg.group;
-                  WorkingDirectory = "${whisper_api.src}";
+                  WorkingDirectory = cfg.dataDir;
                   ExecStart = "${whisper_api}/bin/whisper_api";
                   Restart = "on-failure";
                 }
