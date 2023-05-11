@@ -201,16 +201,35 @@ class Decoder:
         return model_names[model_names.index(model_name):]
 
     def get_possible_model_names_for_gpu(self,
-                                         sizes_to_try: Optional[list[model_sizes_str_t]] = None
+                                         sizes_to_try: Optional[list[model_sizes_str_t]] = None,
+                                         max_vram=None
                                          ) -> Optional[list[model_sizes_str_t]]:
         """
-        Get the largest model that fits on the GPU
+        Get all models that would technically fit the GPU if all memory was available
+        Args:
+            sizes_to_try: a list of models to try out (default is all models)
+            max_vram: max vram that the model should take (default is current_model_size + free vram)
+
         Returns: list of all possible models in descending size order
 
         """
         if DEVELOP_MODE:
             self.logger.warning(f"DEVELOPMENT MODE SET - RETURNING 'base' MODEL")
             return ["base"]
+
+        if max_vram is None:
+            # free VRAM space + current model size if exists
+            mem_info = torch.cuda.mem_get_info()
+            # there is no model in memory, just use free memory
+            if self.model is None:
+                max_vram = mem_info[0]
+            # model size + free memory
+            else:
+                max_vram = mem_info[0] + vram_model_map.get(self.last_loaded_model_size)
+
+            self.logger.debug(
+                f"Calculated a total of {max_vram} memory to work with (free VRAM + potential loaded model)"
+            )
 
         # use only subset of models if specified
         if sizes_to_try:
@@ -220,7 +239,8 @@ class Decoder:
 
         potential_models = []
         for model_name, model_size in models_to_try_dict.items():
-            if torch.cuda.mem_get_info()[0] >= model_size * 1e9:
+            # sum free and allocated memory space to get the full VRAM capacity of GPU
+            if max_vram >= model_size * 1e9:
                 potential_models.append(model_name)
 
         return potential_models
