@@ -330,7 +330,8 @@ class Decoder:
 
             self.logger.warning(f"Requested model '{requested_model_size}' doesn't fit.")
 
-        self.logger.debug("No model loaded. Trying to find the largest model that's currently possible")
+        self.logger.debug(
+            f"No model loaded. Trying to find the largest model that's currently possible. {possible_sizes=}")
         self.logger.debug(f"Current model state: {self.last_loaded_model_size=}, {self.model=}")
 
         # iterate over all possible models, try to find the largest one that currently fits
