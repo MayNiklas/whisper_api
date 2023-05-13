@@ -64,6 +64,5 @@ steps:
 trigger:
   branch:
     - main
-    - completely-restructure
   event:
     - push
