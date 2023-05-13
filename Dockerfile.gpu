@@ -19,15 +19,14 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 
-# download models so they are cached in the docker image
-COPY whisper_api/download_models.py download_models.py
-RUN python3 download_models.py && \
-    rm download_models.py
+COPY . /workspace/code
 
-COPY static static
-COPY whisper_api whisper_api
+RUN cd /workspace/code && \
+    pip3 install .
 
 ENV PORT=3001 \
-    PRELOAD=false
+    LISTEN=0.0.0.0 \
+    LOAD_MODEL_ON_STARTUP=1 \
+    DEVELOP_MODE=0
 
-CMD python3 -m uvicorn whisper_api.main:app --host 0.0.0.0 --port $PORT
+CMD  [ "/usr/local/bin/whisper_api" ]

@@ -1,4 +1,5 @@
 { lib
+, fetchFromGitHub
 , buildPythonPackage
 
   # propagates
@@ -6,18 +7,22 @@
 , fastapi
 , multipart
 , openai-whisper
+, typing-extensions
 , uvicorn
+
+  # tests
+, pytestCheckHook
+, unittestCheckHook
 }:
+
 buildPythonPackage rec {
-
   pname = "whisper_api";
-
-  # get version from version.py
   version = (lib.strings.removePrefix ''__version__ = "''
     (lib.strings.removeSuffix ''
       "
     ''
-      (builtins.readFile ./whisper_api/version.py)));
+      (builtins.readFile ./src/whisper_api/version.py)));
+  format = "setuptools";
 
   src = ./.;
 
@@ -27,9 +32,30 @@ buildPythonPackage rec {
     openai-whisper
     torch
     uvicorn
+    # # https://github.com/elarivie/pyReaderWriterLock
+    # (buildPythonPackage rec {
+    #   pname = "pyReaderWriterLock";
+    #   version = "1.0.9";
+    #   src = fetchFromGitHub {
+    #     owner = "elarivie";
+    #     repo = pname;
+    #     rev = "e7382855cdd46c9d54b2d697c48c00b8fd7e4c81";
+    #     hash = "sha256-53LOAUzfiD61MNik+6XnyEslfK1jJkWDElnvIbgHqDU=";
+    #   };
+    #   propagatedBuildInputs = [ typing-extensions ];
+    #   nativeCheckInputs = [
+    #     unittestCheckHook
+    #   ];
+    # })
   ];
 
-  doCheck = false;
+  nativeCheckInputs = [
+    pytestCheckHook
+  ];
+
+  pythonImportsCheck = [
+    "whisper_api"
+  ];
 
   meta = with lib; {
     description = "A simple API for OpenAI's Whisper";

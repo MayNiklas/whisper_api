@@ -5,7 +5,7 @@ from setuptools import find_packages
 from setuptools import setup
 
 
-def read_version(fname="whisper_api/version.py"):
+def read_version(fname="src/whisper_api/version.py"):
     exec(compile(open(fname, encoding="utf-8").read(), fname, "exec"))
     return locals()["__version__"]
 
@@ -22,7 +22,8 @@ setup(
     long_description_content_type="text/markdown",
     readme="README.md",
     python_requires=">=3.7",
-    packages=find_packages(exclude=["tests*"]),
+    packages=find_packages(where="src", exclude=["tests*"]),
+    package_dir={"": "src"},
     install_requires=[
         str(r)
         for r in pkg_resources.parse_requirements(
@@ -31,9 +32,15 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "whisper_api=whisper_api.webserver:start",
-            "whisper_cli=whisper_api.cli:cli",
+            "whisper_api=whisper_api:start",
         ],
     },
     include_package_data=True,
+    extras_require={
+        "dev": [
+            "pytest",
+            "pre-commit",
+            "autopep8"
+        ]
+    },
 )

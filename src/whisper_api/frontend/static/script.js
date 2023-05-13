@@ -73,7 +73,7 @@ function transcribe() {
   formData.append("file", file, file.name);
 
   // Send a POST request to the server to initiate transcription
-  fetch("/v1/transcribe", {
+  fetch("/api/v1/transcribe", {
     method: "POST",
     body: formData,
   })
@@ -87,10 +87,10 @@ function transcribe() {
 
       // Check the status of the transcription every second
       const intervalId = setInterval(() => {
-        fetch(`/v1/status/${data.task_id}`)
+        fetch(`/api/v1/status?task_id=${data.task_id}`)
           .then((response) => response.json())
           .then((data) => {
-            if (data.status === "done") {
+            if (data.status === "finished") {
               // Display the transcription
               clearInterval(intervalId);
               const resultContainer = document.getElementById("resultContainer");

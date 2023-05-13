@@ -17,6 +17,8 @@
         with lib;
         let
           cfg = config.services.whisper_api;
+          # TODO:
+          # a CUDA / non-CUDA version option would be nice
           whisper_api = self.packages.${pkgs.system}.whisper_api_withCUDA;
         in
         {
@@ -24,22 +26,6 @@
           options.services.whisper_api = {
 
             enable = mkEnableOption "whisper_api";
-
-            preload = mkOption {
-              type = types.bool;
-              default = false;
-              description = ''
-                Whether to preload the model.
-              '';
-            };
-
-            dataDir = mkOption {
-              type = types.str;
-              default = "/var/lib/whisper_api";
-              description = ''
-                The directory where whisper_api stores its data files.
-              '';
-            };
 
             listen = mkOption {
               type = types.str;
@@ -65,11 +51,28 @@
               '';
             };
 
-            envfile = mkOption {
-              type = types.str;
-              default = "/var/src/secrets/whisper_api/envfile";
+            loadModelOnStartup = mkOption {
+              type = types.bool;
+              default = true;
               description = ''
-                The location of the envfile containing secrets
+                Whether to load the model on startup.
+              '';
+            };
+
+            maxModel = mkOption {
+              type = types.str;
+              default = "None";
+              description = ''
+                The maximum model size.
+                Choose between "tiny", "small", "medium" and "large"
+              '';
+            };
+
+            dataDir = mkOption {
+              type = types.str;
+              default = "/var/lib/whisper_api";
+              description = ''
+                The directory where whisper_api stores its data files.
               '';
             };
 
@@ -92,17 +95,24 @@
             systemd.services.whisper_api = {
               description = "A whisper API.";
               wantedBy = [ "multi-user.target" ];
+              # TODO:
+              # expose all environment variables as Nix options
               environment = {
-                PRELOAD = mkIf cfg.preload "true";
-                LISTEN = cfg.listen;
                 PORT = "${toString cfg.port}";
+                LISTEN = cfg.listen;
+                LOAD_MODEL_ON_STARTUP = mkIf (cfg.loadModelOnStartup == false) "0";
+                MAX_MODEL = mkIf (cfg.maxModel != "None") cfg.maxModel;
               };
               serviceConfig = mkMerge [
                 {
-                  # EnvironmentFile = [ cfg.envfile ];
                   User = cfg.user;
                   Group = cfg.group;
-                  WorkingDirectory = "${whisper_api.src}";
+                  # TODO:
+                  # currently this causes a permission issue!
+                  # we need to manually run
+                  # `chown -R whisper_api:whisper_api /var/lib/whisper_api'
+                  # after the home directory is created.
+                  WorkingDirectory = cfg.dataDir;
                   ExecStart = "${whisper_api}/bin/whisper_api";
                   Restart = "on-failure";
                 }
@@ -207,30 +217,6 @@
               };
             in
             pkgs.python3Packages.callPackage ./default.nix { };
-
-          whisper_cli = pkgs.python3Packages.buildPythonPackage rec {
-            pname = "whisper_cli";
-            # get version from version.py
-            version = (pkgs.lib.strings.removePrefix '' __version__ = "''
-              (pkgs.lib.strings.removeSuffix ''
-                "
-              ''
-                (builtins.readFile ./whisper_api/version.py)));
-            src = ./.;
-            propagatedBuildInputs = with pkgs.python3Packages; [
-              requests
-            ];
-            preBuild = ''
-              rm requirements.txt
-              touch requirements.txt
-            '';
-            doCheck = false;
-            meta = with pkgs.lib; {
-              description = "A simple API for OpenAI's Whisper";
-              homepage = "https://github.com/MayNiklas/whisper_api";
-              maintainers = with maintainers; [ MayNiklas ];
-            };
-          };
 
         };
       });
