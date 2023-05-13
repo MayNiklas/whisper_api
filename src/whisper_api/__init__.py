@@ -45,7 +45,7 @@ task_dict: TempDict[uuid_hex_t, Task] = TempDict(expiration_time_m=DELETE_RESULT
                                                  auto_gc_interval_s=RUN_RESULT_EXPIRY_CHECK_M * 60,
                                                  )
 
-open_audio_files_dict: ThreadSafeDict[named_temp_file_name_t, NamedTemporaryFile] = ThreadSafeDict()
+open_audio_files_dict: dict[named_temp_file_name_t, NamedTemporaryFile] = dict()
 
 
 """
