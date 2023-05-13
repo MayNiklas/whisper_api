@@ -18,7 +18,6 @@ if __package__ is None and not hasattr(sys, "frozen"):
 from whisper_api.api_endpoints.endpoints import EndPoints
 from whisper_api.data_models.temp_dict import TempDict
 from whisper_api.frontend.endpoints import Frontend
-from whisper_api.data_models.threadsafe_dict import ThreadSafeDict
 from whisper_api.data_models.data_types import named_temp_file_name_t, uuid_hex_t
 from whisper_api.data_models.task import Task
 from whisper_api.environment import API_PORT, API_LISTEN, UNLOAD_MODEL_AFTER_S, DELETE_RESULTS_AFTER_M, \
