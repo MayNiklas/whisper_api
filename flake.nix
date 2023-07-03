@@ -59,6 +59,14 @@
               '';
             };
 
+            unloadModelAfterSeconds = mkOption {
+              type = types.int;
+              default = null;
+              description = ''
+                Unload the model after the specified number of seconds.
+              '';
+            };
+
             maxModel = mkOption {
               type = types.str;
               default = "None";
@@ -102,6 +110,7 @@
                 LISTEN = cfg.listen;
                 LOAD_MODEL_ON_STARTUP = mkIf (cfg.loadModelOnStartup == false) "0";
                 MAX_MODEL = mkIf (cfg.maxModel != "None") cfg.maxModel;
+                UNLOAD_MODEL_AFTER_S = mkIf (cfg.unloadModelAfterSeconds != null) (toString cfg.unloadModelAfterSeconds);
               };
               serviceConfig = mkMerge [
                 {
