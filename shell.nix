@@ -26,21 +26,6 @@ let
       openai-whisper
       torch
       uvicorn
-      # # https://github.com/elarivie/pyReaderWriterLock
-      # (buildPythonPackage rec {
-      #   pname = "pyReaderWriterLock";
-      #   version = "1.0.9";
-      #   src = pkgs.fetchFromGitHub {
-      #     owner = "elarivie";
-      #     repo = pname;
-      #     rev = "e7382855cdd46c9d54b2d697c48c00b8fd7e4c81";
-      #     hash = "sha256-53LOAUzfiD61MNik+6XnyEslfK1jJkWDElnvIbgHqDU=";
-      #   };
-      #   propagatedBuildInputs = [ typing-extensions ];
-      #   nativeCheckInputs = [
-      #     unittestCheckHook
-      #   ];
-      # })
     ] ++
     # only needed for development
     [

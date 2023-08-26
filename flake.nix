@@ -161,40 +161,24 @@
         pkgs = import nixpkgs {
           inherit system;
         };
+        pkgs-CUDA = import nixpkgs {
+          inherit system;
+          config = {
+            allowUnfree = true;
+            cudaSupport = true;
+          };
+        };
       in
       rec {
 
         # Use nixpkgs-fmt for `nix fmt'
         formatter = pkgs.nixpkgs-fmt;
 
-        devShells = {
-
+        devShells = let whisper-shell = { pkgs, ... }: import ./shell.nix { inherit pkgs; }; in {
           # nix develop
-          default =
-            let
-              pkgs = import nixpkgs {
-                inherit system;
-                config = {
-                  allowUnfree = true;
-                  cudaSupport = true;
-                };
-              };
-            in
-            import ./shell.nix { inherit pkgs; };
-
+          default = whisper-shell { pkgs = pkgs-CUDA; };
           # nix develop .#withoutCUDA
-          withoutCUDA =
-            let
-              pkgs = import nixpkgs {
-                inherit system;
-                config = {
-                  allowUnfree = false;
-                  cudaSupport = false;
-                };
-              };
-            in
-            import ./shell.nix { inherit pkgs; };
-
+          withoutCUDA = whisper-shell { inherit pkgs; };
         };
 
         defaultPackage = packages.whisper_api;
