@@ -174,12 +174,45 @@
         # Use nixpkgs-fmt for `nix fmt'
         formatter = pkgs.nixpkgs-fmt;
 
-        devShells = let whisper-shell = { pkgs, ... }: import ./shell.nix { inherit pkgs; }; in {
-          # nix develop
-          default = whisper-shell { pkgs = pkgs-CUDA; };
-          # nix develop .#withoutCUDA
-          withoutCUDA = whisper-shell { inherit pkgs; };
-        };
+        devShells =
+          let
+            whisper-shell = { pkgs, ... }:
+              let
+                python-with-packages = pkgs.python3.withPackages
+                  (p: with p; [
+                    fastapi
+                    multipart
+                    openai-whisper
+                    torch
+                    uvicorn
+                  ] ++
+                  # only needed for development
+                  [ autopep8 pytest ]);
+              in
+              pkgs.mkShell {
+                buildInputs = with pkgs;[
+                  # only needed for development
+                  nixpkgs-fmt
+                  pre-commit
+                  # also in final package
+                  python-with-packages
+                ];
+                shellHook = ''
+                  export PYTHONPATH=${python-with-packages}/${python-with-packages.sitePackages}
+                  echo ${python-with-packages}
+                  echo "PYTHONPATH=$PYTHONPATH"
+                  # cd src
+                  # uvicorn whisper_api:app --reload --host 127.0.0.1 --port 3001
+                  # exit 0
+                '';
+              };
+          in
+          {
+            # nix develop
+            default = whisper-shell { pkgs = pkgs-CUDA; };
+            # nix develop .#withoutCUDA
+            withoutCUDA = whisper-shell { inherit pkgs; };
+          };
 
         defaultPackage = packages.whisper_api;
 
