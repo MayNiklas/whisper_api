@@ -1,12 +1,14 @@
 {
-  inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-  };
+
+  description = "A simple API for OpenAI's Whisper";
+
+  inputs = { nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable"; };
 
   outputs = { self, nixpkgs, ... }:
     let
       # System types to support.
-      supportedSystems = [ "aarch64-darwin" "aarch64-linux" "x86_64-darwin" "x86_64-linux" ];
+      supportedSystems =
+        [ "aarch64-darwin" "aarch64-linux" "x86_64-darwin" "x86_64-linux" ];
       linuxSystems = [ "aarch64-linux" "x86_64-linux" ];
 
       # Helper function to generate an attrset '{ x86_64-linux = f "x86_64-linux"; ... }'.
@@ -20,6 +22,8 @@
           overlays = [ self.overlays.default ];
         });
 
+      # Nixpkgs instantiated for supported system types.
+      # Including CUDA support (and consequently, proprietary drivers).
       nixpkgsForCUDA = forAllSystems (system:
         import nixpkgs {
           inherit system;
@@ -30,6 +34,8 @@
           };
         });
 
+      # Nixpkgs instantiated for supported system types.
+      # Explicitly without CUDA support (and consequently, proprietary drivers).
       nixpkgsForWithoutCUDA = forAllSystems (system:
         import nixpkgs {
           inherit system;
@@ -68,7 +74,7 @@
                 ''
                   (builtins.readFile ./src/whisper_api/version.py)));
               format = "setuptools";
-              src = ./.;
+              src = self;
               propagatedBuildInputs = [
                 fastapi
                 multipart
