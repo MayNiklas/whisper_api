@@ -142,19 +142,19 @@
         forAllSystems
           (system: {
             # nix develop
-            default = whisper-shell { pkgs = nixpkgsFor; };
+            default = whisper-shell { pkgs = nixpkgsFor.${system}; };
             # nix develop .#withoutCUDA
-            withoutCUDA = whisper-shell { pkgs = nixpkgsForWithoutCUDA; };
+            withoutCUDA = whisper-shell { pkgs = nixpkgsForWithoutCUDA.${system}; };
           })
         //
         forLinuxSystems
           (system: {
             # nix develop
-            default = whisper-shell { pkgs = nixpkgsFor; };
+            default = whisper-shell { pkgs = nixpkgsFor.${system}; };
             # nix develop .#withCUDA
-            withCUDA = whisper-shell { pkgs = nixpkgsForCUDA; };
+            withCUDA = whisper-shell { pkgs = nixpkgsForCUDA.${system}; };
             # nix develop .#withoutCUDA
-            withoutCUDA = whisper-shell { pkgs = nixpkgsForWithoutCUDA; };
+            withoutCUDA = whisper-shell { pkgs = nixpkgsForWithoutCUDA.${system}; };
           });
 
       nixosModules.whisper_api = { lib, pkgs, config, ... }:
