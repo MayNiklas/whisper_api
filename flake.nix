@@ -168,6 +168,13 @@
             cudaSupport = true;
           };
         };
+        pkgs-withoutCUDA = import nixpkgs {
+          inherit system;
+          config = {
+            allowUnfree = false;
+            cudaSupport = false;
+          };
+        };
       in
       rec {
 
@@ -216,34 +223,53 @@
 
         defaultPackage = packages.whisper_api;
 
-        packages = flake-utils.lib.flattenTree rec {
-
-          whisper_api = pkgs.python3Packages.callPackage ./default.nix { };
-
-          whisper_api_withCUDA =
-            let
-              pkgs = import nixpkgs {
-                inherit system;
-                config = {
-                  allowUnfree = true;
-                  cudaSupport = true;
+        packages =
+          let
+            whisper_api-package =
+              { lib
+              , buildPythonPackage
+                # propagates
+              , torch
+              , fastapi
+              , multipart
+              , openai-whisper
+              , uvicorn
+                # tests
+              , pytestCheckHook
+              }:
+              buildPythonPackage {
+                pname = "whisper_api";
+                version = (lib.strings.removePrefix ''__version__ = "''
+                  (lib.strings.removeSuffix ''
+                    "
+                  ''
+                    (builtins.readFile ./src/whisper_api/version.py)));
+                format = "setuptools";
+                src = ./.;
+                propagatedBuildInputs = [
+                  fastapi
+                  multipart
+                  openai-whisper
+                  torch
+                  uvicorn
+                ];
+                nativeCheckInputs = [ pytestCheckHook ];
+                pythonImportsCheck = [ "whisper_api" ];
+                meta = with lib; {
+                  description = "A simple API for OpenAI's Whisper";
+                  homepage = "https://github.com/MayNiklas/whisper_api";
+                  maintainers = with maintainers; [ MayNiklas ];
                 };
               };
-            in
-            pkgs.python3Packages.callPackage ./default.nix { };
+          in
+          flake-utils.lib.flattenTree rec {
 
-          whisper_api_withoutCUDA =
-            let
-              pkgs = import nixpkgs {
-                inherit system;
-                config = {
-                  allowUnfree = false;
-                  cudaSupport = false;
-                };
-              };
-            in
-            pkgs.python3Packages.callPackage ./default.nix { };
+            whisper_api = pkgs.python3Packages.callPackage whisper_api-package { };
 
-        };
+            whisper_api_withCUDA = pkgs-CUDA.python3Packages.callPackage whisper_api-package { };
+
+            whisper_api_withoutCUDA = pkgs-withoutCUDA.python3Packages.callPackage whisper_api-package { };
+
+          };
       });
 }
