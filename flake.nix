@@ -1,17 +1,161 @@
 {
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
   };
 
-  # only used for `nix develop'
-  nixConfig = {
-    extra-trusted-public-keys = "cache.lounge.rocks:uXa8UuAEQoKFtU8Om/hq6d7U+HgcrduTVr8Cfl6JuaY=";
-    extra-substituters = "https://cache.lounge.rocks?priority=100";
-  };
+  outputs = { self, nixpkgs, ... }:
+    let
+      # System types to support.
+      supportedSystems = [ "aarch64-darwin" "aarch64-linux" "x86_64-darwin" "x86_64-linux" ];
+      linuxSystems = [ "aarch64-linux" "x86_64-linux" ];
 
-  outputs = { self, nixpkgs, flake-utils, ... }:
+      # Helper function to generate an attrset '{ x86_64-linux = f "x86_64-linux"; ... }'.
+      forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
+      forLinuxSystems = nixpkgs.lib.genAttrs linuxSystems;
+
+      # Nixpkgs instantiated for supported system types.
+      nixpkgsFor = forAllSystems (system:
+        import nixpkgs {
+          inherit system;
+          overlays = [ self.overlays.default ];
+        });
+
+      nixpkgsForCUDA = forAllSystems (system:
+        import nixpkgs {
+          inherit system;
+          overlays = [ self.overlays.default ];
+          config = {
+            allowUnfree = true;
+            cudaSupport = true;
+          };
+        });
+
+      nixpkgsForWithoutCUDA = forAllSystems (system:
+        import nixpkgs {
+          inherit system;
+          overlays = [ self.overlays.default ];
+          config = {
+            allowUnfree = true;
+            cudaSupport = true;
+          };
+        });
+    in
     {
+
+      # `nix fmt`
+      formatter = forAllSystems
+        (system: nixpkgsFor.${system}.nixpkgs-fmt);
+
+      overlays.default =
+        let
+          package =
+            { lib
+            , buildPythonPackage
+              # propagates
+            , torch
+            , fastapi
+            , multipart
+            , openai-whisper
+            , uvicorn
+              # tests
+            , pytestCheckHook
+            }:
+            buildPythonPackage {
+              pname = "whisper_api";
+              version = (lib.strings.removePrefix ''__version__ = "''
+                (lib.strings.removeSuffix ''
+                  "
+                ''
+                  (builtins.readFile ./src/whisper_api/version.py)));
+              format = "setuptools";
+              src = ./.;
+              propagatedBuildInputs = [
+                fastapi
+                multipart
+                openai-whisper
+                torch
+                uvicorn
+              ];
+              nativeCheckInputs = [ pytestCheckHook ];
+              pythonImportsCheck = [ "whisper_api" ];
+              meta = with lib; {
+                description = "A simple API for OpenAI's Whisper";
+                homepage = "https://github.com/MayNiklas/whisper_api";
+                maintainers = with maintainers; [ MayNiklas ];
+              };
+            };
+        in
+        final: prev: {
+          whisper_api = with final;  pkgs.python3Packages.callPackage package { };
+        };
+
+      # Packages
+      packages =
+        forAllSystems
+          (system: {
+            default = self.packages.${system}.whisper_api;
+            whisper_api = nixpkgsFor.${system}.whisper_api;
+            whisper_api_withoutCUDA = nixpkgsForWithoutCUDA.${system}.whisper_api;
+          })
+        //
+        forLinuxSystems
+          (system: {
+            default = self.packages.${system}.whisper_api;
+            whisper_api = nixpkgsFor.${system}.whisper_api;
+            whisper_api_withCUDA = nixpkgsForCUDA.${system}.whisper_api;
+            whisper_api_withoutCUDA = nixpkgsForWithoutCUDA.${system}.whisper_api;
+          });
+
+      devShells =
+        let
+          whisper-shell = { pkgs, ... }:
+            let
+              python-with-packages = pkgs.python3.withPackages (p: with p;
+                [
+                  fastapi
+                  multipart
+                  openai-whisper
+                  torch
+                  uvicorn
+                ] ++
+                # only needed for development
+                [ autopep8 pytest ]);
+            in
+            pkgs.mkShell {
+              buildInputs = with pkgs;[
+                # only needed for development
+                nixpkgs-fmt
+                pre-commit
+                # also in final package
+                python-with-packages
+              ];
+              shellHook = ''
+                export PYTHONPATH=${python-with-packages}/${python-with-packages.sitePackages}
+                echo ${python-with-packages}
+                echo "PYTHONPATH=$PYTHONPATH"
+                # cd src
+                # uvicorn whisper_api:app --reload --host 127.0.0.1 --port 3001
+                # exit 0
+              '';
+            };
+        in
+        forAllSystems
+          (system: {
+            # nix develop
+            default = whisper-shell { pkgs = nixpkgsFor; };
+            # nix develop .#withoutCUDA
+            withoutCUDA = whisper-shell { pkgs = nixpkgsForWithoutCUDA; };
+          })
+        //
+        forLinuxSystems
+          (system: {
+            # nix develop
+            default = whisper-shell { pkgs = nixpkgsFor; };
+            # nix develop .#withCUDA
+            withCUDA = whisper-shell { pkgs = nixpkgsForCUDA; };
+            # nix develop .#withoutCUDA
+            withoutCUDA = whisper-shell { pkgs = nixpkgsForWithoutCUDA; };
+          });
 
       nixosModules.whisper_api = { lib, pkgs, config, ... }:
         with lib;
@@ -152,124 +296,6 @@
           meta = { maintainers = with lib.maintainers; [ MayNiklas ]; };
 
         };
-    }
 
-    //
-
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = import nixpkgs {
-          inherit system;
-        };
-        pkgs-CUDA = import nixpkgs {
-          inherit system;
-          config = {
-            allowUnfree = true;
-            cudaSupport = true;
-          };
-        };
-        pkgs-withoutCUDA = import nixpkgs {
-          inherit system;
-          config = {
-            allowUnfree = false;
-            cudaSupport = false;
-          };
-        };
-      in
-      rec {
-
-        # Use nixpkgs-fmt for `nix fmt'
-        formatter = pkgs.nixpkgs-fmt;
-
-        devShells =
-          let
-            whisper-shell = { pkgs, ... }:
-              let
-                python-with-packages = pkgs.python3.withPackages
-                  (p: with p; [
-                    fastapi
-                    multipart
-                    openai-whisper
-                    torch
-                    uvicorn
-                  ] ++
-                  # only needed for development
-                  [ autopep8 pytest ]);
-              in
-              pkgs.mkShell {
-                buildInputs = with pkgs;[
-                  # only needed for development
-                  nixpkgs-fmt
-                  pre-commit
-                  # also in final package
-                  python-with-packages
-                ];
-                shellHook = ''
-                  export PYTHONPATH=${python-with-packages}/${python-with-packages.sitePackages}
-                  echo ${python-with-packages}
-                  echo "PYTHONPATH=$PYTHONPATH"
-                  # cd src
-                  # uvicorn whisper_api:app --reload --host 127.0.0.1 --port 3001
-                  # exit 0
-                '';
-              };
-          in
-          {
-            # nix develop
-            default = whisper-shell { pkgs = pkgs-CUDA; };
-            # nix develop .#withoutCUDA
-            withoutCUDA = whisper-shell { inherit pkgs; };
-          };
-
-        defaultPackage = packages.whisper_api;
-
-        packages =
-          let
-            whisper_api-package =
-              { lib
-              , buildPythonPackage
-                # propagates
-              , torch
-              , fastapi
-              , multipart
-              , openai-whisper
-              , uvicorn
-                # tests
-              , pytestCheckHook
-              }:
-              buildPythonPackage {
-                pname = "whisper_api";
-                version = (lib.strings.removePrefix ''__version__ = "''
-                  (lib.strings.removeSuffix ''
-                    "
-                  ''
-                    (builtins.readFile ./src/whisper_api/version.py)));
-                format = "setuptools";
-                src = ./.;
-                propagatedBuildInputs = [
-                  fastapi
-                  multipart
-                  openai-whisper
-                  torch
-                  uvicorn
-                ];
-                nativeCheckInputs = [ pytestCheckHook ];
-                pythonImportsCheck = [ "whisper_api" ];
-                meta = with lib; {
-                  description = "A simple API for OpenAI's Whisper";
-                  homepage = "https://github.com/MayNiklas/whisper_api";
-                  maintainers = with maintainers; [ MayNiklas ];
-                };
-              };
-          in
-          flake-utils.lib.flattenTree rec {
-
-            whisper_api = pkgs.python3Packages.callPackage whisper_api-package { };
-
-            whisper_api_withCUDA = pkgs-CUDA.python3Packages.callPackage whisper_api-package { };
-
-            whisper_api_withoutCUDA = pkgs-withoutCUDA.python3Packages.callPackage whisper_api-package { };
-
-          };
-      });
+    };
 }
