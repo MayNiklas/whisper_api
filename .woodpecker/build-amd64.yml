@@ -1,0 +1,29 @@
+labels:
+  backend: local
+
+platform: "linux/amd64"
+
+pipeline:
+  - name: setup attic
+    image: bash
+    commands:
+      - attic login lounge-rocks https://cache.lounge.rocks $ATTIC_KEY --set-default
+    secrets: [attic_key]
+
+  - name: build and push whisper_api
+    image: bash
+    commands:
+      - nix build --print-out-paths .#whisper_api
+      - attic push nix-cache result
+
+  - name: build and push whisper_api_withoutCUDA
+    image: bash
+    commands:
+      - nix build --print-out-paths .#whisper_api_withoutCUDA
+      - attic push nix-cache result
+
+  - name: build and push whisper_api_withCUDA
+    image: bash
+    commands:
+      - nix build --print-out-paths .#whisper_api_withCUDA
+      - attic push nix-cache result
