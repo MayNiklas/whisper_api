@@ -41,8 +41,8 @@
           inherit system;
           overlays = [ self.overlays.default ];
           config = {
-            allowUnfree = true;
-            cudaSupport = true;
+            allowUnfree = false;
+            cudaSupport = false;
           };
         });
     in
