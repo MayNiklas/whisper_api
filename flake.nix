@@ -9,11 +9,11 @@
       # System types to support.
       supportedSystems =
         [ "aarch64-darwin" "aarch64-linux" "x86_64-darwin" "x86_64-linux" ];
-      linuxSystems = [ "aarch64-linux" "x86_64-linux" ];
+      cudaSystems = [ "x86_64-linux" ];
 
       # Helper function to generate an attrset '{ x86_64-linux = f "x86_64-linux"; ... }'.
       forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
-      forLinuxSystems = nixpkgs.lib.genAttrs linuxSystems;
+      forCudaSystems = nixpkgs.lib.genAttrs cudaSystems;
 
       # Nixpkgs instantiated for supported system types.
       nixpkgsFor = forAllSystems (system:
@@ -104,7 +104,7 @@
             whisper_api_withoutCUDA = nixpkgsForWithoutCUDA.${system}.whisper_api;
           })
         //
-        forLinuxSystems
+        forCudaSystems
           (system: {
             default = self.packages.${system}.whisper_api;
             whisper_api = nixpkgsFor.${system}.whisper_api;
@@ -153,7 +153,7 @@
             withoutCUDA = whisper-shell { pkgs = nixpkgsForWithoutCUDA.${system}; };
           })
         //
-        forLinuxSystems
+        forCudaSystems
           (system: {
             # nix develop
             default = whisper-shell { pkgs = nixpkgsFor.${system}; };
