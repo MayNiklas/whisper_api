@@ -10,20 +10,32 @@ pipeline:
       - attic login lounge-rocks https://cache.lounge.rocks $ATTIC_KEY --set-default
     secrets: [attic_key]
 
-  - name: build and push whisper_api
+  - name: build whisper_api
     image: bash
     commands:
       - nix build --print-out-paths .#whisper_api
+
+  - name: push whisper_api
+    image: bash
+    commands:
       - attic push nix-cache result
 
-  - name: build and push whisper_api_withoutCUDA
+  - name: build whisper_api_withoutCUDA
     image: bash
     commands:
       - nix build --print-out-paths .#whisper_api_withoutCUDA
+
+  - name: push whisper_api_withoutCUDA
+    image: bash
+    commands:
       - attic push nix-cache result
 
-  - name: build and push whisper_api_withCUDA
+  - name: build whisper_api_withCUDA
     image: bash
     commands:
       - nix build --print-out-paths .#whisper_api_withCUDA
+
+  - name: push whisper_api_withCUDA
+    image: bash
+    commands:
       - attic push nix-cache result
