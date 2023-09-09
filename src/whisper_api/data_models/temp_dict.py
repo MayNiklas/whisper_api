@@ -1,7 +1,13 @@
 import threading
 import time
 from collections import defaultdict
-from typing import TypeVar, Iterable, Optional, MutableMapping, Iterator, Union, Callable
+from typing import Callable
+from typing import Iterable
+from typing import Iterator
+from typing import MutableMapping
+from typing import Optional
+from typing import TypeVar
+from typing import Union
 
 """
 Threadsafe DataStructure that holds data for a given time and then discards it

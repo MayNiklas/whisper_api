@@ -4,7 +4,8 @@ import sys
 import threading
 from tempfile import NamedTemporaryFile
 from types import FrameType
-from typing import Callable, Optional
+from typing import Callable
+from typing import Optional
 
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware

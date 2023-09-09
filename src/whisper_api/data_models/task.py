@@ -1,17 +1,20 @@
+import datetime as dt
 import io
 import os
 from dataclasses import dataclass
-import datetime as dt
 from tempfile import NamedTemporaryFile
-from typing import Union, Optional
+from typing import Optional
+from typing import Union
 from uuid import uuid4
 
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass as pydantic_dataclass
 from whisper.utils import WriteSRT
-
-from whisper_api.data_models.data_types import status_str_t, task_type_str_t, named_temp_file_name_t, uuid_hex_t, \
-    model_sizes_str_t
+from whisper_api.data_models.data_types import model_sizes_str_t
+from whisper_api.data_models.data_types import named_temp_file_name_t
+from whisper_api.data_models.data_types import status_str_t
+from whisper_api.data_models.data_types import task_type_str_t
+from whisper_api.data_models.data_types import uuid_hex_t
 
 
 class TaskResponse(BaseModel):

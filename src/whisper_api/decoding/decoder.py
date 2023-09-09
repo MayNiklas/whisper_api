@@ -4,14 +4,18 @@ import logging
 import signal
 from multiprocessing.connection import Connection
 from types import FrameType
-from typing import Literal, Optional
+from typing import Literal
+from typing import Optional
 
 import torch
 import whisper
-
-from whisper_api.data_models.data_types import model_sizes_str_t, task_type_str_t
-from whisper_api.data_models.task import WhisperResult, Task
-from whisper_api.environment import DEVELOP_MODE, LOAD_MODEL_ON_STARTUP, CPU_FALLBACK_MODEL
+from whisper_api.data_models.data_types import model_sizes_str_t
+from whisper_api.data_models.data_types import task_type_str_t
+from whisper_api.data_models.task import Task
+from whisper_api.data_models.task import WhisperResult
+from whisper_api.environment import CPU_FALLBACK_MODEL
+from whisper_api.environment import DEVELOP_MODE
+from whisper_api.environment import LOAD_MODEL_ON_STARTUP
 
 
 gigabyte_factor = int(1e9)
