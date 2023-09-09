@@ -145,6 +145,13 @@
                 echo "python interpreter: ${python-with-packages}/bin/python3"
                 echo "python site packages: $PYTHONPATH"
                 echo "---------------------------------------------------------------------"
+                echo "VSCode:"
+                echo "1. Install the 'ms-python.python' extension"
+                echo "2. Set the python interpreter to ${python-with-packages}/bin/python3"
+                echo "---------------------------------------------------------------------"
+                echo "PyCharm:"
+                echo "TODO - please contribute!"
+                echo "---------------------------------------------------------------------"
 
                 # ask if the user wants to run the whisper_api development server
                 read -p "Do you want to run the whisper_api development server? (y/n) " -n 1 -r
