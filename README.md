@@ -91,7 +91,7 @@ nix run .#whisper_api
 | `PORT`                             | Port the API is available under                                                           | any number of port interval        | 3001            |
 | `LISTEN`                           | Address the API is available under                                                        | any IP or domain you own           | 127.0.0.1       |
 | `LOAD_MODEL_ON_STARTUP`            | If model shall be loaded on startup                                                       | `1` (yes) or `0` (no)              | 1               |
-| `DEVELOP_MODE`                     | Develop mode defaults to smallest model to save time                                      | `1` (yes) or `0` (no)              | 0               | 
+| `DEVELOP_MODE`                     | Develop mode defaults to smallest model to save time                                      | `1` (yes) or `0` (no)              | 0               |
 | `UNLOAD_MODEL_AFTER_S`             | If set the model gets unloaded after inactivity of t seconds, unset means no unload       | any int (0 for instant unload)     | 'unset'         |
 | `DELETE_RESULTS_AFTER_M`           | Time after which results are deleted from internal storage                                | any int                            | 60              |
 | `REFRESH_EXPIRATION_TIME_ON_USAGE` | If result is used expand lifetime                                                         | `1` (yes) or `0` (no)              | 1               |
@@ -105,7 +105,7 @@ nix run .#whisper_api
 #### Note
 The system will automatically try to use the GPU and the best possible model when `USE_GPU_IF_AVAILABLE` and `MAX_MODEL` are not set.
 ###### CPU Mode
-`MAX_MODEL` must be set when CUDA is not available or explicitly disabled via `USE_GPU_IF_AVAILABLE`.  
+`MAX_MODEL` must be set when CUDA is not available or explicitly disabled via `USE_GPU_IF_AVAILABLE`.
 `CPU_FALLBACK_MODEL` is the fallback when GPU Mode shall use max-model but CPU shall be limited due to reduced performance.
 
 ##### Warning:

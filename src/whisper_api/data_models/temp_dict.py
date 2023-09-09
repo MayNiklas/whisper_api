@@ -71,7 +71,7 @@ class TempDict(MutableMapping[Identifier_t, Value_t]):
 
     """
     Properties, Getters & Variable-Setters
-    
+
     If they work on data they'll always trigger an expiration check
     to ensure that only non-timed-out data is used
     """
