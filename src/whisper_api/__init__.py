@@ -83,7 +83,7 @@ Setup decoder process
 parent_side, child_side = multiprocessing.Pipe()
 logging_entry_end, log_outry_end = multiprocessing.Pipe()
 
-configure_logging(logger, LOG_DIR, LOG_FILE,logging_entry_end)
+configure_logging(logger, LOG_DIR, LOG_FILE, logging_entry_end)
 
 api_end_points = EndPoints(app, task_dict, open_audio_files_dict, parent_side)
 frontend = Frontend(app)

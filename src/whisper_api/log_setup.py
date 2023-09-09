@@ -167,13 +167,12 @@ if __name__ == '__main__':
     # logger = logging.getLogger()
     # logger.setLevel(logging.DEBUG)
     # logger.addHandler(PipedFileHandler(_log_pipe, log_file_path))
-    configure_logging(logger, "", log_file_path,_log_pipe)
+    configure_logging(logger, "", log_file_path, _log_pipe)
 
     # Define a function to be run by the child process
     def child_function():
         time.sleep(1.5)
         logger.info("This is a log message from the child process")
-
 
     # Spawn a child process and wait for it to finish
     process = Process(target=child_function)

@@ -57,6 +57,7 @@ class TempDict(MutableMapping[Identifier_t, Value_t]):
 
     class ExpirationChecker:
         """ Context manager that triggers a gc when no auto_gc_interval is set """
+
         def __init__(self, parent: 'TempDict', force_check=False):
             self.parent = parent
             self.force_check = force_check
