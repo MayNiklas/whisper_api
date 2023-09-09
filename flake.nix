@@ -136,14 +136,14 @@
                 python-with-packages
               ];
               shellHook = ''
-                # set environment variables
-                export PYTHONPATH=${python-with-packages}/${python-with-packages.sitePackages}
-
                 # print information about the development shell
                 echo "---------------------------------------------------------------------"
                 echo "How to use this Nix development shell:"
                 echo "python interpreter: ${python-with-packages}/bin/python3"
-                echo "python site packages: $PYTHONPATH"
+                echo "python site packages: ${python-with-packages}/${python-with-packages.sitePackages}"
+                echo "---------------------------------------------------------------------"
+                echo "In case you need to set the PYTHONPATH environment variable, run:"
+                echo "export PYTHONPATH=${python-with-packages}/${python-with-packages.sitePackages}"
                 echo "---------------------------------------------------------------------"
                 echo "VSCode:"
                 echo "1. Install the 'ms-python.python' extension"
