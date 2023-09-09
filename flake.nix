@@ -153,6 +153,19 @@
                 echo "TODO - please contribute!"
                 echo "---------------------------------------------------------------------"
 
+                # if .git/hooks/pre-commit does not exist, ask if the user wants to install it
+                if [ ! -f .git/hooks/pre-commit ]; then
+                  read -p "Do you want to install the pre-commit hook? (y/n) " -n 1 -r
+                  echo   # (optional) move to a new line
+                  if [[ $REPLY =~ ^[Yy]$ ]]
+                  then
+                    echo "---------------------------------------------------------------------"
+                    echo "Installing the pre-commit hook..."
+                    echo "---------------------------------------------------------------------"
+                    ${pkgs.pre-commit}/bin/pre-commit install
+                  fi
+                fi
+
                 # ask if the user wants to run the whisper_api development server
                 read -p "Do you want to run the whisper_api development server? (y/n) " -n 1 -r
                 echo   # (optional) move to a new line
