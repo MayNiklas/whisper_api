@@ -153,6 +153,9 @@
                 echo "TODO - please contribute!"
                 echo "---------------------------------------------------------------------"
 
+                # set the PYTHONPATH environment variable
+                export PYTHONPATH=${python-with-packages}/${python-with-packages.sitePackages}
+
                 # if .git/hooks/pre-commit does not exist, ask if the user wants to install it
                 if [ ! -f .git/hooks/pre-commit ]; then
                   read -p "Do you want to install the pre-commit hook? (y/n) " -n 1 -r
