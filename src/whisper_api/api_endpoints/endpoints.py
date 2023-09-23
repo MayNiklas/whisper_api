@@ -168,10 +168,10 @@ class EndPoints:
     def login(request: Request):
         """
         /api/v1/login is a protected path.
-        -> creates a session cookie after successful login.
-        -> redirects user to /web/.
+        -> create a session cookie after successful login.
+        -> redirect to parameter 'redirect' or '/app/'.
         """
-        return RedirectResponse("/web/")
+        return RedirectResponse(url=request.query_params.get('redirect', '/app/'))
 
     @staticmethod
     def is_file_audio(file_path: str) -> bool:
