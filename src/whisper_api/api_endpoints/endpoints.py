@@ -12,6 +12,7 @@ from fastapi import Request
 from fastapi import status
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
+from fastapi.responses import RedirectResponse
 from fastapi.responses import StreamingResponse
 from whisper_api.data_models.data_types import named_temp_file_name_t
 from whisper_api.data_models.data_types import task_type_str_t
@@ -41,6 +42,7 @@ class EndPoints:
         self.app.add_api_route(f"{V1_PREFIX}/translate", self.translate, methods=["POST"])
         self.app.add_api_route(f"{V1_PREFIX}/transcribe", self.transcribe, methods=["POST"])
         self.app.add_api_route(f"{V1_PREFIX}/userinfo", self.userinfo)
+        self.app.add_api_route(f"{V1_PREFIX}/login", self.login)
         self.app.add_api_route(f"{V1_PREFIX}/srt", self.srt)
 
     def add_task(self, task: Task):
@@ -161,6 +163,15 @@ class EndPoints:
         user['user_agent'] = request.headers.get('User-Agent')
 
         return user
+
+    @staticmethod
+    def login(request: Request):
+        """
+        /api/v1/login is a protected path.
+        -> creates a session cookie after successful login.
+        -> redirects user to /web/.
+        """
+        return RedirectResponse("/web/")
 
     @staticmethod
     def is_file_audio(file_path: str) -> bool:
