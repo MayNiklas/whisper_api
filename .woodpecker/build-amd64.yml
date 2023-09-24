@@ -39,3 +39,23 @@ pipeline:
     image: bash
     commands:
       - attic push nix-cache result
+
+  - name: build devShell without CUDA
+    image: bash
+    commands:
+      - nix build --print-out-paths .#devShells.x86_64-linux.withoutCUDA
+
+  - name: push devShell without CUDA
+    image: bash
+    commands:
+      - attic push nix-cache result
+
+  - name: build devShell with CUDA
+    image: bash
+    commands:
+      - nix build --print-out-paths .#devShells.x86_64-linux.withCUDA
+
+  - name: push devShell with CUDA
+    image: bash
+    commands:
+      - attic push nix-cache result
