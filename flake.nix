@@ -63,6 +63,7 @@
             , multipart
             , openai-whisper
             , uvicorn
+            , ffmpeg-python
               # tests
             , pytestCheckHook
             }:
@@ -77,6 +78,7 @@
               src = self;
               propagatedBuildInputs = [
                 fastapi
+                ffmpeg-python
                 multipart
                 openai-whisper
                 torch
@@ -119,6 +121,7 @@
               python-with-packages = pkgs.python3.withPackages (p: with p;
                 [
                   fastapi
+                  ffmpeg-python
                   multipart
                   openai-whisper
                   torch
