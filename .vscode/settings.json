@@ -1,5 +1,7 @@
 {
-    "python.formatting.provider": "autopep8",
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.autopep8",
+    },
     "python.testing.pytestArgs": [
         "tests"
     ],
