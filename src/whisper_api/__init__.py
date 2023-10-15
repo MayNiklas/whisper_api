@@ -17,6 +17,7 @@ if __package__ is None and not hasattr(sys, "frozen"):
     sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
 
 from whisper_api.api_endpoints.endpoints import EndPoints
+from whisper_api.data_models.decoder_state import DecoderState
 from whisper_api.data_models.temp_dict import TempDict
 from whisper_api.frontend.endpoints import Frontend
 from whisper_api.data_models.data_types import named_temp_file_name_t, uuid_hex_t
@@ -40,6 +41,7 @@ print(description)
 init global variables
 """
 
+# TODO: can tasks get GCed before they finish if queue is too long?
 task_dict: TempDict[uuid_hex_t, Task] = TempDict(expiration_time_m=DELETE_RESULTS_AFTER_M,
                                                  refresh_expiration_time_on_usage=REFRESH_EXPIRATION_TIME_ON_USAGE,
                                                  auto_gc_interval_s=RUN_RESULT_EXPIRY_CHECK_M * 60,
@@ -47,6 +49,8 @@ task_dict: TempDict[uuid_hex_t, Task] = TempDict(expiration_time_m=DELETE_RESULT
 
 open_audio_files_dict: dict[named_temp_file_name_t, NamedTemporaryFile] = dict()
 
+
+decoder_state = DecoderState()
 
 """
 Init API
@@ -101,6 +105,23 @@ def listen_to_decoder(pipe_to_listen_to: multiprocessing.connection.Connection,
 
         update_type = msg.get("type", None)
         data = msg.get("data", None)
+
+        if update_type == "status":
+            decoder_state.gpu_mode = data["gpu_mode"]
+            decoder_state.max_model_to_use = data["max_model_to_use"]
+            decoder_state.last_loaded_model_size = data["last_loaded_model_size"]
+            decoder_state.is_model_loaded = data["is_model_loaded"]
+            decoder_state.queue_len = data.get("queue_len")  # might not be always present in future development
+
+            # check if new postion data arrived else continue
+            if (queue_status := data.get("queue_status")) is None:
+                continue
+
+            # refresh positions if new position-data is received
+            for key, pos in queue_status.items():
+                task_dict[key].position_in_queue = pos
+
+            continue
 
         if update_type == "task_update":  # data is a json-serialized task
             task = Task.from_json(data)
