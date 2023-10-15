@@ -112,6 +112,9 @@ class Decoder:
         if LOAD_MODEL_ON_STARTUP:
             self.model: whisper.Whisper = self.load_model(self.gpu_mode, self.max_model_to_use)
 
+        # let parent know we're ready and which state we're in
+        self.send_status_update()
+
     @property
     def is_model_loaded(self):
         return bool(self.model)
@@ -168,6 +171,7 @@ class Decoder:
 
         """
         # update state and send to parent
+        # we don't need a state update here, updating the one task is enough
         task.status = "processing"
         self.pipe_to_parent.send(self.task_to_pipe_message(task))
 
@@ -202,12 +206,14 @@ class Decoder:
                     task: Task = next(self.task_queue)
 
                 self.logger.info(f"Now processing task {task.uuid}")
+                self.send_status_update()  # queue changed in size - status update
 
                 self.handle_task(task)
 
             # we don't exit, we just wait patiently
             except StopIteration:
                 self.logger.info(f"There are no new tasks - waiting for condition")
+                self.send_status_update()  # nothing in queue - that's mentionable
                 with self.task_queue_lock:
                     self.new_task_condition.wait()
 
@@ -231,12 +237,13 @@ class Decoder:
             if not self.pipe_to_parent.poll(self.unload_model_after_s):
                 # can only trigger if timeout is set
                 self.__unload_model()
+                self.send_status_update()  # the potential unload of the model is worth an update
                 continue
 
             msg = self.pipe_to_parent.recv()
 
             # the structure is a dict that has two keys:
-            # task_type: the way to interpret the data
+            # task_type: the way to interpret the data received
             # data: the data to process. in most cases this will be a dict itself
             task_type = msg.get("type", None)
             data = msg.get("data", None)
@@ -248,6 +255,11 @@ class Decoder:
             elif task_type == "exit":  # data is arbitrary since it will not be considered
                 self.logger.warning("Decoder received exit, exiting process.")
                 exit(0)
+
+            # TODO: maybe add a more efficient task that just requires the lookup of one task?
+            elif task_type == "status":  # data is not evaluated
+                self.send_status_update()
+                continue
 
             # guarding against all messages that are not decode messages
             # data is a json-serialized task
@@ -268,6 +280,11 @@ class Decoder:
             # put task to queue
             with self.task_queue_lock:
                 self.task_queue.put(task)
+                # the queue received a new element
+                # that change will technically be captured by the decoder thread too,
+                # but maybe it's in a longer decode process
+                # sending the update here too makes things more responsive from the outside
+                self.send_status_update()
 
                 # in case that the decode thread is waiting - notify the condition
                 self.new_task_condition.notify()
@@ -493,6 +510,7 @@ class Decoder:
 
         # load model
         model = self.load_model(self.gpu_mode, model_size or self.max_model_to_use)  # model can still be None
+        self.send_status_update()  # we might have reloaded or changed the mode - worth an update
 
         # load failed, load model should try everything to load one, so it's a lost cause
         if model is None:
