@@ -201,8 +201,11 @@ class Decoder:
 
             msg = self.pipe_to_parent.recv()
 
+            # the structure is a dict that has two keys:
+            # task_name: the way to interpret the data
+            # data: the data to process. in most cases this will be a dict itself
             task_name = msg.get("task_name", None)
-            val = msg.get("data", None)
+            data = msg.get("data", None)
 
             if task_name is None:
                 self.logger.debug(f"Decoder received '{task_name=}', weird... continuing - data: {msg=}")
@@ -222,7 +225,7 @@ class Decoder:
 
             # reconstruct task from json
             try:
-                task = Task.from_json(val)
+                task = Task.from_json(data)
             except Exception as e:
                 self.logger.warning(f"Could not parse task from json (continuing): '{e}'")
                 continue
