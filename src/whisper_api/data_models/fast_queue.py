@@ -59,7 +59,8 @@ class FastQueue(Generic[T]):
         else:
             identifier = by_key
 
-        if identifier == self._key_fn(self.current):  # this element is not in the queue but the current one
+        # this element is not in the queue but the current one
+        if self.current is not None and identifier == self._key_fn(self.current):
             return 0
 
         if identifier not in self.__index_dict:
