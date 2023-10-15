@@ -94,19 +94,23 @@ def listen_to_decoder(pipe_to_listen_to: multiprocessing.connection.Connection,
     """ listen to decode process and update the task_dict accordingly """
     while True:
         try:
-            task_update_json = pipe_to_listen_to.recv()
+            msg = pipe_to_listen_to.recv()
         except KeyboardInterrupt:
             worker_exit_fn()
             exit(0)
 
-        task = Task.from_json(task_update_json)
+        update_type = msg.get("type", None)
+        data = msg.get("data", None)
 
-        task_dict[task.uuid] = task
+        if update_type == "task_update":  # data is a json-serialized task
+            task = Task.from_json(data)
 
-        # when task is done (no matter if finished or failed) close and delete the audio file
-        if task.status == "finished" or task.status == "failed":
-            open_audio_files_dict[task.audiofile_name].close()
-            del open_audio_files_dict[task.audiofile_name]
+            task_dict[task.uuid] = task
+
+            # when task is done (no matter if finished or failed) close and delete the audio file
+            if task.status == "finished" or task.status == "failed":
+                open_audio_files_dict[task.audiofile_name].close()
+                del open_audio_files_dict[task.audiofile_name]
 
 
 """

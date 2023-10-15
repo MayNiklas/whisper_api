@@ -124,6 +124,13 @@ class Decoder:
         self.logger.info("Using GPU Mode")
         return True
 
+    @staticmethod
+    def task_to_pipe_message(task: Task, /) -> dict:
+        return {
+            "type": "task_update",
+            "data": task.to_json
+        }
+
     def handle_task(self, task: Task) -> Task:
         """
         Calls the actual decoding and sends the result to the parent
@@ -135,7 +142,7 @@ class Decoder:
         """
         # update state and send to parent
         task.status = "processing"
-        self.pipe_to_parent.send(task.to_json)
+        self.pipe_to_parent.send(self.task_to_pipe_message(task))
 
         # start processing
         whisper_result = self.__run_model(audio_path=task.audiofile_name,
@@ -150,7 +157,7 @@ class Decoder:
         else:
             task.status = "failed"
 
-        self.pipe_to_parent.send(task.to_json)
+        self.pipe_to_parent.send(self.task_to_pipe_message(task))
 
         return task
 
