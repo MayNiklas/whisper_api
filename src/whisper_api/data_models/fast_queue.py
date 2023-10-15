@@ -118,7 +118,7 @@ class FastQueue(Generic[T]):
         if self.current is not None:
             priority_dict[0] = self.current
 
-        queued_element_priorities = {self.index(self._key_fn(elm)): elm for elm in elm_list}
+        queued_element_priorities = {self.index(elm): elm for elm in elm_list}
 
         return {**priority_dict, **queued_element_priorities}
 
