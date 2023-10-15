@@ -304,7 +304,17 @@ class Decoder:
 
             # put task to queue
             with self.task_queue_lock:
-                self.task_queue.put(task)
+                try:
+                    self.task_queue.put(task)
+                except OverflowError:
+                    # TODO: maybe add new status "rejected" and a reason to it?
+                    self.logger.warning(
+                        f"Task '{task.uuid}' failed because queue of size {self.task_queue.max_size} is full"
+                    )
+                    task.status = "failed"
+                    self.send_task_update(task)
+                    continue
+
                 # we don't need to send a task update
                 # the only thing that changes immediately is the position in queue
                 # and that is covered by the state update below
