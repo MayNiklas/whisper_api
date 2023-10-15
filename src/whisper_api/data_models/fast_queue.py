@@ -40,7 +40,7 @@ class FastQueue(Generic[T]):
 
     def put(self, elm: T):
         if len(self) == self.__max_size:
-            raise IndexError(f"The Queue is full: max size={self.__max_size}")
+            raise OverflowError(f"The Queue is full: max size={self.__max_size}")
 
         self.__queue[self.__next_free_index] = elm
         self.__index_dict[self._key_fn(elm)] = self.__next_free_index
