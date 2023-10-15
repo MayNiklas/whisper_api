@@ -113,6 +113,10 @@ class Decoder:
             self.model: whisper.Whisper = self.load_model(self.gpu_mode, self.max_model_to_use)
 
         # let parent know we're ready and which state we're in
+        # DISCLAIMER: yes I know. we could put that info print in the function.
+        # that would save a lot of duplicate lines.
+        # BUT: the logging is way more helpful if it shows the calling function instead of status_update()
+        self.logger.info(f"Sending status update to parent")
         self.send_status_update()
 
     @property
@@ -149,7 +153,6 @@ class Decoder:
 
     def send_status_update(self):
         status_dict = self.get_status_dict()
-        self.logger.info(f"Sending status update to parent")
         self.logger.debug(f"{status_dict}")
 
         self.pipe_to_parent.send(status_dict)
@@ -216,6 +219,7 @@ class Decoder:
                     task: Task = next(self.task_queue)
 
                 self.logger.info(f"Now processing task {task.uuid}")
+                self.logger.info(f"Sending status update to parent")
                 self.send_status_update()  # queue changed in size - status update
 
                 self.handle_task(task)
@@ -223,6 +227,7 @@ class Decoder:
             # we don't exit, we just wait patiently
             except StopIteration:
                 self.logger.info(f"There are no new tasks - waiting for condition")
+                self.logger.info(f"Sending status update to parent")
                 self.send_status_update()  # nothing in queue - that's mentionable
                 with self.task_queue_lock:
                     self.new_task_condition.wait()
@@ -247,6 +252,7 @@ class Decoder:
             if not self.pipe_to_parent.poll(self.unload_model_after_s):
                 # can only trigger if timeout is set
                 self.__unload_model()
+                self.logger.info(f"Sending status update to parent")
                 self.send_status_update()  # the potential unload of the model is worth an update
                 continue
 
@@ -268,6 +274,7 @@ class Decoder:
 
             # TODO: maybe add a more efficient task that just requires the lookup of one task?
             elif task_type == "status":  # data is not evaluated
+                self.logger.info(f"Sending status update to parent")
                 self.send_status_update()
                 continue
 
@@ -298,6 +305,7 @@ class Decoder:
                 # that change will technically be captured by the decoder thread too,
                 # but maybe it's in a longer decode process
                 # sending the update here too makes things more responsive from the outside
+                self.logger.info(f"Sending status update to parent")
                 self.send_status_update()
 
                 # in case that the decode thread is waiting - notify the condition
@@ -524,6 +532,7 @@ class Decoder:
 
         # load model
         model = self.load_model(self.gpu_mode, model_size or self.max_model_to_use)  # model can still be None
+        self.logger.info(f"Sending status update to parent")
         self.send_status_update()  # we might have reloaded or changed the mode - worth an update
 
         # load failed, load model should try everything to load one, so it's a lost cause
