@@ -161,6 +161,9 @@ class Decoder:
             "data": task.to_json
         }
 
+    def send_task_update(self, task: Task, /):
+        self.pipe_to_parent.send(self.task_to_pipe_message(task))
+
     def handle_task(self, task: Task) -> Task:
         """
         Calls the actual decoding and sends the result to the parent
@@ -177,7 +180,7 @@ class Decoder:
             # we could also just enter 0 but this ensures consistency when queues behaviour changes
             task.position_in_queue = self.task_queue.index(task)
 
-        self.pipe_to_parent.send(self.task_to_pipe_message(task))
+        self.send_task_update(task)
 
         # start processing
         whisper_result = self.__run_model(audio_path=task.audiofile_name,
@@ -195,7 +198,7 @@ class Decoder:
         # either way task is no longer queued
         task.position_in_queue = None
 
-        self.pipe_to_parent.send(self.task_to_pipe_message(task))
+        self.send_task_update(task)
 
         return task
 
@@ -287,6 +290,10 @@ class Decoder:
             # put task to queue
             with self.task_queue_lock:
                 self.task_queue.put(task)
+                # we don't need to send a task update
+                # the only thing that changes immediately is the position in queue
+                # and that is covered by the state update below
+
                 # the queue received a new element
                 # that change will technically be captured by the decoder thread too,
                 # but maybe it's in a longer decode process
