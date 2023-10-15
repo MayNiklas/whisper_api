@@ -98,6 +98,7 @@ nix run .#whisper_api
 | `RUN_RESULT_EXPIRY_CHECK_M`        | Interval in which timeout checks shall be executed                                        | any int (0 enables lazy timeout)   | 5               |
 | `USE_GPU_IF_AVAILABLE`             | If GPU shall be used when available                                                       | `1` (yes) or `0` (no)              | 1               |
 | `MAX_MODEL`                        | Max model to be used for decoding, unset means best possible                              | name of official model             | 'unset'         |
+| `MAX_TASK_QUEUE_SIZE`              | The limit of tasks that can be queued in the decoder at the same time before rejection    | any int                            | 128             |
 | `CPU_FALLBACK_MODEL`               | The fallback when `MAX_MODEL` is not set and CPU mode is needed                           | name of official model             | medium          |
 | `LOG_DIR`                          | The directory to store log-file(s) in "" means 'this directory', dir is created if needed | wanted directory name or empty str | "data/"         |
 | `LOG_FILE`                         | The name of the log file                                                                  | arbitrary filename                 | whisper_api.log |
