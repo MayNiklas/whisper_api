@@ -2,6 +2,7 @@ import datetime as dt
 import gc
 import logging
 import signal
+import threading
 from multiprocessing.connection import Connection
 from types import FrameType
 from typing import Literal
@@ -11,6 +12,7 @@ import torch
 import whisper
 from whisper_api.data_models.data_types import model_sizes_str_t
 from whisper_api.data_models.data_types import task_type_str_t
+from whisper_api.data_models.fast_queue import FastQueue
 from whisper_api.data_models.task import Task
 from whisper_api.data_models.task import WhisperResult
 from whisper_api.environment import CPU_FALLBACK_MODEL
@@ -78,6 +80,14 @@ class Decoder:
         """
 
         self.pipe_to_parent = pipe_to_parent
+        # TODO: handle maxsize by making it configurable from outside and handle case where Queue reaches limit
+        # queue that stores tasks that wait for processing
+        # using FastQueue because it allows for position queries of queued objects
+        self.task_queue = FastQueue(max_size=64, key=lambda task: task.uuid)
+        # FastQueue is not threadsafe, so accesses must be synchronized externally
+        self.task_queue_lock = threading.RLock()
+        # condition that is waited for when no tasks are available and is notified when a new task is put in the queue
+        self.new_task_condition = threading.Condition(self.task_queue_lock)
         self.logger = logger
 
         # register signal handlers
@@ -114,12 +124,70 @@ class Decoder:
         self.logger.info("Using GPU Mode")
         return True
 
+    def handle_task(self, task: Task) -> Task:
+        """
+        Calls the actual decoding and sends the result to the parent
+        Args:
+            task: the task to do
+
+        Returns: the updated task
+
+        """
+        # update state and send to parent
+        task.status = "processing"
+        self.pipe_to_parent.send(task.to_json)
+
+        # start processing
+        whisper_result = self.__run_model(audio_path=task.audiofile_name,
+                                          task=task.task_type,
+                                          source_language=task.source_language,
+                                          model_size=task.target_model_size)
+
+        # set result and send to parent
+        if whisper_result is not None:
+            task.whisper_result = whisper_result
+            task.status = "finished"
+        else:
+            task.status = "failed"
+
+        self.pipe_to_parent.send(task.to_json)
+
+        return task
+
+    def decode_loop(self):
+        """
+        Loops over queue and calls processing of each task from the queue.
+        Waits for condition is no task is available.
+        This function is meant to be run as a daemon thread, it will never exit on its own.
+        """
+
+        # try to get new task from queue, if none wait for the condition
+        while True:
+            try:
+                with self.task_queue_lock:
+                    task: Task = next(self.task_queue)
+
+                self.logger.info(f"Now processing task {task.uuid}")
+
+                self.handle_task(task)
+
+            # we don't exit, we just wait patiently
+            except StopIteration:
+                self.logger.info(f"There are no new tasks - waiting for condition")
+                with self.task_queue_lock:
+                    self.new_task_condition.wait()
+
     def run(self):
         """
         Read from task_queue, process tasks and send results to parent process
         Returns:
-
         """
+
+        # start thread that read tasks from queue and processes them
+        # it's a daemon, because it shall die when the main thread (that runs this function) exits
+        decoder_thread = threading.Thread(target=self.decode_loop, name="decode-loop", daemon=True)
+        decoder_thread.start()
+
         self.logger.info(f"Decoder is listening for messages")
         while True:
             # wait for tasks, if no task after time specified in UNLOAD_MODEL_AFTER_S, unload model
@@ -159,24 +227,12 @@ class Decoder:
                 self.logger.warning(f"Could not parse task from json (continuing): '{e}'")
                 continue
 
-            # update state and send to parent
-            task.status = "processing"
-            self.pipe_to_parent.send(task.to_json)
+            # put task to queue
+            with self.task_queue_lock:
+                self.task_queue.put(task)
 
-            # start processing
-            whisper_result = self.__run_model(audio_path=task.audiofile_name,
-                                              task=task.task_type,
-                                              source_language=task.source_language,
-                                              model_size=task.target_model_size)
-
-            # set result and send to parent
-            if whisper_result is not None:
-                task.whisper_result = whisper_result
-                task.status = "finished"
-            else:
-                task.status = "failed"
-
-            self.pipe_to_parent.send(task.to_json)
+                # in case that the decode thread is waiting - notify the condition
+                self.new_task_condition.notify()
 
     def __unload_model(self):
         """
