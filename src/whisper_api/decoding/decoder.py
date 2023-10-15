@@ -143,7 +143,7 @@ class Decoder:
         # TODO: mayne add a kwarg to decide whether this "locked" data shall be collected or if data above is enough
         with self.task_queue_lock:
             data_dict["queue_len"] = len(self.task_queue)
-            data_dict["queue_status"] = {task.uuid: prio for prio, task in self.task_queue.to_priority_dict().items()}
+            data_dict["queue_status"] = {task.uuid: pos for pos, task in self.task_queue.to_priority_dict().items()}
 
         return {"type": "status", "data": data_dict}
 
