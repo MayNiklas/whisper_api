@@ -17,6 +17,7 @@ from fastapi.responses import StreamingResponse
 from whisper_api.data_models.data_types import named_temp_file_name_t
 from whisper_api.data_models.data_types import task_type_str_t
 from whisper_api.data_models.data_types import uuid_hex_t
+from whisper_api.data_models.decoder_state import DecoderState
 from whisper_api.data_models.task import Task
 from whisper_api.data_models.task import TaskResponse
 from whisper_api.data_models.temp_dict import TempDict
@@ -28,9 +29,11 @@ V1_PREFIX = "/api/v1"
 class EndPoints:
     def __init__(self, app: FastAPI,
                  tasks_dict: TempDict[uuid_hex_t, Task],
+                 decoder_state: DecoderState,
                  open_audio_files_dict: dict[named_temp_file_name_t, NamedTemporaryFile],
                  conn_to_child: Connection):
         self.tasks = tasks_dict
+        self.decoder_state = decoder_state
         self.open_audio_files_dict = open_audio_files_dict
         self.app = app
         self.conn_to_child = conn_to_child

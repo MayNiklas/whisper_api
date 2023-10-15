@@ -89,7 +89,7 @@ logging_entry_end, log_outry_end = multiprocessing.Pipe()
 
 configure_logging(logger, LOG_DIR, LOG_FILE, logging_entry_end)
 
-api_end_points = EndPoints(app, task_dict, open_audio_files_dict, parent_side)
+api_end_points = EndPoints(app, task_dict, decoder_state, open_audio_files_dict, parent_side)
 frontend = Frontend(app)
 
 
