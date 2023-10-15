@@ -72,7 +72,7 @@ class Task:
     source_language: Optional[str]
     task_type: task_type_str_t
     status: status_str_t = "pending"
-    position_in_queue = None
+    position_in_queue: Optional[int] = None
     whisper_result: Optional[WhisperResult] = None
     time_uploaded: dt.datetime = None
     uuid: uuid_hex_t = None
