@@ -109,6 +109,10 @@ class Decoder:
 
         self.model: whisper.Whisper = None
         self.last_loaded_model_size: model_sizes_str_t = None
+
+        # internal state that is nowhere used for checks, it's just for state reports to parent
+        self.__busy = False
+
         if LOAD_MODEL_ON_STARTUP:
             self.model: whisper.Whisper = self.load_model(self.gpu_mode, self.max_model_to_use)
 
@@ -141,7 +145,8 @@ class Decoder:
             "gpu_mode": self.gpu_mode,
             "max_model_to_use": self.max_model_to_use,
             "last_loaded_model_size": self.last_loaded_model_size,
-            "is_model_loaded": self.is_model_loaded
+            "is_model_loaded": self.is_model_loaded,
+            "currently_busy": self.__busy
         }
 
         # TODO: mayne add a kwarg to decide whether this "locked" data shall be collected or if data above is enough
@@ -218,14 +223,17 @@ class Decoder:
                 with self.task_queue_lock:
                     task: Task = next(self.task_queue)
 
+                self.__busy = True
+
                 self.logger.info(f"Now processing task {task.uuid}")
                 self.logger.info(f"Sending status update to parent")
                 self.send_status_update()  # queue changed in size - status update
 
-                self.handle_task(task)
+                self.handle_task(task)  # calls decoding and blocks until it's done
 
             # we don't exit, we just wait patiently
             except StopIteration:
+                self.__busy = False
                 self.logger.info(f"There are no new tasks - waiting for condition")
                 self.logger.info(f"Sending status update to parent")
                 self.send_status_update()  # nothing in queue - that's mentionable

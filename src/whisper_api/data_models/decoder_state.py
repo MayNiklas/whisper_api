@@ -9,3 +9,4 @@ class DecoderState(BaseModel):
     last_loaded_model_size: model_sizes_str_t = None
     is_model_loaded: bool = None
     tasks_in_queue: int = None
+    currently_busy: bool = False
