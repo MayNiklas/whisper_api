@@ -5,6 +5,7 @@ import signal
 import threading
 from multiprocessing.connection import Connection
 from types import FrameType
+from typing import Any
 from typing import Literal
 from typing import Optional
 
@@ -111,6 +112,10 @@ class Decoder:
         if LOAD_MODEL_ON_STARTUP:
             self.model: whisper.Whisper = self.load_model(self.gpu_mode, self.max_model_to_use)
 
+    @property
+    def is_model_loaded(self):
+        return bool(self.model)
+
     def __is_gpu_mode(self, use_gpu_if_available: bool):
         """ Determine if GPU can and shall be used or not """
         if not torch.cuda.is_available():
@@ -123,6 +128,28 @@ class Decoder:
 
         self.logger.info("Using GPU Mode")
         return True
+
+    def get_status_dict(self) -> dict[str, Any]:
+        status_dict = {
+            "gpu_mode": self.gpu_mode,
+            "max_model_to_use": self.max_model_to_use,
+            "last_loaded_model_size": self.last_loaded_model_size,
+            "is_model_loaded": self.is_model_loaded
+        }
+
+        # TODO: mayne add a kwarg to decide whether this "locked" data shall be collected or if data above is enough
+        with self.task_queue_lock:
+            status_dict["queue_len"] = len(self.task_queue)
+            status_dict["queue_status"] = {task.uuid: prio for prio, task in self.task_queue.to_priority_dict().items()}
+
+        return status_dict
+
+    def send_status_update(self):
+        status_dict = self.get_status_dict()
+        self.logger.info(f"Sending status update to parent")
+        self.logger.debug(f"{status_dict}")
+
+        self.pipe_to_parent.send(status_dict)
 
     @staticmethod
     def task_to_pipe_message(task: Task, /) -> dict:
