@@ -112,12 +112,12 @@ class FastQueue(Generic[T]):
         Returns:
             dict mapping index to element. first in queue is key 1, 0 is current element if exists
         """
-        elm_set = set(self.__queue) - {None, }
+        elm_list = [elm for elm in self.__queue if elm is not None]
         priority_dict = {}
         if self.current is not None:
             priority_dict[0] = self.current
 
-        queued_element_priorities = {self.index(self._key_fn(elm)): elm for elm in elm_set}
+        queued_element_priorities = {self.index(self._key_fn(elm)): elm for elm in elm_list}
 
         return {**priority_dict, **queued_element_priorities}
 
@@ -145,6 +145,7 @@ if __name__ == '__main__':
     fq.__next__()
     print(fq.to_priority_dict())
     fq.__next__()
+    print(fq.to_priority_dict())
     fq.put(5)
 
     p = fq.index(5)
