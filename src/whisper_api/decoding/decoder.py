@@ -19,6 +19,7 @@ from whisper_api.data_models.task import WhisperResult
 from whisper_api.environment import CPU_FALLBACK_MODEL
 from whisper_api.environment import DEVELOP_MODE
 from whisper_api.environment import LOAD_MODEL_ON_STARTUP
+from whisper_api.environment import MAX_TASK_QUEUE_SIZE
 
 
 gigabyte_factor = int(1e9)
@@ -84,7 +85,7 @@ class Decoder:
         # TODO: handle maxsize by making it configurable from outside and handle case where Queue reaches limit
         # queue that stores tasks that wait for processing
         # using FastQueue because it allows for position queries of queued objects
-        self.task_queue = FastQueue(max_size=64, key=lambda task: task.uuid)
+        self.task_queue = FastQueue(max_size=MAX_TASK_QUEUE_SIZE, key=lambda task: task.uuid)
         # FastQueue is not threadsafe, so accesses must be synchronized externally
         self.task_queue_lock = threading.RLock()
         # condition that is waited for when no tasks are available and is notified when a new task is put in the queue

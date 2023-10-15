@@ -14,6 +14,7 @@ REFRESH_EXPIRATION_TIME_ON_USAGE = int(os.getenv("REFRESH_EXPIRATION_TIME_ON_USA
 RUN_RESULT_EXPIRY_CHECK_M = os.getenv("RUN_RESULT_EXPIRY_CHECK_M", 5)
 USE_GPU_IF_AVAILABLE = int(os.getenv("USE_GPU_IF_AVAILABLE", 1))
 MAX_MODEL = os.getenv("MAX_MODEL", None)
+MAX_TASK_QUEUE_SIZE = int(os.getenv("MAX_TASK_QUEUE_SIZE", 128))
 CPU_FALLBACK_MODEL = os.getenv("CPU_FALLBACK_MODEL", "medium")
 LOG_DIR = os.getenv("LOG_DIR", "data/")
 LOG_FILE = os.getenv("LOG_FILE", "whisper_api.log")
