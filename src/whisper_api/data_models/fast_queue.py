@@ -1,4 +1,3 @@
-from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Generic
@@ -51,14 +50,22 @@ class FastQueue(Generic[T]):
         else:
             self.__next_free_index += 1
 
-    def index(self, elm: T) -> Optional[int]:
-        if self._key_fn(elm) == self._key_fn(self.current):  # this element is not in the queue but the current one
+    def index(self, elm: T = None, by_key: HashableT = None) -> Optional[int]:
+        if elm is not None and by_key is not None:
+            raise ValueError(f"Use only 'elm' OR 'by_key', got: {elm=}, {by_key=}")
+
+        if elm is not None:
+            identifier = self._key_fn(elm)
+        else:
+            identifier = by_key
+
+        if identifier == self._key_fn(self.current):  # this element is not in the queue but the current one
             return 0
 
-        if self._key_fn(elm) not in self.__index_dict:
+        if identifier not in self.__index_dict:
             return None
 
-        elm_index = self.__index_dict[self._key_fn(elm)]
+        elm_index = self.__index_dict[identifier]
 
         queue_len = len(self)
         next_element_index = self.__next_element_idx
