@@ -111,7 +111,8 @@ def listen_to_decoder(pipe_to_listen_to: multiprocessing.connection.Connection,
             decoder_state.max_model_to_use = data["max_model_to_use"]
             decoder_state.last_loaded_model_size = data["last_loaded_model_size"]
             decoder_state.is_model_loaded = data["is_model_loaded"]
-            decoder_state.queue_len = data.get("queue_len")  # might not be always present in future development
+            # might not be always present in future development
+            decoder_state.tasks_in_queue = data.get("tasks_in_queue")
 
             # check if new postion data arrived else continue
             if (queue_status := data.get("queue_status")) is None:

@@ -8,4 +8,4 @@ class DecoderState(BaseModel):
     max_model_to_use: str = None
     last_loaded_model_size: model_sizes_str_t = None
     is_model_loaded: bool = None
-    queue_len: int = None
+    tasks_in_queue: int = None
