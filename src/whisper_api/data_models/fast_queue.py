@@ -127,7 +127,11 @@ class FastQueue(Generic[T]):
         return len(self.__index_dict)
 
     def __repr__(self):
-        return f"<FastQueue(queue={self.__queue}, idx_dict={self.__index_dict})>"
+        return f"<FastQueue(queue={self.__queue}, idx_dict={self.__index_dict}, max_size={self.__max_size})>"
+
+    @property
+    def max_size(self):
+        return self.__max_size
 
 
 if __name__ == '__main__':
