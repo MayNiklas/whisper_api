@@ -132,8 +132,8 @@ class Decoder:
         self.logger.info("Using GPU Mode")
         return True
 
-    def get_status_dict(self) -> dict[str, Any]:
-        status_dict = {
+    def get_status_dict(self) -> dict[str, str | dict[str, Any]]:
+        data_dict = {
             "gpu_mode": self.gpu_mode,
             "max_model_to_use": self.max_model_to_use,
             "last_loaded_model_size": self.last_loaded_model_size,
@@ -142,10 +142,10 @@ class Decoder:
 
         # TODO: mayne add a kwarg to decide whether this "locked" data shall be collected or if data above is enough
         with self.task_queue_lock:
-            status_dict["queue_len"] = len(self.task_queue)
-            status_dict["queue_status"] = {task.uuid: prio for prio, task in self.task_queue.to_priority_dict().items()}
+            data_dict["queue_len"] = len(self.task_queue)
+            data_dict["queue_status"] = {task.uuid: prio for prio, task in self.task_queue.to_priority_dict().items()}
 
-        return status_dict
+        return {"type": "status", "data": data_dict}
 
     def send_status_update(self):
         status_dict = self.get_status_dict()
