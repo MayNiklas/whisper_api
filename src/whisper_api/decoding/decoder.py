@@ -173,6 +173,10 @@ class Decoder:
         # update state and send to parent
         # we don't need a state update here, updating the one task is enough
         task.status = "processing"
+        with self.task_queue_lock:
+            # we could also just enter 0 but this ensures consistency when queues behaviour changes
+            task.position_in_queue = self.task_queue.index(task)
+
         self.pipe_to_parent.send(self.task_to_pipe_message(task))
 
         # start processing
@@ -187,6 +191,9 @@ class Decoder:
             task.status = "finished"
         else:
             task.status = "failed"
+
+        # either way task is no longer queued
+        task.position_in_queue = None
 
         self.pipe_to_parent.send(self.task_to_pipe_message(task))
 
