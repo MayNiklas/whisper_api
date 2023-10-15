@@ -8,7 +8,7 @@ from typing import Literal
 
 
 # set logging format
-formatter_string = "[{asctime}] [{levelname}][{processName}][{module}.{funcName}] {message}"
+formatter_string = "[{asctime}] [{levelname}][{processName}][{threadName}][{module}.{funcName}] {message}"
 formatter_style: Literal["%", "$", "{"] = "{"
 formatter_date_fmt = "%d.%m %H:%M:%S"
 formatter = logging.Formatter(formatter_string, style="{")
