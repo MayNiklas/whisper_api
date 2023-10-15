@@ -42,6 +42,7 @@ class EndPoints:
 
     def add_endpoints(self):
         self.app.add_api_route(f"{V1_PREFIX}/status", self.status)
+        self.app.add_api_route(f"{V1_PREFIX}/decoder_status", self.decoder_status)
         self.app.add_api_route(f"{V1_PREFIX}/translate", self.translate, methods=["POST"])
         self.app.add_api_route(f"{V1_PREFIX}/transcribe", self.transcribe, methods=["POST"])
         self.app.add_api_route(f"{V1_PREFIX}/userinfo", self.userinfo)
@@ -53,6 +54,11 @@ class EndPoints:
 
     def delete_task(self, task_id: uuid_hex_t):
         del self.tasks[task_id]
+
+    async def decoder_status(self):
+        # TODO: should this be some kind of admin route?
+        #  hm... guess there is no downside in leaving it public
+        return self.decoder_state
 
     async def status(self, task_id: uuid_hex_t) -> TaskResponse:
         """
