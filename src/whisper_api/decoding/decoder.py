@@ -242,7 +242,20 @@ class Decoder:
                 self.logger.info(f"Sending status update to parent")
                 self.send_status_update()  # nothing in queue - that's mentionable
                 with self.task_queue_lock:
-                    self.new_task_condition.wait()
+                    # time out some times if timeout is set to potentially unload the model
+                    # TODO: if user sets 0 it will result in busy waiting
+                    #  maybe think of better solution than pinning the unload to the poll timeout
+                    self.new_task_condition.wait(self.unload_model_after_s)
+                    if self.unload_model_after_s is None:
+                        continue
+
+                    # unload model when we're idling for some time
+                    with self.model_lock:
+                        self.__unload_model()
+
+                    # the potential unload of the model is worth an update
+                    self.logger.info(f"Sending status update to parent")
+                    self.send_status_update()
 
     def run(self):
         """
@@ -257,17 +270,9 @@ class Decoder:
 
         self.logger.info(f"Decoder is listening for messages")
         while True:
-            # wait for tasks, if no task after time specified in UNLOAD_MODEL_AFTER_S, unload model
+            # we can just block here until any new message is received
             # None means no timeout so model will never unload
-            # TODO: if user sets 0 it will result in busy waiting
-            #  maybe think of better solution than pinning the unload to the poll timeout
-            if not self.pipe_to_parent.poll(self.unload_model_after_s):
-                # can only trigger if timeout is set
-                with self.model_lock:  # lock until we unload gracefully
-                    self.__unload_model()
-                self.logger.info(f"Sending status update to parent")
-                self.send_status_update()  # the potential unload of the model is worth an update
-                continue
+            self.pipe_to_parent.poll(None)
 
             msg = self.pipe_to_parent.recv()
 
