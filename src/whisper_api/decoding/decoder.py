@@ -99,7 +99,6 @@ class Decoder:
         signal.signal(signal.SIGHUP, self.clean_up_and_exit)   # Handle terminal closure
 
         # determine mode to run in
-        self.model_lock = threading.RLock()
         self.max_model_to_use = max_model_to_use
         self.use_gpu_if_available = use_gpu_if_available
         self.gpu_mode = self.__is_gpu_mode(use_gpu_if_available)
@@ -208,13 +207,11 @@ class Decoder:
             task.position_in_queue = self.task_queue.index(task)
             self.send_task_update(task)
 
-        # ensure that we can't unload the model while we're decoding
-        with self.model_lock:
-            # start processing
-            whisper_result = self.__run_model(audio_path=task.audiofile_name,
-                                              task=task.task_type,
-                                              source_language=task.source_language,
-                                              model_size=task.target_model_size)
+        # start processing
+        whisper_result = self.__run_model(audio_path=task.audiofile_name,
+                                          task=task.task_type,
+                                          source_language=task.source_language,
+                                          model_size=task.target_model_size)
 
         # set result and send to parent
         if whisper_result is not None:
@@ -291,9 +288,7 @@ class Decoder:
                 if self.model is None or time.time() < time_to_unload:
                     continue
 
-                # unload model when we're idling for some time
-                with self.model_lock:
-                    self.__unload_model()
+                self.__unload_model()
 
                 # the potential unload of the model is worth an update
                 self.logger.info(f"Sending status update to parent")
