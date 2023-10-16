@@ -189,16 +189,15 @@ class Decoder:
         with self.task_queue_lock:
             # we could also just enter 0 but this ensures consistency when queues behaviour changes
             task.position_in_queue = self.task_queue.index(task)
+            self.send_task_update(task)
 
         # ensure that we can't unload the model while we're decoding
         with self.model_lock:
-            self.send_task_update(task)
-
-        # start processing
-        whisper_result = self.__run_model(audio_path=task.audiofile_name,
-                                          task=task.task_type,
-                                          source_language=task.source_language,
-                                          model_size=task.target_model_size)
+            # start processing
+            whisper_result = self.__run_model(audio_path=task.audiofile_name,
+                                              task=task.task_type,
+                                              source_language=task.source_language,
+                                              model_size=task.target_model_size)
 
         # set result and send to parent
         if whisper_result is not None:
@@ -249,13 +248,13 @@ class Decoder:
                     if self.unload_model_after_s is None:
                         continue
 
-                    # unload model when we're idling for some time
-                    with self.model_lock:
-                        self.__unload_model()
+                # unload model when we're idling for some time
+                with self.model_lock:
+                    self.__unload_model()
 
-                    # the potential unload of the model is worth an update
-                    self.logger.info(f"Sending status update to parent")
-                    self.send_status_update()
+                # the potential unload of the model is worth an update
+                self.logger.info(f"Sending status update to parent")
+                self.send_status_update()
 
     def run(self):
         """
