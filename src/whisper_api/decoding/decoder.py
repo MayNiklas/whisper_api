@@ -112,6 +112,10 @@ class Decoder:
         self.model: whisper.Whisper = None
         self.last_loaded_model_size: model_sizes_str_t = None
 
+        # this must happen before the decoder-tread starts so that we don't issue two parallel loads
+        if LOAD_MODEL_ON_STARTUP:
+            self.model: whisper.Whisper = self.load_model(self.gpu_mode, self.max_model_to_use)
+
         # internal state that is nowhere used for checks, it's just for state reports to parent
         # does only turn False when queue is empty, not between two tasks that are already queued
         self.__busy = False
@@ -120,9 +124,6 @@ class Decoder:
         # it's a daemon, because it shall die when the main thread exits
         self.decoder_thread: threading.Thread = threading.Thread(target=self.decode_loop, name="decode-loop", daemon=True)
         self.decoder_thread.start()
-
-        if LOAD_MODEL_ON_STARTUP:
-            self.model: whisper.Whisper = self.load_model(self.gpu_mode, self.max_model_to_use)
 
         # let parent know we're ready and which state we're in
         # DISCLAIMER: yes I know. we could put that info print in the function.
