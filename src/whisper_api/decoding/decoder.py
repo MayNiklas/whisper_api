@@ -117,6 +117,12 @@ class Decoder:
         # does only turn False when queue is empty, not between two tasks that are already queued
         self.__busy = False
 
+        # start thread that read tasks from queue and processes them
+        # it's a daemon, because it shall die when the main thread exits
+        self.decoder_thread: threading.Thread = threading.Thread(target=self.decode_loop, name="decode-loop", daemon=True)
+        self.decoder_thread.start()
+
+        # status variable that signals the thread to terminate
         if LOAD_MODEL_ON_STARTUP:
             self.model: whisper.Whisper = self.load_model(self.gpu_mode, self.max_model_to_use)
 
@@ -299,11 +305,6 @@ class Decoder:
         Read from task_queue, process tasks and send results to parent process
         Returns:
         """
-
-        # start thread that read tasks from queue and processes them
-        # it's a daemon, because it shall die when the main thread (that runs this function) exits
-        decoder_thread = threading.Thread(target=self.decode_loop, name="decode-loop", daemon=True)
-        decoder_thread.start()
 
         self.logger.info(f"Decoder is listening for messages")
         while True:
