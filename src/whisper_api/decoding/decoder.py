@@ -143,6 +143,12 @@ class Decoder:
         return True
 
     def get_status_dict(self) -> dict[str, str | dict[str, Any]]:
+        """
+        Get a dict containing the current status of the decoder
+        This function requires the task_queue_lock
+        Returns:
+
+        """
         data_dict = {
             "gpu_mode": self.gpu_mode,
             "max_model_to_use": self.max_model_to_use,
@@ -151,7 +157,7 @@ class Decoder:
             "currently_busy": self.__busy
         }
 
-        # TODO: mayne add a kwarg to decide whether this "locked" data shall be collected or if data above is enough
+        # TODO: maybe add a kwarg to decide whether this "locked" data shall be collected or if data above is enough
         with self.task_queue_lock:
             data_dict["tasks_in_queue"] = len(self.task_queue)
             data_dict["queue_status"] = {task.uuid: pos for pos, task in self.task_queue.to_priority_dict().items()}
@@ -159,6 +165,10 @@ class Decoder:
         return {"type": "status", "data": data_dict}
 
     def send_status_update(self):
+        """
+        Send a status update to the parent process
+        This function calls a method that requires the task_queue_lock to be acquired
+        """
         status_dict = self.get_status_dict()
         self.logger.debug(f"{status_dict}")
 
