@@ -3,6 +3,7 @@ import gc
 import logging
 import signal
 import threading
+import time
 from multiprocessing.connection import Connection
 from types import FrameType
 from typing import Any
@@ -113,6 +114,7 @@ class Decoder:
         self.last_loaded_model_size: model_sizes_str_t = None
 
         # internal state that is nowhere used for checks, it's just for state reports to parent
+        # does only turn False when queue is empty, not between two tasks that are already queued
         self.__busy = False
 
         if LOAD_MODEL_ON_STARTUP:
@@ -223,40 +225,66 @@ class Decoder:
 
         return task
 
-    def decode_loop(self):
+    def decode_loop(self, condition_timeout_s: float = 2.0):
         """
         Loops over queue and calls processing of each task from the queue.
-        Waits for condition is no task is available.
+        Waits for condition (with timeout) is no task is available.
+        Timeout is necessary to check if we should unload the model.
         This function is meant to be run as a daemon thread, it will never exit on its own.
+
+        Args:
+            condition_timeout_s: timeout for the condition wait
         """
+        def get_unload_time():
+            if self.unload_model_after_s is None:
+                # return greatest possible float
+                return float("inf")
+
+            return time_to_unload - time.time()
 
         # try to get new task from queue, if none wait for the condition
+        time_to_unload = get_unload_time()
+        # used to prevent sending the same empty-message over and over again (basically to keep the log clean)
+        sent_empty_queue_info = False
         while True:
             try:
                 with self.task_queue_lock:
                     task: Task = next(self.task_queue)
 
                 self.__busy = True
+                sent_empty_queue_info = False
 
                 self.logger.info(f"Now processing task {task.uuid}")
                 self.logger.info(f"Sending status update to parent")
                 self.send_status_update()  # queue changed in size - status update
 
                 self.handle_task(task)  # calls decoding and blocks until it's done
+                # set time when model could be unloaded if needed
+                time_to_unload = get_unload_time()
 
             # we don't exit, we just wait patiently
             except StopIteration:
                 self.__busy = False
-                self.logger.info(f"There are no new tasks - waiting for condition")
-                self.logger.info(f"Sending status update to parent")
-                self.send_status_update()  # nothing in queue - that's mentionable
+
+                # send empty message only once while same empty process
+                if not sent_empty_queue_info:
+                    self.logger.info(f"There are no new tasks - waiting for condition")
+                    self.logger.info(f"Sending status update to parent")
+                    self.send_status_update()  # nothing in queue - that's mentionable
+                    sent_empty_queue_info = True
+
                 with self.task_queue_lock:
                     # time out some times if timeout is set to potentially unload the model
-                    # TODO: if user sets 0 it will result in busy waiting
-                    #  maybe think of better solution than pinning the unload to the poll timeout
-                    self.new_task_condition.wait(self.unload_model_after_s)
-                    if self.unload_model_after_s is None:
-                        continue
+                    # TODO: do something better with this arbitrarily chosen timeout
+                    # this timeout is relevant to be responsive for model unloads and when to end the thread
+                    self.new_task_condition.wait(condition_timeout_s)
+
+                self.logger.debug(f"Timeout of Condition is reached, performing checks for unload and exit")
+
+                # check if we don't need to unload the model
+                # case that self.unload_model_after_s is None is handled in get_unload_time -> float("inf")
+                if self.model is None or time.time() < time_to_unload:
+                    continue
 
                 # unload model when we're idling for some time
                 with self.model_lock:
