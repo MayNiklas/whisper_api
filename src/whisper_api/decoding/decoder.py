@@ -122,7 +122,6 @@ class Decoder:
         self.decoder_thread: threading.Thread = threading.Thread(target=self.decode_loop, name="decode-loop", daemon=True)
         self.decoder_thread.start()
 
-        # status variable that signals the thread to terminate
         if LOAD_MODEL_ON_STARTUP:
             self.model: whisper.Whisper = self.load_model(self.gpu_mode, self.max_model_to_use)
 
@@ -246,7 +245,7 @@ class Decoder:
                 # return greatest possible float
                 return float("inf")
 
-            return time_to_unload - time.time()
+            return time.time() + self.unload_model_after_s
 
         # try to get new task from queue, if none wait for the condition
         time_to_unload = get_unload_time()
