@@ -393,7 +393,9 @@ class Decoder:
         Clean up and exit the process
         """
         self.logger.warning(f"Exit was called {signum=}")
-        self.__unload_model()
+        # TODO: we should kill the decoder-thread if we wanna explicitly unload the model
+        #  but is that really necessary - we exit anyway and memory will be freed
+        # self.__unload_model()
         exit(0)
 
     def __get_models_below(self, model_name: model_sizes_str_t) -> list[model_sizes_str_t]:
