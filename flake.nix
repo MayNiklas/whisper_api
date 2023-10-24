@@ -155,35 +155,9 @@
                 echo "PyCharm:"
                 echo "TODO - please contribute!"
                 echo "---------------------------------------------------------------------"
-
-                # set the PYTHONPATH environment variable
-                export PYTHONPATH=${python-with-packages}/${python-with-packages.sitePackages}
-
-                # if .git/hooks/pre-commit does not exist, ask if the user wants to install it
-                if [ ! -f .git/hooks/pre-commit ]; then
-                  read -p "Do you want to install the pre-commit hook? (y/n) " -n 1 -r
-                  echo   # (optional) move to a new line
-                  if [[ $REPLY =~ ^[Yy]$ ]]
-                  then
-                    echo "---------------------------------------------------------------------"
-                    echo "Installing the pre-commit hook..."
-                    echo "---------------------------------------------------------------------"
-                    ${pkgs.pre-commit}/bin/pre-commit install
-                  fi
-                fi
-
-                # ask if the user wants to run the whisper_api development server
-                read -p "Do you want to run the whisper_api development server? (y/n) " -n 1 -r
-                echo   # (optional) move to a new line
-                if [[ $REPLY =~ ^[Yy]$ ]]
-                then
-                  echo "---------------------------------------------------------------------"
-                  echo "Running the whisper_api development server..."
-                  echo "---------------------------------------------------------------------"
-                  cd src
-                  uvicorn whisper_api:app --reload --host 127.0.0.1 --port 3001
-                  exit 0
-                fi
+                echo "Running the whisper_api development server:"
+                echo "cd src && uvicorn whisper_api:app --reload --host 127.0.0.1 --port 3001"
+                echo "---------------------------------------------------------------------"
               '';
             };
         in
