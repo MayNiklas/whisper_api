@@ -1,6 +1,8 @@
 # own data folder
 data/
 
+.direnv/
+
 # jetbrains
 .idea/
 
