@@ -38,7 +38,14 @@ class FastQueue(Generic[T]):
         self.__next_free_index = 0
         self.current: T = None       # the current element that was returned by next()
 
-    def put(self, elm: T):
+    def put(self, elm: T) -> int:
+        """
+        Args:
+            elm: the element of tpy eT to put into the queue
+
+        Returns:
+            the position of the element in the queue
+        """
         if len(self) == self.__max_size:
             raise OverflowError(f"The Queue is full: max size={self.__max_size}")
 
@@ -49,6 +56,8 @@ class FastQueue(Generic[T]):
             self.__next_free_index = 0
         else:
             self.__next_free_index += 1
+
+        return self.index(elm)
 
     def index(self, elm: T = None, by_key: HashableT = None) -> Optional[int]:
         if elm is not None and by_key is not None:
