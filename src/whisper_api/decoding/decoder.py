@@ -348,6 +348,7 @@ class Decoder:
             # put task to queue
             with self.task_queue_lock:
                 try:
+                    self.logger.debug(f"Adding task '{task.uuid}' to queue")
                     self.task_queue.put(task)
                 except OverflowError:
                     # TODO: maybe add new status "rejected" and a reason to it?

@@ -107,6 +107,7 @@ def listen_to_decoder(pipe_to_listen_to: multiprocessing.connection.Connection,
         data = msg.get("data", None)
 
         if update_type == "status":
+            logger.debug(f"Received status update: {data=}")
             decoder_state.gpu_mode = data["gpu_mode"]
             decoder_state.max_model_to_use = data["max_model_to_use"]
             decoder_state.last_loaded_model_size = data["last_loaded_model_size"]
@@ -127,6 +128,7 @@ def listen_to_decoder(pipe_to_listen_to: multiprocessing.connection.Connection,
 
         if update_type == "task_update":  # data is a json-serialized task
             task = Task.from_json(data)
+            logger.debug(f"Received task update for {task.uuid=}, {task.status=}, {task.position_in_queue=}")
 
             task_dict[task.uuid] = task
 
