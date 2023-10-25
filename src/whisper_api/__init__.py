@@ -1,7 +1,10 @@
 import multiprocessing
+import random
 import signal
+import string
 import sys
 import threading
+import time
 from tempfile import NamedTemporaryFile
 from types import FrameType
 from typing import Callable
@@ -9,6 +12,7 @@ from typing import Optional
 
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
+from starlette.requests import Request
 
 if __package__ is None and not hasattr(sys, "frozen"):
     import os.path
@@ -78,6 +82,28 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# credit: https://philstories.medium.com/fastapi-logging-f6237b84ea64
+@app.middleware("http")
+async def log_requests(req: Request, call_next):
+    """
+    Requests paths/ parameters and response codes/ times.
+    Not logging any data from the request/ response body, as it might contain sensitive data.
+    """
+
+    idem = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    req_base_str = f'{req.client.host}:{req.client.port} "{req.method} {req.url.path}", rid={idem}'
+
+    logger.info(f'{req_base_str}, q_params={req.query_params or dict()}')
+    start_time = time.time()
+
+    resp = await call_next(req)
+
+    process_time = (time.time() - start_time) * 1000
+    logger.info(f"{req_base_str}, status_code={resp.status_code}, completed_in={process_time:.2f}ms")
+
+    return resp
 
 """
 Setup decoder process
@@ -211,7 +237,7 @@ def start():
     # TODO:
     # forwarded_allow_ips= should be set via env var
     # proxy_headers=True only when needed
-    uvicorn.run(app, host=API_LISTEN, port=API_PORT, proxy_headers=True, forwarded_allow_ips="*")
+    uvicorn.run(app, host=API_LISTEN, port=API_PORT, proxy_headers=True, forwarded_allow_ips="*", log_level="critical")
 
 
 if __name__ == '__main__':
