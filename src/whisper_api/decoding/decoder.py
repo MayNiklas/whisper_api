@@ -253,11 +253,12 @@ class Decoder:
             try:
                 with self.task_queue_lock:
                     task: Task = next(self.task_queue)
+                    logging.debug(f"Extracted new task from queue: '{task.uuid}' ")
 
                 self.__busy = True
                 sent_empty_queue_info = False
 
-                self.logger.info(f"Now processing task {task.uuid}")
+                self.logger.info(f"Now processing task '{task.uuid}'")
                 self.logger.info(f"Sending status update to parent")
                 self.send_status_update()  # queue changed in size - status update
 
@@ -346,6 +347,8 @@ class Decoder:
                 continue
 
             # put task to queue
+            # we will need this lock on several occasions during that section
+            # so just hold it for the whole time and nothing can go wrong :)
             with self.task_queue_lock:
                 try:
                     self.logger.debug(f"Adding task '{task.uuid}' to queue")
@@ -361,7 +364,7 @@ class Decoder:
 
                 # we don't need to send a task update
                 # the only thing that changes immediately is the position in queue
-                # and that is covered by the state update below
+                # and that is covered by the state update datat below
 
                 # the queue received a new element
                 # that change will technically be captured by the decoder thread too,
