@@ -8,7 +8,7 @@ from typing import Literal
 
 
 # set logging format
-formatter_string = "[{asctime}] [{levelname}][{processName}][{threadName}][{module}.{funcName}] {message}"
+formatter_string = "[{asctime}] [{levelname}][{processName}][{module}.{funcName}] {message}"
 formatter_style: Literal["%", "$", "{"] = "{"
 formatter_date_fmt = "%d.%m %H:%M:%S"
 formatter = logging.Formatter(formatter_string, style="{")
@@ -36,7 +36,7 @@ class PipedFileHandler(logging.FileHandler):
         else:
             self.log_path = log_file
 
-        super().__init__(self.log_path)
+        super(PipedFileHandler, self).__init__(self.log_path)
         self.log_pipe = log_pipe
         self.am_I_main = multiprocessing.current_process().name == 'MainProcess'
 
@@ -76,7 +76,7 @@ class PipedFileHandler(logging.FileHandler):
                 _formatter = logging.Formatter(formatter_string, style=formatter_style, datefmt=formatter_date_fmt)
 
             self.setFormatter(_formatter)
-            super().emit(record)
+            super(PipedFileHandler, self).emit(record)
 
         # if we're in a child process, send the record to the pipe
         else:
