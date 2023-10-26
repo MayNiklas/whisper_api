@@ -8,6 +8,7 @@ import threading
 import time
 from tempfile import NamedTemporaryFile
 from types import FrameType
+from typing import Any
 from typing import Callable
 from typing import Optional
 
@@ -120,50 +121,72 @@ api_end_points = EndPoints(app, task_dict, decoder_state, open_audio_files_dict,
 frontend = Frontend(app)
 
 
+def handle_message(message_type: str, data: dict[str, Any]):
+    """
+    Handles the received message from the decoder process.
+    Args:
+        message_type: type of the message
+        data: the data that was sent with the message, must match the type of the message
+    """
+    if message_type == "status":
+        logger.debug(f"Received status update: {data=}")
+        decoder_state.gpu_mode = data["gpu_mode"]
+        decoder_state.max_model_to_use = data["max_model_to_use"]
+        decoder_state.last_loaded_model_size = data["last_loaded_model_size"]
+        decoder_state.is_model_loaded = data["is_model_loaded"]
+        decoder_state.currently_busy = data["currently_busy"]
+        # might not be always present in future development
+        decoder_state.tasks_in_queue = data.get("tasks_in_queue")
+        decoder_state.last_update = dt.datetime.now()
+
+        # check if new postion data arrived else continue
+        if (queue_status := data.get("queue_status")) is None:
+            return
+
+        # refresh positions if new position-data is received
+        for key, pos in queue_status.items():
+            task_dict[key].position_in_queue = pos
+
+        return
+
+    if message_type == "task_update":  # data is a json-serialized task
+        task = Task.from_json(data)
+        logger.debug(f"Received task update for {task.uuid=}, {task.status=}, {task.position_in_queue=}")
+
+        task_dict[task.uuid] = task
+
+        # when task is done (no matter if finished or failed) close and delete the audio file
+        if task.status == "finished" or task.status == "failed":
+            open_audio_files_dict[task.audiofile_name].close()
+            del open_audio_files_dict[task.audiofile_name]
+
+
 def listen_to_decoder(pipe_to_listen_to: multiprocessing.connection.Connection,
                       worker_exit_fn: Callable[[], None]):
     """ listen to decode process and update the task_dict accordingly """
+    def handle_keyboard_interrupt():
+        logger.info("KeyboardInterrupt - initiating exit.")
+        worker_exit_fn()
+        exit(0)
+
     while True:
         try:
             msg = pipe_to_listen_to.recv()
         except KeyboardInterrupt:
-            worker_exit_fn()
-            exit(0)
+            handle_keyboard_interrupt()
 
         update_type = msg.get("type", None)
         data = msg.get("data", None)
 
-        if update_type == "status":
-            logger.debug(f"Received status update: {data=}")
-            decoder_state.gpu_mode = data["gpu_mode"]
-            decoder_state.max_model_to_use = data["max_model_to_use"]
-            decoder_state.last_loaded_model_size = data["last_loaded_model_size"]
-            decoder_state.is_model_loaded = data["is_model_loaded"]
-            decoder_state.currently_busy = data["currently_busy"]
-            # might not be always present in future development
-            decoder_state.tasks_in_queue = data.get("tasks_in_queue")
-            decoder_state.last_update = dt.datetime.now()
+        try:
+            handle_message(update_type, data)
 
-            # check if new postion data arrived else continue
-            if (queue_status := data.get("queue_status")) is None:
-                continue
+        except KeyboardInterrupt:
+            handle_keyboard_interrupt()
 
-            # refresh positions if new position-data is received
-            for key, pos in queue_status.items():
-                task_dict[key].position_in_queue = pos
-
-            continue
-
-        if update_type == "task_update":  # data is a json-serialized task
-            task = Task.from_json(data)
-            logger.debug(f"Received task update for {task.uuid=}, {task.status=}, {task.position_in_queue=}")
-
-            task_dict[task.uuid] = task
-
-            # when task is done (no matter if finished or failed) close and delete the audio file
-            if task.status == "finished" or task.status == "failed":
-                open_audio_files_dict[task.audiofile_name].close()
-                del open_audio_files_dict[task.audiofile_name]
+        except Exception as e:
+            # I'd love to print the full data, but that would potentially log the transcriptions, so not an option.
+            logger.error(f"Exception '{type(e).__name__}': {e}, update_type={update_type}, data={list(data.keys())}")
 
 
 """
