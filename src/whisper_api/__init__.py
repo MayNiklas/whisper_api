@@ -175,18 +175,18 @@ def listen_to_decoder(pipe_to_listen_to: multiprocessing.connection.Connection,
         except KeyboardInterrupt:
             handle_keyboard_interrupt()
 
-        update_type = msg.get("type", None)
+        message_type = msg.get("type", None)
         data = msg.get("data", None)
 
         try:
-            handle_message(update_type, data)
+            handle_message(message_type, data)
 
         except KeyboardInterrupt:
             handle_keyboard_interrupt()
 
         except Exception as e:
             # I'd love to print the full data, but that would potentially log the transcriptions, so not an option.
-            logger.error(f"Exception '{type(e).__name__}': {e}, update_type={update_type}, data={list(data.keys())}")
+            logger.error(f"Exception '{type(e).__name__}': {e}, message_type={message_type}, data={list(data.keys())}")
 
 
 """
