@@ -3,7 +3,6 @@ import gc
 import logging
 import signal
 import threading
-import time
 from multiprocessing.connection import Connection
 from types import FrameType
 from typing import Any
@@ -112,18 +111,11 @@ class Decoder:
         self.model: whisper.Whisper = None
         self.last_loaded_model_size: model_sizes_str_t = None
 
-        # this must happen before the decoder-tread starts so that we don't issue two parallel loads
-        if LOAD_MODEL_ON_STARTUP:
-            self.model: whisper.Whisper = self.load_model(self.gpu_mode, self.max_model_to_use)
-
         # internal state that is nowhere used for checks, it's just for state reports to parent
-        # does only turn False when queue is empty, not between two tasks that are already queued
         self.__busy = False
 
-        # start thread that read tasks from queue and processes them
-        # it's a daemon, because it shall die when the main thread exits
-        self.decoder_thread: threading.Thread = threading.Thread(target=self.decode_loop, name="decode-loop", daemon=True)
-        self.decoder_thread.start()
+        if LOAD_MODEL_ON_STARTUP:
+            self.model: whisper.Whisper = self.load_model(self.gpu_mode, self.max_model_to_use)
 
         # let parent know we're ready and which state we're in
         # DISCLAIMER: yes I know. we could put that info print in the function.
@@ -150,12 +142,6 @@ class Decoder:
         return True
 
     def get_status_dict(self) -> dict[str, str | dict[str, Any]]:
-        """
-        Get a dict containing the current status of the decoder
-        This function requires the task_queue_lock
-        Returns:
-
-        """
         data_dict = {
             "gpu_mode": self.gpu_mode,
             "max_model_to_use": self.max_model_to_use,
@@ -164,7 +150,7 @@ class Decoder:
             "currently_busy": self.__busy
         }
 
-        # TODO: maybe add a kwarg to decide whether this "locked" data shall be collected or if data above is enough
+        # TODO: mayne add a kwarg to decide whether this "locked" data shall be collected or if data above is enough
         with self.task_queue_lock:
             data_dict["tasks_in_queue"] = len(self.task_queue)
             data_dict["queue_status"] = {task.uuid: pos for pos, task in self.task_queue.to_priority_dict().items()}
@@ -172,10 +158,6 @@ class Decoder:
         return {"type": "status", "data": data_dict}
 
     def send_status_update(self):
-        """
-        Send a status update to the parent process
-        This function calls a method that requires the task_queue_lock to be acquired
-        """
         status_dict = self.get_status_dict()
         self.logger.debug(f"{status_dict}")
 
@@ -206,7 +188,8 @@ class Decoder:
         with self.task_queue_lock:
             # we could also just enter 0 but this ensures consistency when queues behaviour changes
             task.position_in_queue = self.task_queue.index(task)
-            self.send_task_update(task)
+
+        self.send_task_update(task)
 
         # start processing
         whisper_result = self.__run_model(audio_path=task.audiofile_name,
@@ -228,72 +211,35 @@ class Decoder:
 
         return task
 
-    def decode_loop(self, condition_timeout_s: float = 2.0):
+    def decode_loop(self):
         """
         Loops over queue and calls processing of each task from the queue.
-        Waits for condition (with timeout) is no task is available.
-        Timeout is necessary to check if we should unload the model.
+        Waits for condition is no task is available.
         This function is meant to be run as a daemon thread, it will never exit on its own.
-
-        Args:
-            condition_timeout_s: timeout for the condition wait
         """
-        def get_unload_time():
-            if self.unload_model_after_s is None:
-                # return greatest possible float
-                return float("inf")
-
-            return time.time() + self.unload_model_after_s
 
         # try to get new task from queue, if none wait for the condition
-        time_to_unload = get_unload_time()
-        # used to prevent sending the same empty-message over and over again (basically to keep the log clean)
-        sent_empty_queue_info = False
         while True:
             try:
                 with self.task_queue_lock:
                     task: Task = next(self.task_queue)
 
                 self.__busy = True
-                sent_empty_queue_info = False
 
                 self.logger.info(f"Now processing task {task.uuid}")
                 self.logger.info(f"Sending status update to parent")
                 self.send_status_update()  # queue changed in size - status update
 
                 self.handle_task(task)  # calls decoding and blocks until it's done
-                # set time when model could be unloaded if needed
-                time_to_unload = get_unload_time()
 
             # we don't exit, we just wait patiently
             except StopIteration:
                 self.__busy = False
-
-                # send empty message only once while same empty process
-                if not sent_empty_queue_info:
-                    self.logger.info(f"There are no new tasks - waiting for condition")
-                    self.logger.info(f"Sending status update to parent")
-                    self.send_status_update()  # nothing in queue - that's mentionable
-                    sent_empty_queue_info = True
-
-                with self.task_queue_lock:
-                    # time out some times if timeout is set to potentially unload the model
-                    # TODO: do something better with this arbitrarily chosen timeout
-                    # this timeout is relevant to be responsive for model unloads and when to end the thread
-                    self.new_task_condition.wait(condition_timeout_s)
-
-                self.logger.debug(f"Timeout of Condition is reached, performing checks for unload and exit")
-
-                # check if we don't need to unload the model
-                # case that self.unload_model_after_s is None is handled in get_unload_time -> float("inf")
-                if self.model is None or time.time() < time_to_unload:
-                    continue
-
-                self.__unload_model()
-
-                # the potential unload of the model is worth an update
+                self.logger.info(f"There are no new tasks - waiting for condition")
                 self.logger.info(f"Sending status update to parent")
-                self.send_status_update()
+                self.send_status_update()  # nothing in queue - that's mentionable
+                with self.task_queue_lock:
+                    self.new_task_condition.wait()
 
     def run(self):
         """
@@ -301,11 +247,23 @@ class Decoder:
         Returns:
         """
 
+        # start thread that read tasks from queue and processes them
+        # it's a daemon, because it shall die when the main thread (that runs this function) exits
+        decoder_thread = threading.Thread(target=self.decode_loop, name="decode-loop", daemon=True)
+        decoder_thread.start()
+
         self.logger.info(f"Decoder is listening for messages")
         while True:
-            # we can just block here until any new message is received
+            # wait for tasks, if no task after time specified in UNLOAD_MODEL_AFTER_S, unload model
             # None means no timeout so model will never unload
-            self.pipe_to_parent.poll(None)
+            # TODO: if user sets 0 it will result in busy waiting
+            #  maybe think of better solution than pinning the unload to the poll timeout
+            if not self.pipe_to_parent.poll(self.unload_model_after_s):
+                # can only trigger if timeout is set
+                self.__unload_model()
+                self.logger.info(f"Sending status update to parent")
+                self.send_status_update()  # the potential unload of the model is worth an update
+                continue
 
             msg = self.pipe_to_parent.recv()
 
@@ -393,9 +351,7 @@ class Decoder:
         Clean up and exit the process
         """
         self.logger.warning(f"Exit was called {signum=}")
-        # TODO: we should kill the decoder-thread if we wanna explicitly unload the model
-        #  but is that really necessary - we exit anyway and memory will be freed
-        # self.__unload_model()
+        self.__unload_model()
         exit(0)
 
     def __get_models_below(self, model_name: model_sizes_str_t) -> list[model_sizes_str_t]:
