@@ -1,3 +1,5 @@
+import datetime as dt
+
 from pydantic import BaseModel
 from whisper_api.data_models.data_types import model_sizes_str_t
 
@@ -10,3 +12,4 @@ class DecoderState(BaseModel):
     is_model_loaded: bool = None
     tasks_in_queue: int = None
     currently_busy: bool = False
+    last_update: dt.datetime = None

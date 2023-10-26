@@ -1,3 +1,4 @@
+import datetime as dt
 import multiprocessing
 import random
 import signal
@@ -141,6 +142,7 @@ def listen_to_decoder(pipe_to_listen_to: multiprocessing.connection.Connection,
             decoder_state.currently_busy = data["currently_busy"]
             # might not be always present in future development
             decoder_state.tasks_in_queue = data.get("tasks_in_queue")
+            decoder_state.last_update = dt.datetime.now()
 
             # check if new postion data arrived else continue
             if (queue_status := data.get("queue_status")) is None:
