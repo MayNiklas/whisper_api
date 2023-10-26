@@ -225,6 +225,11 @@ class Decoder:
         task.position_in_queue = None
 
         self.send_task_update(task)
+        self.logger.info(
+            f"Sent update for task {task.uuid}, "
+            f"status={task.status}, position_in_queue={task.position_in_queue}, "
+            f"whisper result: 'is {'not' if task.whisper_result else ''} None'"
+        )
 
         return task
 

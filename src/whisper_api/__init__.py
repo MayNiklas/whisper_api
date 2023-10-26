@@ -208,12 +208,14 @@ def setup_decoder_process_and_listener_thread():
             logger.info("Child is dead.")
 
     # start decoder process
+    logger.info("Starting decoder process...")
     decoder_process = multiprocessing.Process(target=decoder.Decoder.init_and_run,
                                               args=(child_side, logger, UNLOAD_MODEL_AFTER_S, USE_GPU_IF_AVAILABLE, MAX_MODEL),
                                               name="Decoder-Process",
                                               daemon=True
                                               )
     decoder_process.start()
+    logger.info("Decoder process stared")
 
     # register handlers that signal decoder process to stop
     signal.signal(signal.SIGINT, signal_worker_to_exit)  # Handle Control + C
@@ -226,6 +228,8 @@ def setup_decoder_process_and_listener_thread():
                                                      name="Decoder-Listen-Thread",
                                                      daemon=True)
     decoder_process_listen_thread.start()
+    logger.info("Listener for decoder process started")
+    logger.info("Startup ")
 
 
 """
