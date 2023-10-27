@@ -86,22 +86,32 @@ nix run .#whisper_api
 ```
 
 ## Settings
-| parameter                          | description                                                                               | possible values                    | default         |
-|------------------------------------|-------------------------------------------------------------------------------------------|------------------------------------|-----------------|
-| `PORT`                             | Port the API is available under                                                           | any number of port interval        | 3001            |
-| `LISTEN`                           | Address the API is available under                                                        | any IP or domain you own           | 127.0.0.1       |
-| `LOAD_MODEL_ON_STARTUP`            | If model shall be loaded on startup                                                       | `1` (yes) or `0` (no)              | 1               |
-| `DEVELOP_MODE`                     | Develop mode defaults to smallest model to save time                                      | `1` (yes) or `0` (no)              | 0               |
-| `UNLOAD_MODEL_AFTER_S`             | If set the model gets unloaded after inactivity of t seconds, unset means no unload       | any int (0 for instant unload)     | 'unset'         |
-| `DELETE_RESULTS_AFTER_M`           | Time after which results are deleted from internal storage                                | any int                            | 60              |
-| `REFRESH_EXPIRATION_TIME_ON_USAGE` | If result is used expand lifetime                                                         | `1` (yes) or `0` (no)              | 1               |
-| `RUN_RESULT_EXPIRY_CHECK_M`        | Interval in which timeout checks shall be executed                                        | any int (0 enables lazy timeout)   | 5               |
-| `USE_GPU_IF_AVAILABLE`             | If GPU shall be used when available                                                       | `1` (yes) or `0` (no)              | 1               |
-| `MAX_MODEL`                        | Max model to be used for decoding, unset means best possible                              | name of official model             | 'unset'         |
-| `MAX_TASK_QUEUE_SIZE`              | The limit of tasks that can be queued in the decoder at the same time before rejection    | any int                            | 128             |
-| `CPU_FALLBACK_MODEL`               | The fallback when `MAX_MODEL` is not set and CPU mode is needed                           | name of official model             | medium          |
-| `LOG_DIR`                          | The directory to store log-file(s) in "" means 'this directory', dir is created if needed | wanted directory name or empty str | "data/"         |
-| `LOG_FILE`                         | The name of the log file                                                                  | arbitrary filename                 | whisper_api.log |
+| parameter                          | description                                                                               | possible values                                  | default           |
+|------------------------------------|-------------------------------------------------------------------------------------------|--------------------------------------------------|-------------------|
+| `PORT`                             | Port the API is available under                                                           | any number of port interval                      | 3001              |
+| `LISTEN`                           | Address the API is available under                                                        | any IP or domain you own                         | 127.0.0.1         |
+| `LOAD_MODEL_ON_STARTUP`            | If model shall be loaded on startup                                                       | `1` (yes) or `0` (no)                            | 1                 |
+| `DEVELOP_MODE`                     | Develop mode defaults to smallest model to save time                                      | `1` (yes) or `0` (no)                            | 0                 |
+| `UNLOAD_MODEL_AFTER_S`             | If set the model gets unloaded after inactivity of t seconds, unset means no unload       | any int (0 for instant unload)                   | 'unset'           |
+| `DELETE_RESULTS_AFTER_M`           | Time after which results are deleted from internal storage                                | any int                                          | 60                |
+| `REFRESH_EXPIRATION_TIME_ON_USAGE` | If result is used expand lifetime                                                         | `1` (yes) or `0` (no)                            | 1                 |
+| `RUN_RESULT_EXPIRY_CHECK_M`        | Interval in which timeout checks shall be executed                                        | any int (0 enables lazy timeout)                 | 5                 |
+| `USE_GPU_IF_AVAILABLE`             | If GPU shall be used when available                                                       | `1` (yes) or `0` (no)                            | 1                 |
+| `MAX_MODEL`                        | Max model to be used for decoding, unset means best possible                              | name of official model                           | 'unset'           |
+| `MAX_TASK_QUEUE_SIZE`              | The limit of tasks that can be queued in the decoder at the same time before rejection    | any int                                          | 128               |
+| `CPU_FALLBACK_MODEL`               | The fallback when `MAX_MODEL` is not set and CPU mode is needed                           | name of official model                           | medium            |
+| `LOG_DIR`                          | The directory to store log-file(s) in "" means 'this directory', dir is created if needed | wanted directory name or empty str               | "data/"           |
+| `LOG_FILE`                         | The name of the log file                                                                  | arbitrary filename                               | whisper_api.log   |
+| `LOG_LEVEL_CONSOLE`                | Level of logging for the console                                                          | "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL") | "INFO"            |
+| `LOG_LEVEL_FILE`                   | Level of logging for the file                                                             | "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL") | "INFO"            |
+| `LOG_FORMAT`                       | Format of the log messages                                                                | any valid log message format                     | \*see below\*     |
+| `LOG_DATE_FORMAT`                  | Format of the date in log messages                                                        | any valid date format                            | "%d.%m. %H:%M:%S" |
+| `LOG_ROTATION_WHEN`                | Specifies when log rotation should occur                                                  | "S", "M", "H", "D", "W0"-"W6", "midnight"        | "H"               |
+| `LOG_ROTATION_INTERVAL`            | Interval at which log rotation should occur                                               | any int                                          | 2                 |
+| `LOG_ROTATION_BACKUP_COUNT`        | Number of backup log files to keep                                                        | any int                                          | 48                |
+
+The log format is: `"[{asctime}] [{levelname}][{processName}][{threadName}][{module}.{funcName}] {message}"`, using `{` as format specifier.
+All logging parameters follow pythons [logging](https://docs.python.org/3/library/logging.html) and the [RotatingFileHandler](https://docs.python.org/3/library/logging.handlers.html#timedrotatingfilehandler) specification.
 
 #### Note
 The system will automatically try to use the GPU and the best possible model when `USE_GPU_IF_AVAILABLE` and `MAX_MODEL` are not set.
