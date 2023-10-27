@@ -288,7 +288,7 @@ class Decoder:
                     # this timeout is relevant to be responsive for model unloads and when to end the thread
                     self.new_task_condition.wait(condition_timeout_s)
 
-                self.logger.debug(f"Timeout of Condition is reached, performing checks for unload and exit")
+                # self.logger.debug(f"Timeout of Condition is reached, performing checks for unload and exit")
 
                 # check if we don't need to unload the model
                 # case that self.unload_model_after_s is None is handled in get_unload_time -> float("inf")
