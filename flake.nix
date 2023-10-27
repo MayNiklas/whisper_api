@@ -126,6 +126,9 @@
                   openai-whisper
                   torch
                   uvicorn
+                  # not used yet!
+                  # we need to evaluate it's performance against whisper from OpenAI
+                  faster-whisper
                 ] ++
                 # only needed for development
                 [ autopep8 pytest ]);
