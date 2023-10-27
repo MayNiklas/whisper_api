@@ -1,3 +1,5 @@
+import glob
+import zipfile
 from asyncio import tasks
 from multiprocessing.connection import Connection
 from tempfile import NamedTemporaryFile
@@ -21,6 +23,8 @@ from whisper_api.data_models.decoder_state import DecoderState
 from whisper_api.data_models.task import Task
 from whisper_api.data_models.task import TaskResponse
 from whisper_api.data_models.temp_dict import TempDict
+from whisper_api.environment import LOG_AUTHORIZED_MAILS
+from whisper_api.environment import LOG_DIR
 from whisper_api.log_setup import logger
 
 V1_PREFIX = "/api/v1"
@@ -49,6 +53,7 @@ class EndPoints:
         self.app.add_api_route(f"{V1_PREFIX}/userinfo", self.userinfo)
         self.app.add_api_route(f"{V1_PREFIX}/login", self.login)
         self.app.add_api_route(f"{V1_PREFIX}/srt", self.srt)
+        self.app.add_api_route(f"{V1_PREFIX}/logs", self.get_logs)
 
     def add_task(self, task: Task):
         self.tasks[task.uuid] = task
@@ -162,6 +167,21 @@ class EndPoints:
     async def userinfo(self, request: Request = None):
 
         return self.get_userinfo(request)
+
+    async def get_logs(self, request: Request):
+        user = self.get_userinfo(request)
+        if user["email"] not in LOG_AUTHORIZED_MAILS:
+            raise HTTPException(401, "Your mail is not in the whitelist")
+
+        zip_archive = f"{LOG_DIR}/logs.zip"
+
+        with zipfile.ZipFile(zip_archive, 'w', zipfile.ZIP_DEFLATED) as zipf:
+
+            for file in glob.glob(LOG_DIR + '/*.log*'):
+                # Add file to zip
+                zipf.write(file)
+
+        return FileResponse(zip_archive)
 
     @staticmethod
     def get_userinfo(request: Request = None) -> dict[str, str, str]:
