@@ -169,9 +169,8 @@ class EndPoints:
         return self.get_userinfo(request)
 
     async def get_logs(self, request: Request):
-        user = self.get_userinfo(request)
-        if user["email"] not in LOG_AUTHORIZED_MAILS:
-            raise HTTPException(401, "Your mail is not in the whitelist")
+
+        self.verify_user_mail(request)
 
         zip_archive = f"{LOG_DIR}/logs.zip"
 
@@ -201,6 +200,17 @@ class EndPoints:
         user['user_agent'] = request.headers.get('User-Agent')
 
         return user
+
+    @staticmethod
+    def verify_user_mail(request: Request):
+        user = EndPoints.get_userinfo(request)
+        if "localhost" in request.base_url.hostname:
+            return True
+
+        if user.get("email") not in LOG_AUTHORIZED_MAILS:
+            raise HTTPException(401, "Your mail is not in the whitelist")
+
+        return user["email"]
 
     @staticmethod
     def login(request: Request):
