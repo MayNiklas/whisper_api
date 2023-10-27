@@ -97,13 +97,17 @@ async def log_requests(req: Request, call_next):
     idem = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
     req_base_str = f'{req.client.host}:{req.client.port} "{req.method} {req.url.path}", rid={idem}'
 
-    logger.info(f'{req_base_str}, q_params={req.query_params or dict()}')
+    # logger.info(f'{req_base_str}, q_params={req.query_params or dict()}')
     start_time = time.time()
 
     resp = await call_next(req)
 
     process_time = (time.time() - start_time) * 1000
-    logger.info(f"{req_base_str}, status_code={resp.status_code}, completed_in={process_time:.2f}ms")
+    logger.info(f"{req_base_str}, "
+                f"status_code={resp.status_code}, "
+                f"completed_in={process_time:.2f}ms, "
+                f"q_params={req.query_params or dict()}"
+                )
 
     return resp
 
