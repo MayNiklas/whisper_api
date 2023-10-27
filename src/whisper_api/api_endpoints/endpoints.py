@@ -192,7 +192,7 @@ class EndPoints:
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
         output, error = process.communicate()
 
-        if error:
+        if error is not None:
             return f"Error: {error}"
 
         return output.decode('utf-8').strip()
@@ -219,7 +219,8 @@ class EndPoints:
     @staticmethod
     def verify_user_mail(request: Request):
         user = EndPoints.get_userinfo(request)
-        if "localhost" in request.base_url.hostname:
+        localhost_options = {"localhost", "127.0.0.1"}
+        if request.base_url.hostname in localhost_options and request.client.host in localhost_options:
             return True
 
         if user.get("email") not in LOG_AUTHORIZED_MAILS:
