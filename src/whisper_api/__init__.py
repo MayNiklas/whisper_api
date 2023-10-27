@@ -129,7 +129,7 @@ def handle_message(message_type: str, data: dict[str, Any]):
         data: the data that was sent with the message, must match the type of the message
     """
     if message_type == "status":
-        logger.debug(f"Received status update: {data=}")
+        logger.info(f"Received status update: {data=}")
         decoder_state.gpu_mode = data["gpu_mode"]
         decoder_state.max_model_to_use = data["max_model_to_use"]
         decoder_state.last_loaded_model_size = data["last_loaded_model_size"]
@@ -151,7 +151,7 @@ def handle_message(message_type: str, data: dict[str, Any]):
 
     if message_type == "task_update":  # data is a json-serialized task
         task = Task.from_json(data)
-        logger.debug(f"Received task update for {task.uuid=}, {task.status=}, {task.position_in_queue=}")
+        logger.info(f"Received task update for {task.uuid=}, {task.status=}, {task.position_in_queue=}")
 
         task_dict[task.uuid] = task
 
