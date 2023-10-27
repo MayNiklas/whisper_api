@@ -43,6 +43,7 @@ class EndPoints:
     def add_endpoints(self):
         self.app.add_api_route(f"{V1_PREFIX}/status", self.status)
         self.app.add_api_route(f"{V1_PREFIX}/decoder_status", self.decoder_status)
+        self.app.add_api_route(f"{V1_PREFIX}/decoder_status_refresh", self.decoder_status_refresh)
         self.app.add_api_route(f"{V1_PREFIX}/translate", self.translate, methods=["POST"])
         self.app.add_api_route(f"{V1_PREFIX}/transcribe", self.transcribe, methods=["POST"])
         self.app.add_api_route(f"{V1_PREFIX}/userinfo", self.userinfo)
@@ -56,9 +57,17 @@ class EndPoints:
         del self.tasks[task_id]
 
     async def decoder_status(self):
+        """ Get the last reported status of the decoder """
         # TODO: should this be some kind of admin route?
         #  hm... guess there is no downside in leaving it public
         return self.decoder_state
+
+    async def decoder_status_refresh(self):
+        """ trigger a refresh of the decoder - the response will NEITHER await nor include the new state """
+        self.conn_to_child.send({
+            "type": "status",
+        })
+        return "Request to refresh state is sent to decoder"
 
     async def status(self, task_id: uuid_hex_t) -> TaskResponse:
         """
