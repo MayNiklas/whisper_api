@@ -109,9 +109,19 @@ nix run .#whisper_api
 | `LOG_ROTATION_WHEN`                | Specifies when log rotation should occur                                                  | "S", "M", "H", "D", "W0"-"W6", "midnight"        | "H"               |
 | `LOG_ROTATION_INTERVAL`            | Interval at which log rotation should occur                                               | any int                                          | 2                 |
 | `LOG_ROTATION_BACKUP_COUNT`        | Number of backup log files to keep                                                        | any int                                          | 48                |
+| `AUTHORIZED_MAILS`                 | Mail-addresses which are authorized to access special routes (whitespace separated)       | any int                                          | 48                |
 
 The log format is: `"[{asctime}] [{levelname}][{processName}][{threadName}][{module}.{funcName}] {message}"`, using `{` as format specifier.
 All logging parameters follow pythons [logging](https://docs.python.org/3/library/logging.html) and the [RotatingFileHandler](https://docs.python.org/3/library/logging.handlers.html#timedrotatingfilehandler) specification.
+
+#### LOG_AUTHORIZED_MAILS
+The API provides a `/logs` route. That route provides all logs for download.
+The verification is done based on the `'X-Email'` field in the request headers.
+A valid input would be: `LOG_AUTHORIZED_MAILS="nik@example.com chris@example.com"`.
+Requests from localhost are currently always permitted (want an env-option to disable it? - make an issue).
+
+Other privileged routes may come in the future.
+
 
 #### Note
 The system will automatically try to use the GPU and the best possible model when `USE_GPU_IF_AVAILABLE` and `MAX_MODEL` are not set.
