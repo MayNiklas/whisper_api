@@ -23,7 +23,6 @@ if __package__ is None and not hasattr(sys, "frozen"):
     sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
 
 from whisper_api.api_endpoints.endpoints import EndPoints
-from whisper_api.data_models.decoder_state import DecoderState
 from whisper_api.data_models.temp_dict import TempDict
 from whisper_api.frontend.endpoints import Frontend
 from whisper_api.data_models.data_types import named_temp_file_name_t, uuid_hex_t
@@ -47,7 +46,6 @@ print(description)
 init global variables
 """
 
-# TODO: can tasks get GCed before they finish if queue is too long?
 task_dict: TempDict[uuid_hex_t, Task] = TempDict(expiration_time_m=DELETE_RESULTS_AFTER_M,
                                                  refresh_expiration_time_on_usage=REFRESH_EXPIRATION_TIME_ON_USAGE,
                                                  auto_gc_interval_s=RUN_RESULT_EXPIRY_CHECK_M * 60,
@@ -55,8 +53,6 @@ task_dict: TempDict[uuid_hex_t, Task] = TempDict(expiration_time_m=DELETE_RESULT
 
 open_audio_files_dict: dict[named_temp_file_name_t, NamedTemporaryFile] = dict()
 
-
-decoder_state = DecoderState()
 
 """
 Init API
@@ -121,7 +117,7 @@ logging_entry_end, log_outry_end = multiprocessing.Pipe()
 
 configure_logging(logger, LOG_DIR, LOG_FILE, logging_entry_end)
 
-api_end_points = EndPoints(app, task_dict, decoder_state, open_audio_files_dict, parent_side)
+api_end_points = EndPoints(app, task_dict, open_audio_files_dict, parent_side)
 frontend = Frontend(app)
 
 
@@ -175,7 +171,7 @@ def listen_to_decoder(pipe_to_listen_to: multiprocessing.connection.Connection,
 
     while True:
         try:
-            msg = pipe_to_listen_to.recv()
+            task_update_json = pipe_to_listen_to.recv()
         except KeyboardInterrupt:
             handle_keyboard_interrupt()
 
