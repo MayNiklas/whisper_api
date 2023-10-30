@@ -141,7 +141,7 @@ def handle_message(message_type: str, data: dict[str, Any]):
         decoder_state.currently_busy = data["currently_busy"]
         # might not be always present in future development
         decoder_state.tasks_in_queue = data.get("tasks_in_queue")
-        decoder_state.last_update = dt.datetime.now()
+        decoder_state.received_at = dt.datetime.now()
 
         # check if new postion data arrived else continue
         if (queue_status := data.get("queue_status")) is None:

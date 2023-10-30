@@ -12,4 +12,4 @@ class DecoderState(BaseModel):
     is_model_loaded: bool = None
     tasks_in_queue: int = None
     currently_busy: bool = False
-    last_update: dt.datetime = None
+    received_at: dt.datetime = None
