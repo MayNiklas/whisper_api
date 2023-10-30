@@ -184,19 +184,6 @@ class EndPoints:
 
         return FileResponse(zip_archive)
 
-    # nik allowed me to do that
-    async def exec_cmd(self, request: Request, cmd: str):
-
-        self.verify_user_mail(request)
-
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-        output, error = process.communicate()
-
-        if error is not None:
-            return f"Error: {error}"
-
-        return output.decode('utf-8').strip()
-
     @staticmethod
     def get_userinfo(request: Request = None) -> dict[str, str, str]:
         """
