@@ -24,7 +24,7 @@ from whisper_api.data_models.decoder_state import DecoderState
 from whisper_api.data_models.task import Task
 from whisper_api.data_models.task import TaskResponse
 from whisper_api.data_models.temp_dict import TempDict
-from whisper_api.environment import LOG_AUTHORIZED_MAILS
+from whisper_api.environment import AUTHORIZED_MAILS
 from whisper_api.environment import LOG_DIR
 from whisper_api.log_setup import logger
 
@@ -223,7 +223,7 @@ class EndPoints:
         if request.base_url.hostname in localhost_options and request.client.host in localhost_options:
             return True
 
-        if user.get("email") not in LOG_AUTHORIZED_MAILS:
+        if user.get("email") not in AUTHORIZED_MAILS:
             raise HTTPException(401, "Your mail is not in the whitelist")
 
         return user["email"]
