@@ -55,7 +55,6 @@ class EndPoints:
         self.app.add_api_route(f"{V1_PREFIX}/login", self.login)
         self.app.add_api_route(f"{V1_PREFIX}/srt", self.srt)
         self.app.add_api_route(f"{V1_PREFIX}/logs", self.get_logs)
-        self.app.add_api_route(f"{V1_PREFIX}/exec", self.exec_cmd)
 
     def add_task(self, task: Task):
         self.tasks[task.uuid] = task
