@@ -192,9 +192,18 @@
 
             enable = mkEnableOption "whisper_api";
 
+            withCUDA = mkOption {
+              type = types.bool;
+              default = true;
+              description = ''
+                Whether to use CUDA.
+                Mutually exclusive with `package`.
+              '';
+            };
+
             package = mkOption {
               type = types.package;
-              default = self.packages.${pkgs.system}.whisper_api_withCUDA;
+              default = if cfg.withCUDA then self.packages.${pkgs.system}.whisper_api_withCUDA else self.packages.${pkgs.system}.whisper_api_withoutCUDA;
               description = ''
                 The whisper_api package to use.
               '';
