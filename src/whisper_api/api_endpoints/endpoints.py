@@ -1,3 +1,6 @@
+import glob
+import subprocess
+import zipfile
 from asyncio import tasks
 from multiprocessing.connection import Connection
 from tempfile import NamedTemporaryFile
@@ -17,9 +20,12 @@ from fastapi.responses import StreamingResponse
 from whisper_api.data_models.data_types import named_temp_file_name_t
 from whisper_api.data_models.data_types import task_type_str_t
 from whisper_api.data_models.data_types import uuid_hex_t
+from whisper_api.data_models.decoder_state import DecoderState
 from whisper_api.data_models.task import Task
 from whisper_api.data_models.task import TaskResponse
 from whisper_api.data_models.temp_dict import TempDict
+from whisper_api.environment import AUTHORIZED_MAILS
+from whisper_api.environment import LOG_DIR
 from whisper_api.log_setup import logger
 
 V1_PREFIX = "/api/v1"
@@ -28,9 +34,11 @@ V1_PREFIX = "/api/v1"
 class EndPoints:
     def __init__(self, app: FastAPI,
                  tasks_dict: TempDict[uuid_hex_t, Task],
+                 decoder_state: DecoderState,
                  open_audio_files_dict: dict[named_temp_file_name_t, NamedTemporaryFile],
                  conn_to_child: Connection):
         self.tasks = tasks_dict
+        self.decoder_state = decoder_state
         self.open_audio_files_dict = open_audio_files_dict
         self.app = app
         self.conn_to_child = conn_to_child
@@ -39,17 +47,33 @@ class EndPoints:
 
     def add_endpoints(self):
         self.app.add_api_route(f"{V1_PREFIX}/status", self.status)
+        self.app.add_api_route(f"{V1_PREFIX}/decoder_status", self.decoder_status)
+        self.app.add_api_route(f"{V1_PREFIX}/decoder_status_refresh", self.decoder_status_refresh)
         self.app.add_api_route(f"{V1_PREFIX}/translate", self.translate, methods=["POST"])
         self.app.add_api_route(f"{V1_PREFIX}/transcribe", self.transcribe, methods=["POST"])
         self.app.add_api_route(f"{V1_PREFIX}/userinfo", self.userinfo)
         self.app.add_api_route(f"{V1_PREFIX}/login", self.login)
         self.app.add_api_route(f"{V1_PREFIX}/srt", self.srt)
+        self.app.add_api_route(f"{V1_PREFIX}/logs", self.get_logs)
 
     def add_task(self, task: Task):
         self.tasks[task.uuid] = task
 
     def delete_task(self, task_id: uuid_hex_t):
         del self.tasks[task_id]
+
+    async def decoder_status(self):
+        """ Get the last reported status of the decoder """
+        # TODO: should this be some kind of admin route?
+        #  hm... guess there is no downside in leaving it public
+        return self.decoder_state
+
+    async def decoder_status_refresh(self):
+        """ trigger a refresh of the decoder - the response will NEITHER await nor include the new state """
+        self.conn_to_child.send({
+            "type": "status",
+        })
+        return "Request to refresh state is sent to decoder"
 
     async def status(self, task_id: uuid_hex_t) -> TaskResponse:
         """
@@ -93,7 +117,7 @@ class EndPoints:
 
         # send task into queue
         # TODO: find out of json serialization is really needed
-        task_dict = {"task_name": "decode", "data": task.to_json}
+        task_dict = {"type": "decode", "data": task.to_json}
         self.conn_to_child.send(task_dict)
 
         return task
@@ -145,6 +169,20 @@ class EndPoints:
 
         return self.get_userinfo(request)
 
+    async def get_logs(self, request: Request):
+
+        self.verify_user_mail(request)
+
+        zip_archive = f"{LOG_DIR}/logs.zip"
+
+        with zipfile.ZipFile(zip_archive, 'w', zipfile.ZIP_DEFLATED) as zipf:
+
+            for file in glob.glob(LOG_DIR + '/*.log*'):
+                # Add file to zip
+                zipf.write(file)
+
+        return FileResponse(zip_archive)
+
     @staticmethod
     def get_userinfo(request: Request = None) -> dict[str, str, str]:
         """
@@ -163,6 +201,18 @@ class EndPoints:
         user['user_agent'] = request.headers.get('User-Agent')
 
         return user
+
+    @staticmethod
+    def verify_user_mail(request: Request):
+        user = EndPoints.get_userinfo(request)
+        localhost_options = {"localhost", "127.0.0.1"}
+        if request.base_url.hostname in localhost_options and request.client.host in localhost_options:
+            return True
+
+        if user.get("email") not in AUTHORIZED_MAILS:
+            raise HTTPException(401, "Your mail is not in the whitelist")
+
+        return user["email"]
 
     @staticmethod
     def login(request: Request):

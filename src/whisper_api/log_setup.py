@@ -3,15 +3,24 @@ import logging
 import multiprocessing
 import os
 import threading
+from logging.handlers import TimedRotatingFileHandler
 from multiprocessing.connection import Connection
 from typing import Literal
 
+from whisper_api.environment import LOG_DATE_FORMAT
+from whisper_api.environment import LOG_FORMAT
+from whisper_api.environment import LOG_LEVEL_CONSOLE
+from whisper_api.environment import LOG_LEVEL_FILE
+from whisper_api.environment import LOG_ROTATION_BACKUP_COUNT
+from whisper_api.environment import LOG_ROTATION_INTERVAL
+from whisper_api.environment import LOG_ROTATION_WHEN
 
 # set logging format
-formatter_string = "[{asctime}] [{levelname}][{processName}][{module}.{funcName}] {message}"
+formatter_string = LOG_FORMAT
 formatter_style: Literal["%", "$", "{"] = "{"
-formatter_date_fmt = "%d.%m %H:%M:%S"
+formatter_date_fmt = LOG_DATE_FORMAT
 formatter = logging.Formatter(formatter_string, style="{")
+# TODO why is this here AND USED? - why? can we just replace it with the normal format??
 rich_formatter = logging.Formatter("[{asctime}] [{levelname}] [{threadName}] {message}",
                                    style=formatter_style, datefmt=formatter_date_fmt)
 
@@ -27,16 +36,16 @@ logger.setLevel(logging.DEBUG)
 
 
 # TODO: rotating filehandler?
-class PipedFileHandler(logging.FileHandler):
+class PipedFileHandler(TimedRotatingFileHandler):
     """ A logger that can be used in two processes, but only writes from MainProcess """
 
-    def __init__(self, log_pipe: Connection, log_dir: str, log_file: str):
+    def __init__(self, log_pipe: Connection, log_dir: str, log_file: str, **rotating_file_handler_kwargs):
         if log_dir:
             self.log_path = os.path.join(log_dir, log_file)
         else:
             self.log_path = log_file
 
-        super(PipedFileHandler, self).__init__(self.log_path)
+        super().__init__(self.log_path, **rotating_file_handler_kwargs)
         self.log_pipe = log_pipe
         self.am_I_main = multiprocessing.current_process().name == 'MainProcess'
 
@@ -76,7 +85,7 @@ class PipedFileHandler(logging.FileHandler):
                 _formatter = logging.Formatter(formatter_string, style=formatter_style, datefmt=formatter_date_fmt)
 
             self.setFormatter(_formatter)
-            super(PipedFileHandler, self).emit(record)
+            super().emit(record)
 
         # if we're in a child process, send the record to the pipe
         else:
@@ -109,8 +118,8 @@ def configure_logging(_logger: logging.Logger,
                       log_dir: str = "",
                       log_file: str = "events.log",
                       log_pipe: Connection = None,
-                      console_logger_level=logging.INFO,
-                      file_logger_level=logging.DEBUG,
+                      console_logger_level=LOG_LEVEL_CONSOLE,
+                      file_logger_level=LOG_LEVEL_FILE,
                       logger_base_level=logging.DEBUG):
     """
     The function to call from the outside to configure the PipedLogger
@@ -130,7 +139,11 @@ def configure_logging(_logger: logging.Logger,
     _logger.setLevel(logger_base_level)
 
     if log_pipe and file_logger_level:
-        pipe_logger = PipedFileHandler(log_pipe, log_dir, log_file)
+        pipe_logger = PipedFileHandler(log_pipe, log_dir, log_file,
+                                       when=LOG_ROTATION_WHEN,
+                                       interval=LOG_ROTATION_INTERVAL,
+                                       backupCount=LOG_ROTATION_BACKUP_COUNT,
+                                       )
         pipe_logger.setLevel(file_logger_level)
         pipe_logger.setFormatter(rich_formatter)
         _logger.addHandler(pipe_logger)

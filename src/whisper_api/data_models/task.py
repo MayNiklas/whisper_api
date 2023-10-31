@@ -24,6 +24,7 @@ class TaskResponse(BaseModel):
     source_language: Optional[str]
     task_type: task_type_str_t
     status: str
+    position_in_queue: Optional[int]
     time_uploaded: dt.datetime
     processing_duration: Optional[int]
     time_processing_finished: Optional[dt.datetime]
@@ -71,6 +72,7 @@ class Task:
     source_language: Optional[str]
     task_type: task_type_str_t
     status: status_str_t = "pending"
+    position_in_queue: Optional[int] = None
     whisper_result: Optional[WhisperResult] = None
     time_uploaded: dt.datetime = None
     uuid: uuid_hex_t = None
@@ -90,15 +92,18 @@ class Task:
                 task_id=self.uuid,
                 time_uploaded=self.time_uploaded,
                 status=self.status,
+                position_in_queue=self.position_in_queue,
                 task_type=self.task_type,
             )
 
+        # task status = "finished"
         return TaskResponse(
             task_id=self.uuid,
             transcript=self.whisper_result.text,
             source_language=self.whisper_result.language,
             task_type=self.task_type,
             status=self.status,
+            position_in_queue=self.position_in_queue,
             time_uploaded=self.time_uploaded,
             processing_duration=self.whisper_result.processing_duration_s,
             time_processing_finished=self.whisper_result.end_time,
