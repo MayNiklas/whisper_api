@@ -139,50 +139,26 @@
                 python-with-packages
               ];
               shellHook = ''
-                # print information about the development shell
-                echo "---------------------------------------------------------------------"
-                echo "How to use this Nix development shell:"
-                echo "python interpreter: ${python-with-packages}/bin/python3"
-                echo "python site packages: ${python-with-packages}/${python-with-packages.sitePackages}"
-                echo "---------------------------------------------------------------------"
-                echo "In case you need to set the PYTHONPATH environment variable, run:"
-                echo "export PYTHONPATH=${python-with-packages}/${python-with-packages.sitePackages}"
-                echo "---------------------------------------------------------------------"
-                echo "VSCode:"
-                echo "1. Install the 'ms-python.python' extension"
-                echo "2. Set the python interpreter to ${python-with-packages}/bin/python3"
-                echo "---------------------------------------------------------------------"
-                echo "PyCharm:"
-                echo "TODO - please contribute!"
-                echo "---------------------------------------------------------------------"
-
-                # set the PYTHONPATH environment variable
-                export PYTHONPATH=${python-with-packages}/${python-with-packages.sitePackages}
-
-                # if .git/hooks/pre-commit does not exist, ask if the user wants to install it
-                if [ ! -f .git/hooks/pre-commit ]; then
-                  read -p "Do you want to install the pre-commit hook? (y/n) " -n 1 -r
-                  echo   # (optional) move to a new line
-                  if [[ $REPLY =~ ^[Yy]$ ]]
-                  then
-                    echo "---------------------------------------------------------------------"
-                    echo "Installing the pre-commit hook..."
-                    echo "---------------------------------------------------------------------"
-                    ${pkgs.pre-commit}/bin/pre-commit install
-                  fi
-                fi
-
-                # ask if the user wants to run the whisper_api development server
-                read -p "Do you want to run the whisper_api development server? (y/n) " -n 1 -r
-                echo   # (optional) move to a new line
-                if [[ $REPLY =~ ^[Yy]$ ]]
-                then
+                if [[ -z $using_direnv ]]; then                
+                  # print information about the development shell
                   echo "---------------------------------------------------------------------"
-                  echo "Running the whisper_api development server..."
+                  echo "How to use this Nix development shell:"
+                  echo "python interpreter: ${python-with-packages}/bin/python3"
+                  echo "python site packages: ${python-with-packages}/${python-with-packages.sitePackages}"
                   echo "---------------------------------------------------------------------"
-                  cd src
-                  uvicorn whisper_api:app --reload --host 127.0.0.1 --port 3001
-                  exit 0
+                  echo "In case you need to set the PYTHONPATH environment variable, run:"
+                  echo "export PYTHONPATH=${python-with-packages}/${python-with-packages.sitePackages}"
+                  echo "---------------------------------------------------------------------"
+                  echo "VSCode:"
+                  echo "1. Install the 'ms-python.python' extension"
+                  echo "2. Set the python interpreter to ${python-with-packages}/bin/python3"
+                  echo "---------------------------------------------------------------------"
+                  echo "PyCharm:"
+                  echo "TODO - please contribute!"
+                  echo "---------------------------------------------------------------------"
+                  echo "Running the whisper_api development server:"
+                  echo "cd src && uvicorn whisper_api:app --reload --host 127.0.0.1 --port 3001"
+                  echo "---------------------------------------------------------------------"
                 fi
               '';
             };
@@ -268,11 +244,29 @@
               '';
             };
 
+            authorizedMails = mkOption {
+              type = types.str;
+              default = "None";
+              description = ''
+                Users with these mails are authorized to request logs via the API.
+                This is mainly used for debugging purposes.
+                Multiple mails can be separated by a space.
+              '';
+            };
+
             dataDir = mkOption {
               type = types.str;
               default = "/var/lib/whisper_api";
               description = ''
                 The directory where whisper_api stores its data files.
+              '';
+            };
+
+            environment = mkOption {
+              type = types.attrs;
+              default = { };
+              description = ''
+                Environment variables to be passed to the whisper_api service.
               '';
             };
 
@@ -303,7 +297,8 @@
                 LOAD_MODEL_ON_STARTUP = mkIf (cfg.loadModelOnStartup == false) "0";
                 MAX_MODEL = mkIf (cfg.maxModel != "None") cfg.maxModel;
                 UNLOAD_MODEL_AFTER_S = mkIf (cfg.unloadModelAfterSeconds != 0) (toString cfg.unloadModelAfterSeconds);
-              };
+                LOG_AUTHORIZED_MAILS = mkIf (cfg.authorizedMails != "None") cfg.authorizedMails;
+              } // cfg.environment;
               serviceConfig = mkMerge [
                 {
                   User = cfg.user;
