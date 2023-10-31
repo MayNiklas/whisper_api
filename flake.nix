@@ -126,9 +126,6 @@
                   openai-whisper
                   torch
                   uvicorn
-                  # not used yet!
-                  # we need to evaluate it's performance against whisper from OpenAI
-                  faster-whisper
                 ] ++
                 # only needed for development
                 [ autopep8 pytest ]);
@@ -142,25 +139,27 @@
                 python-with-packages
               ];
               shellHook = ''
-                # print information about the development shell
-                echo "---------------------------------------------------------------------"
-                echo "How to use this Nix development shell:"
-                echo "python interpreter: ${python-with-packages}/bin/python3"
-                echo "python site packages: ${python-with-packages}/${python-with-packages.sitePackages}"
-                echo "---------------------------------------------------------------------"
-                echo "In case you need to set the PYTHONPATH environment variable, run:"
-                echo "export PYTHONPATH=${python-with-packages}/${python-with-packages.sitePackages}"
-                echo "---------------------------------------------------------------------"
-                echo "VSCode:"
-                echo "1. Install the 'ms-python.python' extension"
-                echo "2. Set the python interpreter to ${python-with-packages}/bin/python3"
-                echo "---------------------------------------------------------------------"
-                echo "PyCharm:"
-                echo "TODO - please contribute!"
-                echo "---------------------------------------------------------------------"
-                echo "Running the whisper_api development server:"
-                echo "cd src && uvicorn whisper_api:app --reload --host 127.0.0.1 --port 3001"
-                echo "---------------------------------------------------------------------"
+                if [[ -z $using_direnv ]]; then                
+                  # print information about the development shell
+                  echo "---------------------------------------------------------------------"
+                  echo "How to use this Nix development shell:"
+                  echo "python interpreter: ${python-with-packages}/bin/python3"
+                  echo "python site packages: ${python-with-packages}/${python-with-packages.sitePackages}"
+                  echo "---------------------------------------------------------------------"
+                  echo "In case you need to set the PYTHONPATH environment variable, run:"
+                  echo "export PYTHONPATH=${python-with-packages}/${python-with-packages.sitePackages}"
+                  echo "---------------------------------------------------------------------"
+                  echo "VSCode:"
+                  echo "1. Install the 'ms-python.python' extension"
+                  echo "2. Set the python interpreter to ${python-with-packages}/bin/python3"
+                  echo "---------------------------------------------------------------------"
+                  echo "PyCharm:"
+                  echo "TODO - please contribute!"
+                  echo "---------------------------------------------------------------------"
+                  echo "Running the whisper_api development server:"
+                  echo "cd src && uvicorn whisper_api:app --reload --host 127.0.0.1 --port 3001"
+                  echo "---------------------------------------------------------------------"
+                fi
               '';
             };
         in
@@ -245,11 +244,29 @@
               '';
             };
 
+            authorizedMails = mkOption {
+              type = types.str;
+              default = "None";
+              description = ''
+                Users with these mails are authorized to request logs via the API.
+                This is mainly used for debugging purposes.
+                Multiple mails can be separated by a space.
+              '';
+            };
+
             dataDir = mkOption {
               type = types.str;
               default = "/var/lib/whisper_api";
               description = ''
                 The directory where whisper_api stores its data files.
+              '';
+            };
+
+            environment = mkOption {
+              type = types.attrs;
+              default = { };
+              description = ''
+                Environment variables to be passed to the whisper_api service.
               '';
             };
 
@@ -280,7 +297,8 @@
                 LOAD_MODEL_ON_STARTUP = mkIf (cfg.loadModelOnStartup == false) "0";
                 MAX_MODEL = mkIf (cfg.maxModel != "None") cfg.maxModel;
                 UNLOAD_MODEL_AFTER_S = mkIf (cfg.unloadModelAfterSeconds != 0) (toString cfg.unloadModelAfterSeconds);
-              };
+                LOG_AUTHORIZED_MAILS = mkIf (cfg.authorizedMails != "None") cfg.authorizedMails;
+              } // cfg.environment;
               serviceConfig = mkMerge [
                 {
                   User = cfg.user;
