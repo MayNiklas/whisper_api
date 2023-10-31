@@ -245,8 +245,8 @@
             };
 
             authorizedMails = mkOption {
-              type = types.str;
-              default = "None";
+              type = types.listOf types.str;
+              default = [ ];
               description = ''
                 Users with these mails are authorized to request logs via the API.
                 This is mainly used for debugging purposes.
@@ -297,7 +297,7 @@
                 LOAD_MODEL_ON_STARTUP = mkIf (cfg.loadModelOnStartup == false) "0";
                 MAX_MODEL = mkIf (cfg.maxModel != "None") cfg.maxModel;
                 UNLOAD_MODEL_AFTER_S = mkIf (cfg.unloadModelAfterSeconds != 0) (toString cfg.unloadModelAfterSeconds);
-                LOG_AUTHORIZED_MAILS = mkIf (cfg.authorizedMails != "None") cfg.authorizedMails;
+                LOG_AUTHORIZED_MAILS = mkIf (cfg.authorizedMails != [ ]) (lib.strings.concatStringsSep " " cfg.authorizedMails);
               } // cfg.environment;
               serviceConfig = mkMerge [
                 {
