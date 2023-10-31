@@ -194,7 +194,7 @@
 
             withCUDA = mkOption {
               type = types.bool;
-              default = true;
+              default = false;
               description = ''
                 Whether to use CUDA.
                 Mutually exclusive with `package`.
