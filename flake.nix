@@ -185,15 +185,20 @@
         with lib;
         let
           cfg = config.services.whisper_api;
-          # TODO:
-          # a CUDA / non-CUDA version option would be nice
-          whisper_api = self.packages.${pkgs.system}.whisper_api_withCUDA;
         in
         {
 
           options.services.whisper_api = {
 
             enable = mkEnableOption "whisper_api";
+
+            package = mkOption {
+              type = types.package;
+              default = self.packages.${pkgs.system}.whisper_api_withCUDA;
+              description = ''
+                The whisper_api package to use.
+              '';
+            };
 
             listen = mkOption {
               type = types.str;
@@ -304,7 +309,7 @@
                   User = cfg.user;
                   Group = cfg.group;
                   WorkingDirectory = cfg.dataDir;
-                  ExecStart = "${whisper_api}/bin/whisper_api";
+                  ExecStart = "${cfg.package}/bin/whisper_api";
                   Restart = "on-failure";
                 }
               ];
