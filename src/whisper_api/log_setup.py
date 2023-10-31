@@ -85,7 +85,7 @@ class PipedFileHandler(TimedRotatingFileHandler):
                 _formatter = logging.Formatter(formatter_string, style=formatter_style, datefmt=formatter_date_fmt)
 
             self.setFormatter(_formatter)
-            super(PipedFileHandler, self).emit(record)
+            super().emit(record)
 
         # if we're in a child process, send the record to the pipe
         else:
