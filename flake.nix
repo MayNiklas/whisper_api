@@ -361,7 +361,7 @@
                 networking = {
                   dhcpcd.enable = false;
                   interfaces.eth1.ipv4.addresses = [{
-                    address = "192.168.1.2";
+                    address = "192.168.0.2";
                     prefixLength = 24;
                   }];
                 };
@@ -383,7 +383,7 @@
                   useNetworkd = true;
                   useDHCP = false;
                   interfaces.eth1.ipv4.addresses = [{
-                    address = "192.168.1.1";
+                    address = "192.168.0.1";
                     prefixLength = 24;
                   }];
                 };
@@ -413,14 +413,14 @@
                 server.wait_for_unit("whisper_api")
 
                 # check if client can reach server
-                client.wait_until_succeeds("ping -c 1 192.168.1.1")
+                client.wait_until_succeeds("ping -c 1 192.168.0.1")
 
                 # check if server can reach API
                 server.wait_until_succeeds("${pkgs.curl}/bin/curl http://127.0.0.1:3001/api/v1/decoder_status")
-                server.wait_until_succeeds("${pkgs.curl}/bin/curl http://192.168.1.1:3001/api/v1/decoder_status")
+                server.wait_until_succeeds("${pkgs.curl}/bin/curl http://192.168.0.1:3001/api/v1/decoder_status")
 
                 # check if client can reach API
-                client.wait_until_succeeds("${pkgs.curl}/bin/curl http://192.168.1.1:3001/api/v1/decoder_status")
+                client.wait_until_succeeds("${pkgs.curl}/bin/curl http://192.168.0.1:3001/api/v1/decoder_status")
               '';
           };
       };
