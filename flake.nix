@@ -349,5 +349,81 @@
 
         };
 
+      # nix run .\#checks.vmTest.driver
+      checks = let system = "x86_64-linux"; in {
+        vmTest = with import (nixpkgs + "/nixos/lib/testing-python.nix") { inherit system; };
+          makeTest {
+            name = "whisper-service-test";
+            nodes = {
+
+              client = { pkgs, ... }: {
+                imports = [ ];
+                networking = {
+                  dhcpcd.enable = false;
+                  interfaces.eth1.ipv4.addresses = [{
+                    address = "192.168.1.2";
+                    prefixLength = 24;
+                  }];
+                };
+              };
+
+              server = { pkgs, ... }: {
+                imports = [ self.nixosModules.whisper_api ];
+                services.whisper_api = {
+                  enable = true;
+                  package = self.packages.${system}.whisper_api_withoutCUDA;
+                  maxModel = "base";
+                  listen = "0.0.0.0";
+                  port = 3001;
+                  openFirewall = true;
+                  environment = { };
+                };
+                networking = {
+                  dhcpcd.enable = false;
+                  useNetworkd = true;
+                  useDHCP = false;
+                  interfaces.eth1.ipv4.addresses = [{
+                    address = "192.168.1.1";
+                    prefixLength = 24;
+                  }];
+                };
+              };
+
+            };
+            testScript =
+              let
+                base_model = (pkgs.fetchurl {
+                  url = "https://openaipublic.azureedge.net/main/whisper/models/ed3a0b6b1c0edf879ad9b11b1af5a0e6ab5db9205f891f668f8b0e6c6326e34e/base.pt";
+                  hash = "sha256-7ToLaxwO34ea2bEbGvWg5qtduSBfiR9mj4sObGMm404=";
+                });
+              in
+              ''
+                start_all()
+
+                # copy the model to /var/lib/whisper_api/.cache/whisper/tiny.pt on the server
+                server.succeed("mkdir -p /var/lib/whisper_api/.cache/whisper")
+                server.succeed("cp ${base_model} /var/lib/whisper_api/.cache/whisper/base.pt")
+                server.succeed("chown -R whisper_api:whisper_api /var/lib/whisper_api/.cache/whisper")
+
+                # wait until the client is up
+                client.wait_for_unit("network-online.target")
+
+                # wait until the server is up
+                server.wait_for_unit("network-online.target")
+                server.wait_for_unit("whisper_api")
+
+                # check if client can reach server
+                client.wait_until_succeeds("ping -c 1 192.168.1.1")
+
+                # check if server can reach API
+                server.wait_until_succeeds("${pkgs.curl}/bin/curl http://127.0.0.1:3001/api/v1/decoder_status")
+                server.wait_until_succeeds("${pkgs.curl}/bin/curl http://192.168.1.1:3001/api/v1/decoder_status")
+
+                # check if client can reach API
+                client.wait_until_succeeds("${pkgs.curl}/bin/curl http://192.168.1.1:3001/api/v1/decoder_status")
+              '';
+          };
+      };
+
     };
 }
