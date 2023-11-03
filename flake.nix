@@ -126,6 +126,8 @@
                   openai-whisper
                   torch
                   uvicorn
+                  # we need to evaluate faster-whisper
+                  faster-whisper
                 ] ++
                 # only needed for development
                 [ autopep8 pytest ]);
