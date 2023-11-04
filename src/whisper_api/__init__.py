@@ -1,11 +1,13 @@
 import datetime as dt
 import multiprocessing
+import os
 import random
 import signal
 import string
 import sys
 import threading
 import time
+import traceback as tb
 from tempfile import NamedTemporaryFile
 from types import FrameType
 from typing import Any
@@ -95,11 +97,26 @@ def req_info_str(req: Request, rid=None) -> str:
     return f'{req.client.host}:{req.client.port} "{req.method} {req.url.path}", rid={rid}'
 
 
+def exec_location_info():
+    exc_type, exc_value, exc_traceback = sys.exc_info()
+    traceback_details = tb.extract_tb(exc_traceback, limit=None)
+
+    last_call = traceback_details[-1]
+
+    rel_path = os.path.relpath(last_call.filename)
+
+    return (f"{exc_type.__name__}: '{exc_value}', "
+            f"file: {rel_path}, "
+            f"line: {last_call.lineno} '{last_call.line}', "
+            f"function: {last_call.name}")
+
+
 @app.exception_handler(Exception)
 async def log_exception(req: Request, e: Exception):
+
     logger.error(
-        f"Exception '{type(e).__name__}': {e}, "
-        f"request: '{req_info_str(req)}',"
+        f"{exec_location_info()}, "
+        f"request: '{req_info_str(req)}', "
         f"q_params={req.query_params or dict()}")
 
 
