@@ -34,6 +34,7 @@ logger = logging.getLogger('logger')
 # register loggers
 logger.setLevel(logging.DEBUG)
 
+INITIALIZED = False
 
 # TODO: rotating filehandler?
 class PipedFileHandler(TimedRotatingFileHandler):
@@ -132,6 +133,10 @@ def configure_logging(_logger: logging.Logger,
         file_logger_level: The level to log to file (None for no file logging, even if pipe is set)
         logger_base_level: The base level of the logger (everything below will be discarded, recommended: DEBUG)
     """
+    global INITIALIZED
+    if INITIALIZED:
+        logger.warning(f"Log is already configured! - are you sure to configure it again?")
+
     # path for databases or config files
     if log_dir and not os.path.exists(log_dir):
         os.mkdir(log_dir)
@@ -160,6 +165,8 @@ def configure_logging(_logger: logging.Logger,
         console_logger.setLevel(console_logger_level)
         console_logger.setFormatter(formatter)
         _logger.addHandler(console_logger)
+
+    INITIALIZED = True
 
 
 if __name__ == '__main__':
