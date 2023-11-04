@@ -151,17 +151,19 @@ async def log_requests(req: Request, call_next):
 
 """
 Setup decoder process
+Done in global scope at init, but only once (in main)
 """
 
-# create Pipe for communication between main and worker thread
-parent_side, child_side = multiprocessing.Pipe()
-logging_entry_end, log_outry_end = multiprocessing.Pipe()
+if multiprocessing.current_process().name == "MainProcess":
 
-configure_logging(logger, LOG_DIR, LOG_FILE, logging_entry_end)
+    # create Pipe for communication between main and worker thread
+    parent_side, child_side = multiprocessing.Pipe()
+    logging_entry_end, log_outry_end = multiprocessing.Pipe()
 
-api_end_points = EndPoints(app, task_dict, decoder_state, open_audio_files_dict, parent_side)
-frontend = Frontend(app)
+    configure_logging(logger, LOG_DIR, LOG_FILE, logging_entry_end)
 
+    api_end_points = EndPoints(app, task_dict, decoder_state, open_audio_files_dict, parent_side)
+    frontend = Frontend(app)
 
 def handle_message(message_type: str, data: dict[str, Any]):
     """
