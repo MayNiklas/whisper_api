@@ -95,6 +95,14 @@ def req_info_str(req: Request, rid=None) -> str:
     return f'{req.client.host}:{req.client.port} "{req.method} {req.url.path}", rid={rid}'
 
 
+@app.exception_handler(Exception)
+async def log_exception(req: Request, e: Exception):
+    logger.error(
+        f"Exception '{type(e).__name__}': {e}, "
+        f"request: '{req_info_str(req)}',"
+        f"q_params={req.query_params or dict()}")
+
+
 # credit: https://philstories.medium.com/fastapi-logging-f6237b84ea64
 @app.middleware("http")
 async def log_requests(req: Request, call_next):
