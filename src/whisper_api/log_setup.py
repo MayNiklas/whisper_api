@@ -61,11 +61,15 @@ class PipedFileHandler(TimedRotatingFileHandler):
             atexit.register(self.wait_for_listener)
             self.is_end = False
 
+    @staticmethod
+    def am_i_main():
+        return multiprocessing.current_process().name == 'MainProcess'
+
     def wait_for_listener(self):
         """ Ensure that we wait for thread when we shall exit """
         # well, we won't try to use the logger when waiting for logging to be finished :)
         print("Stopping listener for logger...")
-        if self.am_I_main:
+        if self.am_i_main():
             self.is_end = True
             print("Waiting for logger to finish writing...")
             self.listener_thread.join()
@@ -74,7 +78,7 @@ class PipedFileHandler(TimedRotatingFileHandler):
     def emit(self, record: logging.LogRecord):
         """ Emit the message or send it to the main """
         # only write from main process
-        if self.am_I_main:
+        if self.am_i_main():
 
             # we need to replace the process name manually, otherwise processName is overwritten with 'MainProcess'
             if record.processName != 'MainProcess':
