@@ -85,6 +85,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# maps current requests to our identifiers
+rid_dict: dict[Request, str] = {}
+
+
+def req_info_str(req: Request, rid=None) -> str:
+    if rid is None:
+        rid = rid_dict.get(req)
+    return f'{req.client.host}:{req.client.port} "{req.method} {req.url.path}", rid={rid}'
+
 
 # credit: https://philstories.medium.com/fastapi-logging-f6237b84ea64
 @app.middleware("http")
@@ -94,8 +103,10 @@ async def log_requests(req: Request, call_next):
     Not logging any data from the request/ response body, as it might contain sensitive data.
     """
 
-    idem = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-    req_base_str = f'{req.client.host}:{req.client.port} "{req.method} {req.url.path}", rid={idem}'
+    rid = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    rid_dict[req] = rid  # register current request
+
+    req_base_str = req_info_str(req, rid)
 
     # logger.info(f'{req_base_str}, q_params={req.query_params or dict()}')
     start_time = time.time()
@@ -108,6 +119,8 @@ async def log_requests(req: Request, call_next):
                 f"completed_in={process_time:.2f}ms, "
                 f"q_params={req.query_params or dict()}"
                 )
+
+    del rid_dict[req]  # remove request
 
     return resp
 
