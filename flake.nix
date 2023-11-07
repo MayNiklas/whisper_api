@@ -53,7 +53,7 @@
         (system: nixpkgsFor.${system}.nixpkgs-fmt);
 
       overlays.default = final: prev: {
-        whisper_api = with final;  pkgs.python3Packages.callPackage nixos/pkgs/whisper_api { };
+        whisper_api = with final;  pkgs.python3Packages.callPackage nixos/pkgs/whisper_api { inherit self; };
       };
 
       # Packages
