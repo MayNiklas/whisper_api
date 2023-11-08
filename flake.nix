@@ -54,7 +54,8 @@
         (system: nixpkgsFor.${system}.nixpkgs-fmt);
 
       overlays.default = final: prev: {
-        whisper_api = with final;  pkgs.python3Packages.callPackage nixos/pkgs/whisper_api { inherit self; };
+        devShell = with final; pkgs.callPackage nixos/devShell { };
+        whisper_api = with final; pkgs.python3Packages.callPackage nixos/pkgs/whisper_api { inherit self; };
       };
 
       # Packages
@@ -70,74 +71,15 @@
             }
           );
 
-      devShells =
-        let
-          whisper-shell = { pkgs, ... }:
-            let
-              python-with-packages = pkgs.python3.withPackages (p: with p;
-                [
-                  fastapi
-                  ffmpeg-python
-                  multipart
-                  openai-whisper
-                  torch
-                  uvicorn
-                  # we need to evaluate faster-whisper
-                  faster-whisper
-                ] ++
-                # only needed for development
-                [ autopep8 pytest ]);
-            in
-            pkgs.mkShell {
-              buildInputs = with pkgs;[
-                # only needed for development
-                nixpkgs-fmt
-                pre-commit
-                # also in final package
-                python-with-packages
-              ];
-              shellHook = ''
-                if [[ -z $using_direnv ]]; then                
-                  # print information about the development shell
-                  echo "---------------------------------------------------------------------"
-                  echo "How to use this Nix development shell:"
-                  echo "python interpreter: ${python-with-packages}/bin/python3"
-                  echo "python site packages: ${python-with-packages}/${python-with-packages.sitePackages}"
-                  echo "---------------------------------------------------------------------"
-                  echo "In case you need to set the PYTHONPATH environment variable, run:"
-                  echo "export PYTHONPATH=${python-with-packages}/${python-with-packages.sitePackages}"
-                  echo "---------------------------------------------------------------------"
-                  echo "VSCode:"
-                  echo "1. Install the 'ms-python.python' extension"
-                  echo "2. Set the python interpreter to ${python-with-packages}/bin/python3"
-                  echo "---------------------------------------------------------------------"
-                  echo "PyCharm:"
-                  echo "TODO - please contribute!"
-                  echo "---------------------------------------------------------------------"
-                  echo "Running the whisper_api development server:"
-                  echo "cd src && uvicorn whisper_api:app --reload --host 127.0.0.1 --port 3001"
-                  echo "---------------------------------------------------------------------"
-                fi
-              '';
-            };
-        in
-        forAllSystems
-          (system: {
-            # nix develop
-            default = whisper-shell { pkgs = nixpkgsFor.${system}; };
-            # nix develop .#withoutCUDA
-            withoutCUDA = whisper-shell { pkgs = nixpkgsForWithoutCUDA.${system}; };
-          })
-        //
-        forCudaSystems
-          (system: {
-            # nix develop
-            default = whisper-shell { pkgs = nixpkgsFor.${system}; };
-            # nix develop .#withCUDA
-            withCUDA = whisper-shell { pkgs = nixpkgsForCUDA.${system}; };
-            # nix develop .#withoutCUDA
-            withoutCUDA = whisper-shell { pkgs = nixpkgsForWithoutCUDA.${system}; };
-          });
+      devShells = forAllSystems
+        (system:
+          let pkgs = nixpkgsFor.${system}; in {
+            default = pkgs.devShell;
+            withoutCUDA = pkgs.devShell;
+          } // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
+            withCUDA = pkgs.devShell.override { cudaSupport = true; };
+          }
+        );
 
       nixosModules.whisper_api = { lib, pkgs, config, ... }:
         with lib;
