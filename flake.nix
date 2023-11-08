@@ -30,7 +30,6 @@
     in
     {
 
-      # `nix fmt`
       formatter = forAllSystems
         (system: nixpkgsFor.${system}.nixpkgs-fmt);
 
@@ -39,30 +38,26 @@
         whisper_api = with final; pkgs.python3Packages.callPackage nixos/pkgs/whisper_api { inherit self; };
       };
 
-      # Packages
-      packages =
-        forAllSystems
-          (system:
-            let pkgs = nixpkgsFor.${system}; in {
-              default = pkgs.whisper_api;
-              whisper_api = pkgs.whisper_api;
-              whisper_api_withoutCUDA = pkgs.whisper_api;
-            } // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
-              whisper_api_withCUDA = pkgs.whisper_api.override { cudaSupport = true; };
-            }
-          );
+      packages = forAllSystems (system:
+        let pkgs = nixpkgsFor.${system}; in {
+          default = pkgs.whisper_api;
+          whisper_api = pkgs.whisper_api;
+          whisper_api_withoutCUDA = pkgs.whisper_api;
+        } // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
+          whisper_api_withCUDA = pkgs.whisper_api.override { cudaSupport = true; };
+        }
+      );
 
-      devShells = forAllSystems
-        (system:
-          let pkgs = nixpkgsFor.${system}; in {
-            default = pkgs.devShell;
-            withoutCUDA = pkgs.devShell;
-          } // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
-            # TODO: currently we use nixpkgsCUDA for devShell
-            # not all dependencies have a cudaSupport option.        
-            withCUDA = nixpkgsCUDA.devShell;
-          }
-        );
+      devShells = forAllSystems (system:
+        let pkgs = nixpkgsFor.${system}; in {
+          default = pkgs.devShell;
+          withoutCUDA = pkgs.devShell;
+        } // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
+          # TODO: currently we use nixpkgsCUDA for devShell
+          # not all dependencies have a cudaSupport option.        
+          withCUDA = nixpkgsCUDA.devShell;
+        }
+      );
 
       nixosModules = {
         whisper_api = {
