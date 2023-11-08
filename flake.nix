@@ -20,6 +20,7 @@
         import nixpkgs {
           inherit system;
           overlays = [ self.overlays.default ];
+          config = { allowUnfree = true; };
         });
 
       # Nixpkgs instantiated for supported system types.
@@ -59,19 +60,15 @@
       # Packages
       packages =
         forAllSystems
-          (system: {
-            default = self.packages.${system}.whisper_api;
-            whisper_api = nixpkgsFor.${system}.whisper_api;
-            whisper_api_withoutCUDA = nixpkgsForWithoutCUDA.${system}.whisper_api;
-          })
-        //
-        forCudaSystems
-          (system: {
-            default = self.packages.${system}.whisper_api;
-            whisper_api = nixpkgsFor.${system}.whisper_api;
-            whisper_api_withCUDA = nixpkgsForCUDA.${system}.whisper_api;
-            whisper_api_withoutCUDA = nixpkgsForWithoutCUDA.${system}.whisper_api;
-          });
+          (system:
+            let pkgs = nixpkgsFor.${system}; in {
+              default = pkgs.whisper_api;
+              whisper_api = pkgs.whisper_api;
+              whisper_api_withoutCUDA = pkgs.whisper_api;
+            } // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
+              whisper_api_withCUDA = pkgs.whisper_api.override { cudaSupport = true; };
+            }
+          );
 
       devShells =
         let
