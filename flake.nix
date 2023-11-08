@@ -7,13 +7,10 @@
   outputs = { self, nixpkgs, ... }:
     let
       # System types to support.
-      supportedSystems =
-        [ "aarch64-darwin" "aarch64-linux" "x86_64-darwin" "x86_64-linux" ];
-      cudaSystems = [ "x86_64-linux" ];
+      supportedSystems = [ "aarch64-darwin" "aarch64-linux" "x86_64-darwin" "x86_64-linux" ];
 
       # Helper function to generate an attrset '{ x86_64-linux = f "x86_64-linux"; ... }'.
       forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
-      forCudaSystems = nixpkgs.lib.genAttrs cudaSystems;
 
       # Nixpkgs instantiated for supported system types.
       nixpkgsFor = forAllSystems (system:
@@ -25,27 +22,11 @@
 
       # Nixpkgs instantiated for supported system types.
       # Including CUDA support (and consequently, proprietary drivers).
-      nixpkgsForCUDA = forAllSystems (system:
-        import nixpkgs {
-          inherit system;
-          overlays = [ self.overlays.default ];
-          config = {
-            allowUnfree = true;
-            cudaSupport = true;
-          };
-        });
-
-      # Nixpkgs instantiated for supported system types.
-      # Explicitly without CUDA support (and consequently, proprietary drivers).
-      nixpkgsForWithoutCUDA = forAllSystems (system:
-        import nixpkgs {
-          inherit system;
-          overlays = [ self.overlays.default ];
-          config = {
-            allowUnfree = false;
-            cudaSupport = false;
-          };
-        });
+      nixpkgsCUDA = import nixpkgs {
+        system = "x86_64-linux";
+        overlays = [ self.overlays.default ];
+        config = { allowUnfree = true; cudaSupport = true; };
+      };
     in
     {
 
@@ -77,7 +58,9 @@
             default = pkgs.devShell;
             withoutCUDA = pkgs.devShell;
           } // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
-            withCUDA = pkgs.devShell.override { cudaSupport = true; };
+            # currently we still use withCUDA for devShell
+            # not all packages we need have a CUDA option
+            withCUDA = nixpkgsCUDA.devShell.override { cudaSupport = true; };
           }
         );
 
