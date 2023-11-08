@@ -1,13 +1,10 @@
-{ pkgs
-, cudaSupport ? false
-, ...
-}:
+{ pkgs, ... }:
 let
   python-with-packages = pkgs.python3.withPackages (p: with p; [
     fastapi
     ffmpeg-python
     multipart
-    (openai-whisper.override { inherit cudaSupport; })
+    openai-whisper
     uvicorn
     # we want to evaluate faster-whisper
     faster-whisper

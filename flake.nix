@@ -20,7 +20,7 @@
           config = { allowUnfree = true; };
         });
 
-      # Nixpkgs instantiated for supported system types.
+      # Nixpkgs instantiated for x86_64-linux.
       # Including CUDA support (and consequently, proprietary drivers).
       nixpkgsCUDA = import nixpkgs {
         system = "x86_64-linux";
@@ -58,9 +58,9 @@
             default = pkgs.devShell;
             withoutCUDA = pkgs.devShell;
           } // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
-            # currently we still use withCUDA for devShell
-            # not all packages we need have a CUDA option
-            withCUDA = nixpkgsCUDA.devShell.override { cudaSupport = true; };
+            # TODO: currently we use nixpkgsCUDA for devShell
+            # not all dependencies have a cudaSupport option.        
+            withCUDA = nixpkgsCUDA.devShell;
           }
         );
 
