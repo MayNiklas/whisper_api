@@ -18,7 +18,11 @@ let cfg = config.services.whisper_api; in
 
     package = mkOption {
       type = types.package;
-      default = if cfg.withCUDA then self.packages.${pkgs.system}.whisper_api_withCUDA else self.packages.${pkgs.system}.whisper_api_withoutCUDA;
+      default =
+        if cfg.withCUDA then
+          pkgs.whisper_api.override { cudaSupport = true; }
+        else
+          pkgs.whisper_api;
       description = ''
         The whisper_api package to use.
       '';

@@ -93,7 +93,6 @@
                 imports = [ self.nixosModules.whisper_api ];
                 services.whisper_api = {
                   enable = true;
-                  package = self.packages.${system}.whisper_api_withoutCUDA;
                   maxModel = "base";
                   listen = "0.0.0.0";
                   port = 3001;
