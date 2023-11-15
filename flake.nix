@@ -19,14 +19,6 @@
           overlays = [ self.overlays.default ];
           config = { allowUnfree = true; };
         });
-
-      # Nixpkgs instantiated for x86_64-linux.
-      # Including CUDA support (and consequently, proprietary drivers).
-      nixpkgsCUDA = import nixpkgs {
-        system = "x86_64-linux";
-        overlays = [ self.overlays.default ];
-        config = { allowUnfree = true; cudaSupport = true; };
-      };
     in
     {
 
@@ -55,7 +47,7 @@
         } // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
           # TODO: currently we use nixpkgsCUDA for devShell
           # not all dependencies have a cudaSupport option.        
-          withCUDA = nixpkgsCUDA.devShell;
+          withCUDA = pkgs.devShell.override { cudaSupport = true; };
         }
       );
 

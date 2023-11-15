@@ -1,13 +1,25 @@
-{ pkgs, ... }:
+{ pkgs
+, cudaSupport ? false
+, ...
+}:
 let
   python-with-packages = pkgs.python3.withPackages (p: with p; [
     fastapi
     ffmpeg-python
     multipart
-    openai-whisper
+    (openai-whisper.override { inherit cudaSupport; })
     uvicorn
-    # we want to evaluate faster-whisper
-    faster-whisper
+
+    # we want to evaluate faster-whisper against openai-whisper
+    (faster-whisper.override {
+      ctranslate2 = (ctranslate2.override {
+        ctranslate2-cpp = (pkgs.ctranslate2.override {
+          stdenv = if cudaSupport then pkgs.gcc11Stdenv else pkgs.stdenv;
+          withCUDA = cudaSupport;
+          withCuDNN = cudaSupport;
+        });
+      });
+    })
   ] ++ [
     # only needed for development
     autopep8
