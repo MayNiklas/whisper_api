@@ -19,6 +19,13 @@
           overlays = [ self.overlays.default ];
           config = { allowUnfree = true; };
         });
+
+      nixpkgsCUDA = forAllSystems (system:
+        import nixpkgs {
+          inherit system;
+          overlays = [ self.overlays.default ];
+          config = { allowUnfree = true; cudaSupport = true; };
+        });
     in
     {
 
@@ -36,7 +43,7 @@
           whisper_api = pkgs.whisper_api;
           whisper_api_withoutCUDA = pkgs.whisper_api;
         } // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
-          whisper_api_withCUDA = pkgs.whisper_api.override { cudaSupport = true; };
+          whisper_api_withCUDA = nixpkgsCUDA.whisper_api;
         }
       );
 

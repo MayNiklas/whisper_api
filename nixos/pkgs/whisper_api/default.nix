@@ -31,7 +31,7 @@ buildPythonPackage {
     fastapi
     ffmpeg-python
     multipart
-    (openai-whisper.override { torch = torch.override { inherit cudaSupport; openai-triton = openai-triton.override { inherit cudaSupport; }; }; })
+    openai-whisper
     uvicorn
   ];
 
