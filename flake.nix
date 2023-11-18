@@ -20,12 +20,11 @@
           config = { allowUnfree = true; };
         });
 
-      nixpkgsCUDA = forAllSystems (system:
-        import nixpkgs {
-          inherit system;
-          overlays = [ self.overlays.default ];
-          config = { allowUnfree = true; cudaSupport = true; };
-        });
+      nixpkgsCUDA = import nixpkgs {
+        system = "x86_64-linux";
+        overlays = [ self.overlays.default ];
+        config = { allowUnfree = true; cudaSupport = true; };
+      };
     in
     {
 
