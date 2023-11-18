@@ -2,7 +2,7 @@
 
   description = "A simple API for OpenAI's Whisper";
 
-  inputs = { nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable"; };
+  inputs = { nixpkgs.url = "github:mweinelt/nixpkgs/openai-whisper-20231117"; };
 
   outputs = { self, nixpkgs, ... }:
     let

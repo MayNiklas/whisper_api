@@ -2,16 +2,16 @@
   "nodes": {
     "nixpkgs": {
       "locked": {
-        "lastModified": 1698924604,
-        "narHash": "sha256-GCFbkl2tj8fEZBZCw3Tc0AkGo0v+YrQlohhEGJ/X4s0=",
-        "owner": "nixos",
+        "lastModified": 1700307211,
+        "narHash": "sha256-uFHOzAmYK2JuHNhZl5tt7KP38BLBIrWC7ITZlkOBJPM=",
+        "owner": "mweinelt",
         "repo": "nixpkgs",
-        "rev": "fa804edfb7869c9fb230e174182a8a1a7e512c40",
+        "rev": "0aeec365caf1496ecdb86b63e916d7d508e3431e",
         "type": "github"
       },
       "original": {
-        "owner": "nixos",
-        "ref": "nixos-unstable",
+        "owner": "mweinelt",
+        "ref": "openai-whisper-20231117",
         "repo": "nixpkgs",
         "type": "github"
       }

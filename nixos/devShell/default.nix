@@ -7,7 +7,7 @@ let
     fastapi
     ffmpeg-python
     multipart
-    (openai-whisper.override { inherit cudaSupport; })
+    (openai-whisper.override { torch = torch.override { inherit cudaSupport; openai-triton = openai-triton.override { inherit cudaSupport; }; }; })
     uvicorn
 
     # we want to evaluate faster-whisper against openai-whisper

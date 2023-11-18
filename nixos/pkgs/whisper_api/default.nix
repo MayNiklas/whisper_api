@@ -4,10 +4,12 @@
 
   # propagates
 , fastapi
-, multipart
-, openai-whisper
-, uvicorn
 , ffmpeg-python
+, multipart
+, openai-triton
+, openai-whisper
+, torch
+, uvicorn
 
   # tests
 , pytestCheckHook
@@ -29,7 +31,7 @@ buildPythonPackage {
     fastapi
     ffmpeg-python
     multipart
-    (openai-whisper.override { inherit cudaSupport; })
+    (openai-whisper.override { torch = torch.override { inherit cudaSupport; openai-triton = openai-triton.override { inherit cudaSupport; }; }; })
     uvicorn
   ];
 
