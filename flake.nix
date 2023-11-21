@@ -19,6 +19,13 @@
           overlays = [ self.overlays.default ];
           config = { allowUnfree = true; };
         });
+
+      # Nixpkgs with CUDA support for x86_64-linux
+      nixpkgsCUDA = import nixpkgs {
+        system = "x86_64-linux";
+        overlays = [ self.overlays.default ];
+        config = { allowUnfree = true; cudaSupport = true; };
+      };
     in
     {
 
@@ -36,7 +43,7 @@
           whisper_api = pkgs.whisper_api;
           whisper_api_withoutCUDA = pkgs.whisper_api;
         } // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
-          whisper_api_withCUDA = pkgs.whisper_api.override { cudaSupport = true; };
+          whisper_api_withCUDA = nixpkgsCUDA.whisper_api;
         }
       );
 
@@ -45,16 +52,19 @@
           default = pkgs.devShell;
           withoutCUDA = pkgs.devShell;
         } // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
-          # TODO: currently we use nixpkgsCUDA for devShell
-          # not all dependencies have a cudaSupport option.        
-          withCUDA = pkgs.devShell.override { cudaSupport = true; };
+          withCUDA = nixpkgsCUDA.devShell;
         }
       );
 
       nixosModules = {
         whisper_api = {
           imports = [ ./nixos/module ];
-          nixpkgs.overlays = [ self.overlays.default ];
+          nixpkgs.overlays = [
+            (final: prev: {
+              whisper_api = with final; pkgs.python3Packages.callPackage nixos/pkgs/whisper_api { inherit self; };
+              whisper_api_withCUDA = nixpkgsCUDA.python3Packages.callPackage nixos/pkgs/whisper_api { inherit self; };
+            })
+          ];
         };
       };
 

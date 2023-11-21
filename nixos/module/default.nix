@@ -20,7 +20,7 @@ let cfg = config.services.whisper_api; in
       type = types.package;
       default =
         if cfg.withCUDA then
-          pkgs.whisper_api.override { cudaSupport = true; }
+          pkgs.whisper_api_withCUDA
         else
           pkgs.whisper_api;
       description = ''

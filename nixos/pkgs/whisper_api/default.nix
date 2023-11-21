@@ -11,8 +11,6 @@
 
   # tests
 , pytestCheckHook
-
-, cudaSupport ? false
 }:
 buildPythonPackage {
 
@@ -29,7 +27,7 @@ buildPythonPackage {
     fastapi
     ffmpeg-python
     multipart
-    (openai-whisper.override { inherit cudaSupport; })
+    openai-whisper
     uvicorn
   ];
 
