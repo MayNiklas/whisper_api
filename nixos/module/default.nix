@@ -119,6 +119,12 @@ let cfg = config.services.whisper_api; in
 
   config = mkIf cfg.enable {
 
+    assertions = [{
+      assertion = cfg.withCUDA -> ("${pkgs.system}" == "x86_64-linux");
+      message = "whisper_api with CUDA is only supported on x86_64-linux." +
+        "If you have access to a non x86_64-linux machine with CUDA support, please open an issue.";
+    }];
+
     systemd.services.whisper_api = {
       description = "A whisper API.";
       wantedBy = [ "multi-user.target" ];
