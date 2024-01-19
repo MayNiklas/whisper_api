@@ -1,9 +1,8 @@
 labels:
   backend: local
+  platform: "linux/amd64"
 
-platform: "linux/amd64"
-
-pipeline:
+steps:
   - name: setup attic
     image: bash
     commands:
