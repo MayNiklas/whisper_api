@@ -60,10 +60,12 @@
         whisper_api = {
           imports = [ ./nixos/module ];
           nixpkgs.overlays = [
-            (final: prev: {
-              whisper_api = with final; pkgs.python3Packages.callPackage nixos/pkgs/whisper_api { inherit self; };
-              whisper_api_withCUDA = nixpkgsCUDA.python3Packages.callPackage nixos/pkgs/whisper_api { inherit self; };
-            })
+            (final: prev:
+              let system = prev.system; in
+              {
+                whisper_api = nixpkgsFor.${system}.python3Packages.callPackage nixos/pkgs/whisper_api { inherit self; };
+                whisper_api_withCUDA = nixpkgsCUDA.python3Packages.callPackage nixos/pkgs/whisper_api { inherit self; };
+              })
           ];
         };
       };
