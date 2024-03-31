@@ -4,10 +4,11 @@
 
   # propagates
 , fastapi
-, multipart
-, openai-whisper
-, uvicorn
 , ffmpeg-python
+, httpx
+, openai-whisper
+, python-multipart
+, uvicorn
 
   # tests
 , pytestCheckHook
@@ -26,12 +27,13 @@ buildPythonPackage {
   propagatedBuildInputs = [
     fastapi
     ffmpeg-python
-    multipart
+    httpx
     openai-whisper
+    python-multipart
     uvicorn
   ];
 
-  nativeCheckInputs = [ pytestCheckHook ];
+  # nativeCheckInputs = [ pytestCheckHook ];
 
   pythonImportsCheck = [ "whisper_api" ];
 

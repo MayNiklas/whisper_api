@@ -3,8 +3,9 @@ let
   python-with-packages = pkgs.python3.withPackages (p: with p; [
     fastapi
     ffmpeg-python
-    multipart
+    httpx
     openai-whisper
+    python-multipart
     uvicorn
   ] ++ [
     # only needed for development
