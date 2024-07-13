@@ -33,8 +33,14 @@
         (system: nixpkgsFor.${system}.nixpkgs-fmt);
 
       overlays.default = final: prev: {
-        devShell = with final; pkgs.callPackage nixos/devShell { };
-        whisper_api = with final; pkgs.python3Packages.callPackage nixos/pkgs/whisper_api { inherit self; };
+        devShell = final.callPackage nixos/devShell { };
+        whisper_api = final.callPackage nixos/pkgs/whisper_api { inherit self; };
+        # Our code is not compatible with pydantic version 2 yet.
+        python3 = prev.python3.override {
+          packageOverrides = python-self: python-super: {
+            fastapi = python-super.fastapi.override { pydantic = python-super.pydantic_1; };
+          };
+        };
       };
 
       packages = forAllSystems (system:

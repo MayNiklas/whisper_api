@@ -1,18 +1,9 @@
 { self
 , lib
-, buildPythonPackage
-
-  # propagates
-, fastapi
-, multipart
-, openai-whisper
-, uvicorn
-, ffmpeg-python
-
-  # tests
-, pytestCheckHook
+, python3
+,
 }:
-buildPythonPackage {
+python3.pkgs.buildPythonApplication {
 
   pname = "whisper_api";
   version = (lib.strings.removePrefix ''__version__ = "'' (lib.strings.removeSuffix ''
@@ -23,15 +14,18 @@ buildPythonPackage {
   format = "setuptools";
   src = self;
 
-  propagatedBuildInputs = [
+  propagatedBuildInputs = with python3.pkgs; [
     fastapi
     ffmpeg-python
-    multipart
     openai-whisper
+    python-multipart
     uvicorn
   ];
 
-  nativeCheckInputs = [ pytestCheckHook ];
+  nativeCheckInputs = with python3.pkgs; [
+    pytestCheckHook
+    httpx
+  ];
 
   pythonImportsCheck = [ "whisper_api" ];
 
