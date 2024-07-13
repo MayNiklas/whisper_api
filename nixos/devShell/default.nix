@@ -1,14 +1,15 @@
 { pkgs, ... }:
 let
-  python-with-packages = pkgs.python3.withPackages (p: with p; [
+  python-with-packages = pkgs.python3.withPackages (p: with p;   [
     fastapi
     ffmpeg-python
-    multipart
     openai-whisper
+    python-multipart
     uvicorn
   ] ++ [
     # only needed for development
     autopep8
+    httpx
     pytest
   ]);
 in
@@ -21,7 +22,7 @@ pkgs.mkShell {
     python-with-packages
   ];
   shellHook = ''
-    if [[ -z $using_direnv ]]; then                
+    if [[ -z $using_direnv ]]; then
       # print information about the development shell
       echo "---------------------------------------------------------------------"
       echo "How to use this Nix development shell:"
