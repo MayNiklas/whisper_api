@@ -1,7 +1,51 @@
 # Whisper API
 
-A simple whisper api for speech to text.
-Work in progress.
+A simple API to access whisper for speech to text transcription.
+
+It simplifies offloading the heavy lifting of using Whisper to a central GPU server, which can be accessed by multiple people.
+
+## Features
+
+* Transcribes audio files to text using OpenAI Whisper
+* Includes a simple static frontend to transcribe audio files (`/`)
+* Includes a interactive API documentation using the Swagger UI (`/docs`)
+* Uses GPU acceleration if available
+* Implements a task queue to handle multiple requests (first in, first out)
+* Stateless: to prioritize data privacy, the API only stores data in RAM. Audio files are stored using tempfile and are deleted after processing
+* Supports loading the model into VRAM on startup OR on first request
+* Supports unloading the model after a certain time of inactivity
+
+## Setup recommendations
+
+This service performs the best, when it is run on a server with a GPU. For using the high-quality models, I recommend using a GPU with at least 12GB of VRAM. The RTX 3060 12GB is most likely the cheapest option for this task.
+
+This service is optimized for a multi user environment. I will discuss 2 setups:
+
+### Personal setup
+
+When you are the only user of this service, you can run it on your local network. This way you can access the service from any device in your network. Use a VPN to access the service from outside your network.
+
+### SMB & research setup
+
+When hosting this service in a more professional environment, we should consider the following:
+
+* should the service be accessible from outside the network?
+* who should be able to access the service?
+
+If only users on your local network should be able to access the service and everyone in your network should be able to access it, you can run the service on a server in your network without any further configuration.
+
+If you need to implement access control, I suggest the following:
+
+* use a reverse proxy to terminate SSL
+* use oauth2 to only allow users which belong to a certain group to access the service
+
+My setup uses the following software:
+
+* NGINX as a reverse proxy
+* Keycloak as an identity provider
+* oauth2_proxy to handle oauth2 authentication and session tokens
+
+In case you have some questions about the setup or software, feel free to reach out!
 
 ## How to run
 
@@ -86,6 +130,7 @@ nix run .#whisper_api
 ```
 
 ## Settings
+
 | parameter                          | description                                                                               | possible values                                  | default           |
 |------------------------------------|-------------------------------------------------------------------------------------------|--------------------------------------------------|-------------------|
 | `PORT`                             | Port the API is available under                                                           | any number of port interval                      | 3001              |
@@ -115,6 +160,7 @@ The log format is: `"[{asctime}] [{levelname}][{processName}][{threadName}][{mod
 All logging parameters follow pythons [logging](https://docs.python.org/3/library/logging.html) and the [RotatingFileHandler](https://docs.python.org/3/library/logging.handlers.html#timedrotatingfilehandler) specification.
 
 #### LOG_AUTHORIZED_MAILS
+
 The API provides a `/logs` route. That route provides all logs for download.
 The verification is done based on the `'X-Email'` field in the request headers.
 A valid input would be: `LOG_AUTHORIZED_MAILS="nik@example.com chris@example.com"`.
@@ -122,14 +168,17 @@ Requests from localhost are currently always permitted (want an env-option to di
 
 Other privileged routes may come in the future.
 
-
 #### Note
+
 The system will automatically try to use the GPU and the best possible model when `USE_GPU_IF_AVAILABLE` and `MAX_MODEL` are not set.
+
 ###### CPU Mode
+
 `MAX_MODEL` must be set when CUDA is not available or explicitly disabled via `USE_GPU_IF_AVAILABLE`.
 `CPU_FALLBACK_MODEL` is the fallback when GPU Mode shall use max-model but CPU shall be limited due to reduced performance.
 
-##### Warning:
+##### Warning
+
 If `UNLOAD_MODEL_AFTER_S` is set to `0` the model will not only be unloaded nearly instantly, it internally also results in busy waiting!
 All ints are assumed to be unsigned.
 
