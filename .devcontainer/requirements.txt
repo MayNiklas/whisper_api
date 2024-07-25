@@ -1,6 +1,6 @@
-black
 fastapi
+ffmpeg-python
 openai-whisper
-pre-commit
+pydantic~=1.10.14
 python-multipart
 uvicorn

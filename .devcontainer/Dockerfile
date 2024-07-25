@@ -1,5 +1,5 @@
 # FROM mcr.microsoft.com/devcontainers/base:ubuntu
-FROM nvidia/cuda:11.7.0-base-ubuntu22.04
+FROM nvidia/cuda:12.4.1-base-ubuntu22.04
 
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get -qq update && \
