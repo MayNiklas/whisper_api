@@ -1,11 +1,7 @@
-version: "3.9"
 services:
-  api:
+  whisperAPI:
     image: "mayniklas/whisper_api:latest"
-    build:
-      context: .
-      # use Dockerfile.gpu when using a NVIDIA GPU
-      dockerfile: Dockerfile.gpu
+    build: .
     ports:
       - "3001:3001"
     environment:
@@ -13,7 +9,10 @@ services:
       - LOAD_MODEL_ON_STARTUP=1
       # - UNLOAD_MODEL_AFTER_S=300
       # - DEVELOP_MODE=0
-    # Uncomment the following lines when using a NVIDIA GPU
+    # include the following lines when using a NVIDIA GPU!
+    # make sure to have the NVIDIA Container Toolkit installed
+    # for more information visit:
+    # https://github.com/NVIDIA/nvidia-container-toolkit
     deploy:
       resources:
         reservations:
