@@ -1,4 +1,4 @@
-fastapi==0.103.1
+fastapi==0.109.1
 ffmpeg-python==0.2.0
 openai-whisper==20231117
 pydantic==1.10.12
