@@ -98,6 +98,7 @@ function transcribe() {
               result.innerText = data.transcript;
               resultContainer.style.display = "block";
               document.getElementById("cleanOutputBtn").style.display = "block";
+              document.getElementById("downloadSrtBtn").style.display = "block";
               taskIdContainer.style.display = "none";
 
               // Remove the content of the file variable after transcription
@@ -122,6 +123,9 @@ function cleanOutput() {
   // Hide the clean output button
   document.getElementById("cleanOutputBtn").style.display = "none";
 
+  // Hide the download button
+  document.getElementById("downloadSrtBtn").style.display = "none";
+
   // Hide the task ID container and clear its content
   const taskIdContainer = document.getElementById("taskIdContainer");
   taskIdContainer.style.display = "none";
@@ -129,4 +133,18 @@ function cleanOutput() {
 
   // Reset the selected file name
   selectedFileName.innerText = "No file selected";
+}
+
+function downloadSrt() {
+  const taskId = document.getElementById("taskId").innerText;
+  if (!taskId) {
+    alert("No transcription found.");
+    return;
+  }
+
+  // Construct the URL for downloading the SRT file
+  const downloadUrl = `/api/v1/srt?task_id=${taskId}`;
+
+  // Open a new tab with the constructed URL
+  window.open(downloadUrl, '_blank');
 }

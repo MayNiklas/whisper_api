@@ -78,6 +78,10 @@ button[type="button"]:hover {
   margin-bottom: 20px;
 }
 
+#downloadSrtBtn {
+  display: none;
+}
+
 #resultContainer {
   background-color: #f9f9f9;
 }
