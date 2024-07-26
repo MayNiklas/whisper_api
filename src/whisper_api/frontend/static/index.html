@@ -22,8 +22,14 @@
     <h2>Transcription:</h2>
     <div id="result"></div>
   </div>
-  <button type="button" id="cleanOutputBtn" onclick="cleanOutput()">Clean output</button>
-  <button type="button" id="downloadSrtBtn" onclick="downloadSrt()">Download transcription as .srt</button>
+  <div style="display: flex; justify-content: center; gap: 20px; width: 100%;">
+    <button type="button" id="cleanOutputBtn" onclick="cleanOutput()"
+      style="flex: 1 1 150px; padding: 10px; height: 50px;">Clean
+      output</button>
+    <button type="button" id="downloadSrtBtn" onclick="downloadSrt()"
+      style="flex: 1 1 150px; padding: 10px; height: 50px;">Download
+      transcription as .srt</button>
+  </div>
   <script src="script.js"></script>
 </body>
 
