@@ -1,6 +1,6 @@
 services:
   whisperAPI:
-    image: "mayniklas/whisper_api:latest"
+    image: ghcr.io/mayniklas/whisper_api:main
     build: .
     ports:
       - "3001:3001"
@@ -18,4 +18,4 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              capabilities: [ gpu ]
+              capabilities: [gpu]
