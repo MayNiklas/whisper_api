@@ -63,7 +63,7 @@ Create the following `compose.yaml` file:
 services:
   whisperAPI:
     # in production: please specify a current release tag
-    image: ghcr.io/mayniklas/whisper_api:main
+    image: ghcr.io/mayniklas/whisper_api:latest
     ports:
       - "3001:3001"
     environment:
