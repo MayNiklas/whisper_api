@@ -47,7 +47,100 @@ My setup uses the following software:
 
 In case you have some questions about the setup or software, feel free to reach out!
 
-## How to run
+## How to deploy
+
+### Linux - docker
+
+Pre-requisites:
+
+1. have [Docker](https://docs.docker.com/engine/install/) installed
+2. install [NVIDIA CUDA](https://developer.nvidia.com/cuda-downloads?target_os=Linux) (if you want to use GPU acceleration)
+3. install [NVidia Container Toolkit](https://github.com/NVIDIA/nvidia-container-toolkit) (if you want to use GPU acceleration)
+
+Create the following `compose.yaml` file:
+
+```yaml
+services:
+  whisperAPI:
+    # in production: please specify a current release tag
+    image: ghcr.io/mayniklas/whisper_api:main
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - LOAD_MODEL_ON_STARTUP=1
+      # - UNLOAD_MODEL_AFTER_S=300
+      # - DEVELOP_MODE=0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+```
+
+When nop using GPU acceleration, remove the `deploy` section from the `compose.yaml` file.
+
+Run the following commands:
+
+```bash
+docker compose up -d
+```
+
+You can also use `docker` directly:
+
+```bash
+docker run -d -p 3001:3001 --gpus all ghcr.io/mayniklas/whisper_api:main
+```
+
+### Linux
+
+Pre-requisites:
+
+1. install [NVIDIA CUDA](https://developer.nvidia.com/cuda-downloads?target_os=Linux)
+2. install ffmpeg (e.g. `sudo apt install ffmpeg`)
+
+Since project is a well packaged python project, you don't have to worry about any project specific installation steps.
+
+1. Create a virtual environment
+2. Install this project in the virtual environment
+3. Create a systemd service that runs the server
+
+### NixOS
+
+Since I'm personally using NixOS, I created a module that is available through this `flake.nix`.
+
+Add the following input to your `flake.nix`:
+
+```nix
+{
+  inputs = {
+    whisper_api.url = "github:MayNiklas/whisper_api";
+  };
+}
+```
+
+Import the module in your `configuration.nix` and use it:
+
+```nix
+{ pkgs, config, lib, whisper_api, ... }: {
+
+  imports = [ whisper_api.nixosModules.whisper_api ];
+
+  services.whisper_api = {
+    enable = true;
+    withCUDA = true;
+    loadModelOnStartup = true;
+    # unloadModelAfterSeconds = 300;
+    listen = "0.0.0.0";
+    openFirewall = true;
+    environment = { };
+  };
+
+}
+```
+
+## Development
 
 ### Linux
 
@@ -67,54 +160,17 @@ cd whisper_api
 python3 -m venv .venv
 source .venv/bin/activate
 
-# install dependencies into the virtual environment
-.venv/bin/pip3 install -r requirements.txt
+# prepare the environment
+pip3 install -e .
 
 # run the server from within the virtual environment
-.venv/bin/uvicorn whisper_api:app --reload --host 127.0.0.1 --port 3001
+uvicorn whisper_api:app --reload --host 127.0.0.1 --port 3001
+
+# alternatively, you can use the following command to run the server
+export PORT=3001
+export LISTEN=127.0.0.1
+whisper_api
 ```
-
-Since Uvicorn is a production server, it is not recommended to use it for development.
-Instead, we use the `--reload` flag to enable auto-reloading.
-
-### Linux -  through docker with NVIDIA GPU acceleration
-
-Pre-requisites:
-
-1. Install [docker](https://docs.docker.com/engine/install/).
-2. If you have a NVIDIA GPU and want to use it with docker, you need to install [nvidia-docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker).
-
-Note: this is not a docker guide! If you are new to docker, please read the [docker documentation](https://docs.docker.com/).
-All I can do is provide a few commands, but you should understand what they do.
-
-```bash
-# clone the repository
-git clone https://github.com/MayNiklas/whisper_api.git
-
-# change into the directory
-cd whisper_api
-
-# build the docker image
-docker compose build
-
-# run the server (detached)
-docker compose up -d
-
-# see the logs
-docker compose logs -f
-
-# stop the server
-docker compose down
-
-# rebuild the docker image
-docker compose build
-
-# force rebuild of the docker image
-docker compose build --no-cache
-```
-
-The worker will now use the GPU acceleration.
-`nvidia-smi` should show the docker container using the GPU.
 
 ### NixOS
 
@@ -126,7 +182,10 @@ git clone https://github.com/MayNiklas/whisper_api.git
 cd whisper_api
 
 # run the server via nix (using CUDA)
-nix run .#whisper_api
+nix run .#whisper_api_withCUDA
+
+# enter the development shell providing the necessary environment
+nix develop .#withCUDA
 ```
 
 ## Settings
