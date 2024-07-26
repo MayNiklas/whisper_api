@@ -38,7 +38,7 @@
         # Our code is not compatible with pydantic version 2 yet.
         python3 = prev.python3.override {
           packageOverrides = python-self: python-super: {
-            fastapi = python-super.fastapi.override { pydantic = python-super.pydantic_1; };
+            # fastapi = python-super.fastapi.override { pydantic = python-super.pydantic_1; };
           };
         };
       };
