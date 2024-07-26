@@ -16,13 +16,6 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
         software-properties-common \
         wget
 
-COPY requirements.txt /tmp/requirements.txt
-
-RUN pip3 install --upgrade pip && \
-    pip3 install -r  /tmp/requirements.txt
-
-COPY download_models.py /download_models.py
-RUN python3 /download_models.py && \
-    rm /download_models.py
+RUN pip3 install --upgrade pip
 
 CMD git config --global --add safe.directory /workspaces/whisper_api
