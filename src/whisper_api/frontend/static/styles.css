@@ -58,10 +58,16 @@ button[type="button"] {
   margin-bottom: 10px;
   cursor: pointer;
   border-radius: 5px;
+  height: 40px;
 }
 
 button[type="button"]:hover {
   background-color: #3e8e41;
+}
+
+.action-btn {
+  flex: 1 1 150px;
+  padding: 10px;
 }
 
 #taskIdContainer,
