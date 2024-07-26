@@ -164,6 +164,7 @@ source .venv/bin/activate
 pip3 install -e .
 
 # run the server from within the virtual environment
+cd src/
 uvicorn whisper_api:app --reload --host 127.0.0.1 --port 3001
 
 # alternatively, you can use the following command to run the server
