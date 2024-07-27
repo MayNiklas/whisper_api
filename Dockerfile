@@ -15,7 +15,8 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
         python${PYTHON_VERSION} \
         python${PYTHON_VERSION}-venv \
         python3-pip && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    pip3 install --upgrade pip
 
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
