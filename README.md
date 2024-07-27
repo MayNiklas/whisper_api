@@ -160,7 +160,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 
 # prepare the environment
-pip3 install -e .
+pip3 install -e '.[dev]'
 
 # run the server from within the virtual environment
 cd src/

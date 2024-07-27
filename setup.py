@@ -38,9 +38,9 @@ setup(
     include_package_data=True,
     extras_require={
         "dev": [
-            "pytest",
-            "pre-commit",
-            "autopep8"
+            "autopep8",
+            "httpx",
+            "pre-commit"
         ]
     },
 )
