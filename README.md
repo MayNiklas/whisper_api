@@ -62,7 +62,6 @@ Create the following `compose.yaml` file:
 ```yaml
 services:
   whisperAPI:
-    # in production: please specify a current release tag
     image: ghcr.io/mayniklas/whisper_api:latest
     ports:
       - "3001:3001"
@@ -90,7 +89,7 @@ docker compose up -d
 You can also use `docker` directly:
 
 ```bash
-docker run -d -p 3001:3001 --gpus all ghcr.io/mayniklas/whisper_api:main
+docker run -d -p 3001:3001 --gpus all ghcr.io/mayniklas/whisper_api:latest
 ```
 
 ### Linux
