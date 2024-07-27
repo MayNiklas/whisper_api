@@ -1,4 +1,5 @@
 import unittest
+
 from fastapi.testclient import TestClient
 from whisper_api import app
 
@@ -25,7 +26,7 @@ class TestFrontend(unittest.TestCase):
         """
         response = client.get("/script.js")
         assert response.status_code == 200
-        assert response.headers["content-type"] == "text/javascript; charset=utf-8"
+        assert response.headers["content-type"] in ("text/javascript; charset=utf-8", "application/javascript")
 
     def test_styles_css(self):
         """

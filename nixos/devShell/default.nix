@@ -10,7 +10,6 @@ let
     # only needed for development
     autopep8
     httpx
-    pytest
   ]);
 in
 pkgs.mkShell {
