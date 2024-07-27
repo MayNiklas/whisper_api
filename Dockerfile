@@ -1,9 +1,10 @@
 # newest version:
 # https://hub.docker.com/r/nvidia/cuda/tags?page=1&name=-base-ubuntu22.04&ordering=name
 
-FROM nvidia/cuda:12.4.1-base-ubuntu22.04
+ARG CUDA_VERSION=12.4.1
+FROM nvidia/cuda:${CUDA_VERSION}-base-ubuntu22.04
 
-ENV PYTHON_VERSION=3.10
+ARG PYTHON_VERSION=3.10
 
 WORKDIR /workspace
 
@@ -18,6 +19,14 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
+
+# disabled by default since GitHub Actions do not have enough space
+ARG PREFETCH_MODEL=0
+COPY ./src/whisper_api/prefetch.py /tmp/prefetch.py
+RUN if [ "$PREFETCH_MODEL" != 0 ]; then \
+        python3 /tmp/prefetch.py --model ${PREFETCH_MODEL}; \
+    fi; \
+    rm /tmp/prefetch.py
 
 COPY . /workspace/code
 
