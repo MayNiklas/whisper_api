@@ -166,18 +166,35 @@ def handle_message(message_type: str, data: dict[str, Any]):
 
 
 def listen_to_decoder(pipe_to_listen_to: multiprocessing.connection.Connection,
-                      worker_exit_fn: Callable[[], None]):
+                      worker_exit_fn: Callable[[int], None]):
     """ listen to decode process and update the task_dict accordingly """
     def handle_keyboard_interrupt():
         logger.info("KeyboardInterrupt - initiating exit.")
-        worker_exit_fn()
-        exit(0)
+        worker_exit_fn(signal.SIGINT)
 
     while True:
         try:
-            msg = pipe_to_listen_to.recv()
+            if pipe_to_listen_to.poll(0.5):
+                msg = pipe_to_listen_to.recv()
+            # no messages left and stop threads is set
+            elif _stop_threads:
+                pipe_to_listen_to.close()
+                logger.info(f"Flag to stop listener-thread is set. Ending thread.")
+                return
+            else:
+                continue
+
+        # TODO: is this even a case that can happen?
+        #  pretty unsure since the function was flawed for a long time and should have produces a crash...
         except KeyboardInterrupt:
             handle_keyboard_interrupt()
+            return
+
+        # EOF is what happens when the pipe gets closed, so we use it to shut down the pipe
+        # when the pipe is shut down we don't need that thread - obviously
+        except EOFError:
+            logger.info(f"Pipe closed (EOFError). Exiting thread.")
+            return
 
         message_type = msg.get("type", None)
         data = msg.get("data", None)
@@ -203,16 +220,17 @@ Dispatch decoder process and listener thread
 # 'An attempt has been made to start a new process before the
 # current process has finished its bootstrapping phase'
 @app.on_event("startup")
-def setup_decoder_process_and_listener_thread():
+_stop_threads = False  # i hate this, but python doesn't offer any good way to kill a thread
+def setup_decoder_process_and_listener_thread() -> Callable[[int], None]:
     """
     Handles the whole multiprocessing and threading stuff to get:
     - a decoder process
     - a listener thread for the pipe to the decoder process
     """
 
-    def signal_worker_to_exit(signum: int, frame: Optional[FrameType]):
+    def exit_fn(signum: int):
         """ Terminate child and hope it dies """
-
+        global _stop_threads
         logger.warning(f"Got {signum=}")
 
         pid = decoder_process.pid
@@ -234,6 +252,14 @@ def setup_decoder_process_and_listener_thread():
         else:
             logger.info("Child is dead.")
 
+    def signal_worker_to_exit(signum: int, frame: Optional[FrameType]):
+        """
+        wrapper around the exit function that provides the signature signal.signal() requires as second parameter
+        https://docs.python.org/3/library/signal.html#signal.signal
+        https://stackoverflow.com/questions/18704862/python-frame-parameter-of-signal-handler
+        """
+        exit_fn(signum)
+
     # start decoder process
     logger.info("Starting decoder process...")
     decoder_process = multiprocessing.Process(target=decoder.Decoder.init_and_run,
@@ -251,12 +277,14 @@ def setup_decoder_process_and_listener_thread():
 
     # start thread to listen to decoder process pipe
     decoder_process_listen_thread = threading.Thread(target=listen_to_decoder,
-                                                     args=(parent_side, signal_worker_to_exit),
+                                                     args=(parent_side, exit_fn),
                                                      name="Decoder-Listen-Thread",
                                                      daemon=True)
     decoder_process_listen_thread.start()
     logger.info("Listener for decoder process started")
     logger.info("Startup ")
+
+    return exit_fn
 
 
 """
