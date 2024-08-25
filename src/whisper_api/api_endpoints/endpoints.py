@@ -1,14 +1,10 @@
 import glob
-import subprocess
 import zipfile
-from asyncio import tasks
 from multiprocessing.connection import Connection
 from tempfile import NamedTemporaryFile
 from typing import Optional
-from typing import Union
 
 import ffmpeg
-from fastapi import APIRouter
 from fastapi import FastAPI
 from fastapi import HTTPException
 from fastapi import Request
@@ -157,7 +153,7 @@ class EndPoints:
 
         headers = {
             "Content-Disposition": f"attachment; "
-                                   f"filename={task.original_file_name}_{task.whisper_result.output_language}.srt",
+            f"filename={task.original_file_name}_{task.whisper_result.output_language}.srt",
             "Content-Type": "text/plain",
         }
 
