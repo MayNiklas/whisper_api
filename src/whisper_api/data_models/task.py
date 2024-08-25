@@ -3,6 +3,7 @@ import io
 import os
 from dataclasses import dataclass
 from tempfile import NamedTemporaryFile
+from typing import Any
 from typing import Optional
 from typing import Union
 from uuid import uuid4
@@ -20,26 +21,25 @@ from whisper_api.data_models.data_types import uuid_hex_t
 class TaskResponse(BaseModel):
     """ The class that is returned via the API"""
     task_id: str
-    transcript: Optional[str]
-    source_language: Optional[str]
     task_type: task_type_str_t
     status: str
-    position_in_queue: Optional[int]
     time_uploaded: dt.datetime
-    processing_duration: Optional[int]
-    time_processing_finished: Optional[dt.datetime]
-    target_model_size: Optional[str]
-    used_model_size: Optional[str]
-    used_device: Optional[str]
+    transcript: str | None = None
+    source_language: str | None = None
+    position_in_queue: int | None = None
+    processing_duration: int | None = None
+    time_processing_finished: dt.datetime | None = None
+    target_model_size: str | None = None
+    used_model_size: str | None = None
+    used_device: str | None = None
 
 
-@pydantic_dataclass
-class WhisperResult:
+class WhisperResult(BaseModel):
     """ The result of a whisper translation/ transcription plus additional information"""
     text: str
     language: str  # spoken language
     output_language: str  # language code of the output language (hopefully)  # TODO validate that always true
-    segments: list[dict[str, Union[float, str, int, list[int]]]]
+    segments: list[dict[str, float | str | int | list[int]]]
     used_model_size: model_sizes_str_t
     start_time: dt.datetime
     end_time: dt.datetime
@@ -66,21 +66,21 @@ class WhisperResult:
         return buffer
 
 
-@dataclass
-class Task:
+class Task(BaseModel):
     audiofile_name: named_temp_file_name_t
-    source_language: Optional[str]
     task_type: task_type_str_t
+
     status: status_str_t = "pending"
-    position_in_queue: Optional[int] = None
-    whisper_result: Optional[WhisperResult] = None
-    time_uploaded: dt.datetime = None
-    uuid: uuid_hex_t = None
-    target_model_size: Optional[model_sizes_str_t] = None
+    source_language: str | None = None
+    position_in_queue: int | None = None
+    whisper_result: WhisperResult | None = None
+    time_uploaded: dt.datetime | None = None
+    uuid: uuid_hex_t | None = None
+    target_model_size: model_sizes_str_t | None = None
     original_file_name: str = "unknown"
     used_device: str = "unknown"
 
-    def __post_init__(self):
+    def model_post_init(self, context: Any):
         self.uuid = self.uuid or uuid4().hex
         self.time_uploaded = self.time_uploaded or dt.datetime.now()
 
@@ -134,13 +134,18 @@ class Task:
 
 
 if __name__ == '__main__':
-    t = Task(NamedTemporaryFile().name, "en", "transcribe")
+    t = Task(
+        audiofile_name=NamedTemporaryFile().name,
+        source_language="en",
+        task_type="transcribe")
     t.whisper_result = WhisperResult(text="hello",
                                      language="en",
-                                     # segments=[],
+                                     output_language="de",
+                                     segments=[],
+                                     used_model_size="medium",
                                      start_time=dt.datetime.now(),
                                      end_time=dt.datetime.now(),
-                                     used_model_size="base")
+                                     used_device="gpu")
     serialized = t.to_json
     new_task = Task.from_json(serialized)
 
