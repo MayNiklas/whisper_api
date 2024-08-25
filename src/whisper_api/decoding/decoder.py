@@ -185,7 +185,7 @@ class Decoder:
     def task_to_pipe_message(task: Task, /) -> dict:
         return {
             "type": "task_update",
-            "data": task.to_json
+            "data": task
         }
 
     def send_task_update(self, task: Task, /):
@@ -346,9 +346,9 @@ class Decoder:
 
             # reconstruct task from json
             try:
-                task = Task.from_json(data)
+                task: Task = data
             except Exception as e:
-                self.logger.warning(f"Could not parse task from json (continuing): '{e}'")
+                self.logger.warning(f"Task didn't survive the pipe (continuing): '{e}'")
                 continue
 
             # put task to queue

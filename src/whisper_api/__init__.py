@@ -71,7 +71,7 @@ if __name__ == '__main__':
 
     configure_logging(logger, LOG_DIR, LOG_FILE, logging_entry_end)
 
-def handle_message(message_type: str, data: dict[str, Any]):
+def handle_message(message_type: str, data: dict[str, Any] | Task):
     """
     Handles the received message from the decoder process.
     Args:
@@ -100,7 +100,7 @@ def handle_message(message_type: str, data: dict[str, Any]):
         return
 
     if message_type == "task_update":  # data is a json-serialized task
-        task = Task.from_json(data)
+        task: Task = data
         logger.info(f"Received task update for {task.uuid=}, {task.status=}, {task.position_in_queue=}")
 
         task_dict[task.uuid] = task

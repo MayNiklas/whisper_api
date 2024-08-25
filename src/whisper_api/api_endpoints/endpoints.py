@@ -111,14 +111,23 @@ class EndPoints:
 
         self.open_audio_files_dict[named_file.name] = named_file
         if file.filename is not None:
-            task = Task(named_file.name, source_language, task_type, original_file_name=file.filename)
+            task = Task(
+                audiofile_name=named_file.name,
+                source_language=source_language,
+                task_type=task_type,
+                original_file_name=file.filename
+            )
         else:
-            task = Task(named_file.name, source_language, task_type)
+            task = Task(
+                audiofile_name=named_file.name,
+                source_language=source_language,
+                task_type=task_type
+            )
         self.add_task(task)
 
         # send task into queue
         # TODO: find out of json serialization is really needed
-        task_dict = {"type": "decode", "data": task.to_json}
+        task_dict = {"type": "decode", "data": task}
         self.conn_to_child.send(task_dict)
 
         return task
