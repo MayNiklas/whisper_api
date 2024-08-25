@@ -252,6 +252,26 @@ def setup_decoder_process_and_listener_thread() -> Callable[[int], None]:
         else:
             logger.info("Child is dead.")
 
+        # don't know if the part below here really brings anything valuable to the table
+        # I assume it might because we give the thread the time to receive all messages before shutdown
+
+        logger.info(f"Shutting down listener thread...")
+        _stop_threads = True
+        decoder_process_listen_thread.join(5)  # this should be more than enough time to empty message queue
+        # faulthandler.dump_traceback_later(10, exit=True, file=sys.stdout)
+        if decoder_process_listen_thread.is_alive():
+            logger.warning(f"Can't shutdown listener gracefully, proceeding with shutdown")
+        else:
+            logger.info(f"Listener thread killed successfully")
+
+        # at this point are still at least three threads going
+        # - the gc thread in the task queue (daemon)
+        # - the logger thread (registered in atexit)
+        # - uvicorn (it'll be fine and have its own shutdown procedures)
+
+        sys.exit(0)
+
+
     def signal_worker_to_exit(signum: int, frame: Optional[FrameType]):
         """
         wrapper around the exit function that provides the signature signal.signal() requires as second parameter
