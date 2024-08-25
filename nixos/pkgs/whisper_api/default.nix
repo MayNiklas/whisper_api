@@ -11,8 +11,10 @@ python3.pkgs.buildPythonApplication {
   ''
     (builtins.readFile "${self}/src/whisper_api/version.py")));
 
-  format = "setuptools";
+  pyproject = true;
   src = self;
+
+  nativeBuildInputs = with python3.pkgs; [ setuptools ];
 
   propagatedBuildInputs = with python3.pkgs; [
     fastapi
