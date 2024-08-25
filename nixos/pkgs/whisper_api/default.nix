@@ -14,6 +14,10 @@ python3.pkgs.buildPythonApplication {
   pyproject = true;
   src = self;
 
+  preBuild = ''
+    export HOME=$(mktemp -d)
+  '';
+
   nativeBuildInputs = with python3.pkgs; [ setuptools ];
 
   propagatedBuildInputs = with python3.pkgs; [
