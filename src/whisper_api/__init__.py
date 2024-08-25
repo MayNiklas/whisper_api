@@ -6,6 +6,7 @@ import string
 import sys
 import threading
 import time
+import os
 from contextlib import asynccontextmanager
 from tempfile import NamedTemporaryFile
 from types import FrameType
@@ -18,7 +19,6 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 
 if __package__ is None and not hasattr(sys, "frozen"):
-    import os.path
 
     path = os.path.realpath(os.path.abspath(__file__))
     sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
@@ -36,96 +36,40 @@ from whisper_api.version import __version__
 from whisper_api.api_endpoints import endpoints
 
 import whisper_api.decoding.decoder as decoder
-from whisper_api.log_setup import logger, configure_logging
+from whisper_api.log_setup import logger, configure_logging, formatter
 
 description = """
 Whisper API transcribes audio files.
 """
 
-print(description)
+if __name__ == '__main__':
+    print(description)
 
 
 """
 init global variables
 """
+if __name__ == '__main__':
+    # TODO: can tasks get GCed before they finish if queue is too long?
+    task_dict: TempDict[uuid_hex_t, Task] = TempDict(expiration_time_m=DELETE_RESULTS_AFTER_M,
+                                                     refresh_expiration_time_on_usage=REFRESH_EXPIRATION_TIME_ON_USAGE,
+                                                     auto_gc_interval_s=RUN_RESULT_EXPIRY_CHECK_M * 60,
+                                                     )
 
-# TODO: can tasks get GCed before they finish if queue is too long?
-task_dict: TempDict[uuid_hex_t, Task] = TempDict(expiration_time_m=DELETE_RESULTS_AFTER_M,
-                                                 refresh_expiration_time_on_usage=REFRESH_EXPIRATION_TIME_ON_USAGE,
-                                                 auto_gc_interval_s=RUN_RESULT_EXPIRY_CHECK_M * 60,
-                                                 )
-
-open_audio_files_dict: dict[named_temp_file_name_t, NamedTemporaryFile] = dict()
-
-
-decoder_state = DecoderState()
-
-"""
-Init API
-"""
-
-app = FastAPI(
-    title="Whisper API",
-    description=description,
-    version=__version__,
-    # terms_of_service="PLACEHOLDER",
-    contact={
-        "name": "GitHub Repository",
-        "url": "https://github.com/mayniklas/whisper_api/",
-    },
-)
-
-origins = [
-    "*",
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+    open_audio_files_dict: dict[named_temp_file_name_t, NamedTemporaryFile] = dict()
 
 
-# credit: https://philstories.medium.com/fastapi-logging-f6237b84ea64
-@app.middleware("http")
-async def log_requests(req: Request, call_next):
+    decoder_state = DecoderState()
+
     """
-    Requests paths/ parameters and response codes/ times.
-    Not logging any data from the request/ response body, as it might contain sensitive data.
+    Setup decoder process
     """
 
-    idem = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-    req_base_str = f'{req.client.host}:{req.client.port} "{req.method} {req.url.path}", rid={idem}'
+    # create Pipe for communication between main and worker thread
+    parent_side, child_side = multiprocessing.Pipe()
+    logging_entry_end, log_outry_end = multiprocessing.Pipe()
 
-    # logger.info(f'{req_base_str}, q_params={req.query_params or dict()}')
-    start_time = time.time()
-
-    resp = await call_next(req)
-
-    process_time = (time.time() - start_time) * 1000
-    logger.info(f"{req_base_str}, "
-                f"status_code={resp.status_code}, "
-                f"completed_in={process_time:.2f}ms, "
-                f"q_params={req.query_params or dict()}"
-                )
-
-    return resp
-
-"""
-Setup decoder process
-"""
-
-# create Pipe for communication between main and worker thread
-parent_side, child_side = multiprocessing.Pipe()
-logging_entry_end, log_outry_end = multiprocessing.Pipe()
-
-configure_logging(logger, LOG_DIR, LOG_FILE, logging_entry_end)
-
-api_end_points = EndPoints(app, task_dict, decoder_state, open_audio_files_dict, parent_side)
-frontend = Frontend(app)
-
+    configure_logging(logger, LOG_DIR, LOG_FILE, logging_entry_end)
 
 def handle_message(message_type: str, data: dict[str, Any]):
     """
@@ -313,6 +257,65 @@ async def lifespan(_app: FastAPI):
     exit_fn = setup_decoder_process_and_listener_thread()
     yield
     exit_fn(signal.SIGTERM)  # just larping as a kill signal
+
+
+"""
+Init API
+"""
+if __name__ == '__main__':
+    app = FastAPI(
+        title="Whisper API",
+        description=description,
+        version=__version__,
+        lifespan=lifespan,
+        # terms_of_service="PLACEHOLDER",
+        contact={
+            "name": "GitHub Repository",
+            "url": "https://github.com/mayniklas/whisper_api/",
+        },
+    )
+
+    origins = [
+        "*",
+    ]
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    api_end_points = EndPoints(app, task_dict, decoder_state, open_audio_files_dict, parent_side)
+    frontend = Frontend(app)
+
+    # credit: https://philstories.medium.com/fastapi-logging-f6237b84ea64
+    @app.middleware("http")
+    async def log_requests(req: Request, call_next):
+        """
+        Requests paths/ parameters and response codes/ times.
+        Not logging any data from the request/ response body, as it might contain sensitive data.
+        """
+
+        idem = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        req_base_str = f'{req.client.host}:{req.client.port} "{req.method} {req.url.path}", rid={idem}'
+
+        # logger.info(f'{req_base_str}, q_params={req.query_params or dict()}')
+        start_time = time.time()
+
+        resp = await call_next(req)
+
+        process_time = (time.time() - start_time) * 1000
+        logger.info(f"{req_base_str}, "
+                    f"status_code={resp.status_code}, "
+                    f"completed_in={process_time:.2f}ms, "
+                    f"q_params={req.query_params or dict()}"
+                    )
+
+        return resp
+
+
 """
 Hook for uvicorn
 """
