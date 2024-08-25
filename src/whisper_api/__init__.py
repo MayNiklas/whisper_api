@@ -29,7 +29,8 @@ from whisper_api.frontend.endpoints import Frontend
 from whisper_api.data_models.data_types import named_temp_file_name_t, uuid_hex_t
 from whisper_api.data_models.task import Task
 from whisper_api.environment import API_PORT, API_LISTEN, UNLOAD_MODEL_AFTER_S, DELETE_RESULTS_AFTER_M, \
-    RUN_RESULT_EXPIRY_CHECK_M, REFRESH_EXPIRATION_TIME_ON_USAGE, USE_GPU_IF_AVAILABLE, MAX_MODEL, LOG_DIR, LOG_FILE
+    RUN_RESULT_EXPIRY_CHECK_M, REFRESH_EXPIRATION_TIME_ON_USAGE, USE_GPU_IF_AVAILABLE, MAX_MODEL, LOG_DIR, LOG_FILE, \
+    LOG_FORMAT
 from whisper_api.version import __version__
 from whisper_api.api_endpoints import endpoints
 
@@ -318,7 +319,7 @@ def start():
     # TODO:
     # forwarded_allow_ips= should be set via env var
     # proxy_headers=True only when needed
-    uvicorn.run(app, host=API_LISTEN, port=API_PORT, proxy_headers=True, forwarded_allow_ips="*", log_level="critical")
+    uvicorn.run(app, host=API_LISTEN, port=API_PORT, proxy_headers=True, forwarded_allow_ips="*", log_level="debug")
 
 
 if __name__ == '__main__':
