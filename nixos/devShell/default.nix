@@ -1,16 +1,10 @@
-{ pkgs, ... }:
+{ self, pkgs, ... }:
 let
-  python-with-packages = pkgs.python3.withPackages (p: with p;   [
-    fastapi
-    ffmpeg-python
-    openai-whisper
-    python-multipart
-    uvicorn
-  ] ++ [
+  python-with-packages = pkgs.python3.withPackages (p: with p; [
     # only needed for development
     autopep8
     httpx
-  ]);
+  ] ++ self.packages.${pkgs.system}.whisper_api.propagatedBuildInputs);
 in
 pkgs.mkShell {
   buildInputs = with pkgs;[
