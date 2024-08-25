@@ -6,6 +6,7 @@ import string
 import sys
 import threading
 import time
+from contextlib import asynccontextmanager
 from tempfile import NamedTemporaryFile
 from types import FrameType
 from typing import Any
@@ -220,7 +221,6 @@ Dispatch decoder process and listener thread
 # otherwise we get this beautiful RuntimeError:
 # 'An attempt has been made to start a new process before the
 # current process has finished its bootstrapping phase'
-@app.on_event("startup")
 _stop_threads = False  # i hate this, but python doesn't offer any good way to kill a thread
 def setup_decoder_process_and_listener_thread() -> Callable[[int], None]:
     """
@@ -308,6 +308,11 @@ def setup_decoder_process_and_listener_thread() -> Callable[[int], None]:
     return exit_fn
 
 
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    exit_fn = setup_decoder_process_and_listener_thread()
+    yield
+    exit_fn(signal.SIGTERM)  # just larping as a kill signal
 """
 Hook for uvicorn
 """
