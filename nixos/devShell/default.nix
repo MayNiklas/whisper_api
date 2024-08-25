@@ -10,6 +10,7 @@ let
     # only needed for development
     autopep8
     httpx
+    pip
   ]);
 in
 pkgs.mkShell {

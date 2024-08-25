@@ -123,7 +123,7 @@ class EndPoints:
 
         # send task into queue
         # TODO: find out of json serialization is really needed
-        task_dict = {"type": "decode", "data": task}
+        task_dict = {"type": "decode", "data": task.to_json}
         self.conn_to_child.send(task_dict)
 
         return task
