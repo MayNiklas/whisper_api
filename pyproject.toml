@@ -9,7 +9,10 @@ description = "A simple API for whisper"
 readme = "README.md"
 requires-python = ">=3.7"
 license = { text = "" }
-authors = [{name = "MayNiklas", email = "info@niklas-steffen.de"}]
+authors = [
+    {name = "MayNiklas", email = "info@niklas-steffen.de"},
+    {name = "nonchris", email = "git@chris-ge.de"}
+]
 
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.txt"] }
