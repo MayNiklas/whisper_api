@@ -3,13 +3,16 @@
 , python3
 ,
 }:
-python3.pkgs.buildPythonApplication {
-
-  pname = "whisper_api";
+let
   version = (lib.strings.removePrefix ''__version__ = "'' (lib.strings.removeSuffix ''
     "
   ''
     (builtins.readFile "${self}/src/whisper_api/version.py")));
+in
+python3.pkgs.buildPythonApplication {
+
+  pname = "whisper_api";
+  inherit version;
 
   pyproject = true;
   src = self;
