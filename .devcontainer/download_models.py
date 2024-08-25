@@ -23,9 +23,7 @@ def download_model(name: str):
         whisper._download(whisper._MODELS[name], download_root, in_memory=False)
 
     else:
-        raise RuntimeError(
-            f"Model {name} not found; available models = {whisper.available_models()}"
-        )
+        raise RuntimeError(f"Model {name} not found; available models = {whisper.available_models()}")
 
 
 if __name__ == "__main__":

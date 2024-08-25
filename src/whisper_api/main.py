@@ -1,12 +1,12 @@
 import datetime as dt
 import multiprocessing
+import os
 import random
 import signal
 import string
 import sys
 import threading
 import time
-import os
 from contextlib import asynccontextmanager
 from tempfile import NamedTemporaryFile
 from types import FrameType
@@ -23,22 +23,29 @@ if __package__ is None and not hasattr(sys, "frozen"):
     path = os.path.realpath(os.path.abspath(__file__))
     sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
 
-from whisper_api.api_endpoints.endpoints import EndPoints
-from whisper_api.data_models.decoder_state import DecoderState
-from whisper_api.data_models.temp_dict import TempDict
-from whisper_api.frontend.endpoints import Frontend
-from whisper_api.data_models.data_types import named_temp_file_name_t, uuid_hex_t
-from whisper_api.data_models.task import Task
-from whisper_api.environment import API_PORT, API_LISTEN, UNLOAD_MODEL_AFTER_S, DELETE_RESULTS_AFTER_M, \
-    RUN_RESULT_EXPIRY_CHECK_M, REFRESH_EXPIRATION_TIME_ON_USAGE, USE_GPU_IF_AVAILABLE, MAX_MODEL, LOG_DIR, LOG_FILE, \
-    LOG_FORMAT
-from whisper_api.version import __version__
-from whisper_api.api_endpoints import endpoints
-
 import whisper_api.decoding.decoder as decoder
-from whisper_api.log_setup import logger, configure_logging, formatter
+from whisper_api.api_endpoints.endpoints import EndPoints
+from whisper_api.data_models.data_types import named_temp_file_name_t
+from whisper_api.data_models.data_types import uuid_hex_t
+from whisper_api.data_models.decoder_state import DecoderState
+from whisper_api.data_models.task import Task
+from whisper_api.data_models.temp_dict import TempDict
+from whisper_api.environment import API_LISTEN
+from whisper_api.environment import API_PORT
+from whisper_api.environment import DELETE_RESULTS_AFTER_M
+from whisper_api.environment import LOG_DIR
+from whisper_api.environment import LOG_FILE
+from whisper_api.environment import MAX_MODEL
+from whisper_api.environment import REFRESH_EXPIRATION_TIME_ON_USAGE
+from whisper_api.environment import RUN_RESULT_EXPIRY_CHECK_M
+from whisper_api.environment import UNLOAD_MODEL_AFTER_S
+from whisper_api.environment import USE_GPU_IF_AVAILABLE
+from whisper_api.frontend.endpoints import Frontend
+from whisper_api.log_setup import configure_logging
+from whisper_api.log_setup import logger
+from whisper_api.version import __version__
 
-IS_MAIN_PROCESS = multiprocessing.current_process().name == 'MainProcess'
+IS_MAIN_PROCESS = multiprocessing.current_process().name == "MainProcess"
 
 description = """
 Whisper API transcribes audio files.
@@ -53,13 +60,13 @@ init global variables
 """
 if IS_MAIN_PROCESS:
     # TODO: can tasks get GCed before they finish if queue is too long?
-    task_dict: TempDict[uuid_hex_t, Task] = TempDict(expiration_time_m=DELETE_RESULTS_AFTER_M,
-                                                     refresh_expiration_time_on_usage=REFRESH_EXPIRATION_TIME_ON_USAGE,
-                                                     auto_gc_interval_s=RUN_RESULT_EXPIRY_CHECK_M * 60,
-                                                     )
+    task_dict: TempDict[uuid_hex_t, Task] = TempDict(
+        expiration_time_m=DELETE_RESULTS_AFTER_M,
+        refresh_expiration_time_on_usage=REFRESH_EXPIRATION_TIME_ON_USAGE,
+        auto_gc_interval_s=RUN_RESULT_EXPIRY_CHECK_M * 60,
+    )
 
     open_audio_files_dict: dict[named_temp_file_name_t, NamedTemporaryFile] = dict()
-
 
     decoder_state = DecoderState()
 
@@ -72,6 +79,7 @@ if IS_MAIN_PROCESS:
     logging_entry_end, log_outry_end = multiprocessing.Pipe()
 
     configure_logging(logger, LOG_DIR, LOG_FILE, logging_entry_end)
+
 
 def handle_message(message_type: str, data: dict[str, Any]):
     """
@@ -113,9 +121,9 @@ def handle_message(message_type: str, data: dict[str, Any]):
             del open_audio_files_dict[task.audiofile_name]
 
 
-def listen_to_decoder(pipe_to_listen_to: multiprocessing.connection.Connection,
-                      worker_exit_fn: Callable[[int], None]):
-    """ listen to decode process and update the task_dict accordingly """
+def listen_to_decoder(pipe_to_listen_to: multiprocessing.connection.Connection, worker_exit_fn: Callable[[int], None]):
+    """listen to decode process and update the task_dict accordingly"""
+
     def handle_keyboard_interrupt():
         logger.info("KeyboardInterrupt - initiating exit.")
         worker_exit_fn(signal.SIGINT)
@@ -168,6 +176,8 @@ Dispatch decoder process and listener thread
 # 'An attempt has been made to start a new process before the
 # current process has finished its bootstrapping phase'
 _stop_threads = False  # i hate this, but python doesn't offer any good way to kill a thread
+
+
 def setup_decoder_process_and_listener_thread() -> Callable[[int], None]:
     """
     Handles the whole multiprocessing and threading stuff to get:
@@ -176,7 +186,7 @@ def setup_decoder_process_and_listener_thread() -> Callable[[int], None]:
     """
 
     def exit_fn(signum: int):
-        """ Terminate child and hope it dies """
+        """Terminate child and hope it dies"""
         global _stop_threads
         logger.warning(f"Got {signum=}")
 
@@ -218,7 +228,6 @@ def setup_decoder_process_and_listener_thread() -> Callable[[int], None]:
 
         sys.exit(0)
 
-
     def signal_worker_to_exit(signum: int, frame: Optional[FrameType]):
         """
         wrapper around the exit function that provides the signature signal.signal() requires as second parameter
@@ -229,11 +238,12 @@ def setup_decoder_process_and_listener_thread() -> Callable[[int], None]:
 
     # start decoder process
     logger.info("Starting decoder process...")
-    decoder_process = multiprocessing.Process(target=decoder.Decoder.init_and_run,
-                                              args=(child_side, logger, UNLOAD_MODEL_AFTER_S, USE_GPU_IF_AVAILABLE, MAX_MODEL),
-                                              name="Decoder-Process",
-                                              daemon=True
-                                              )
+    decoder_process = multiprocessing.Process(
+        target=decoder.Decoder.init_and_run,
+        args=(child_side, logger, UNLOAD_MODEL_AFTER_S, USE_GPU_IF_AVAILABLE, MAX_MODEL),
+        name="Decoder-Process",
+        daemon=True,
+    )
     decoder_process.start()
     logger.info("Decoder process stared")
 
@@ -243,10 +253,9 @@ def setup_decoder_process_and_listener_thread() -> Callable[[int], None]:
     signal.signal(signal.SIGHUP, signal_worker_to_exit)  # Handle terminal closure
 
     # start thread to listen to decoder process pipe
-    decoder_process_listen_thread = threading.Thread(target=listen_to_decoder,
-                                                     args=(parent_side, exit_fn),
-                                                     name="Decoder-Listen-Thread",
-                                                     daemon=True)
+    decoder_process_listen_thread = threading.Thread(
+        target=listen_to_decoder, args=(parent_side, exit_fn), name="Decoder-Listen-Thread", daemon=True
+    )
     decoder_process_listen_thread.start()
     logger.info("Listener for decoder process started")
     logger.info("Startup ")
@@ -300,7 +309,7 @@ if IS_MAIN_PROCESS:
         Not logging any data from the request/ response body, as it might contain sensitive data.
         """
 
-        idem = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        idem = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
         req_base_str = f'{req.client.host}:{req.client.port} "{req.method} {req.url.path}", rid={idem}'
 
         # logger.info(f'{req_base_str}, q_params={req.query_params or dict()}')
@@ -309,11 +318,12 @@ if IS_MAIN_PROCESS:
         resp = await call_next(req)
 
         process_time = (time.time() - start_time) * 1000
-        logger.info(f"{req_base_str}, "
-                    f"status_code={resp.status_code}, "
-                    f"completed_in={process_time:.2f}ms, "
-                    f"q_params={req.query_params or dict()}"
-                    )
+        logger.info(
+            f"{req_base_str}, "
+            f"status_code={resp.status_code}, "
+            f"completed_in={process_time:.2f}ms, "
+            f"q_params={req.query_params or dict()}"
+        )
 
         return resp
 
@@ -332,5 +342,5 @@ def start():
     uvicorn.run(app, host=API_LISTEN, port=API_PORT, proxy_headers=True, forwarded_allow_ips="*", log_level="debug")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     start()

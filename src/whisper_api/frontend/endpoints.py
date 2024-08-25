@@ -1,12 +1,10 @@
 import os.path
-import sys
 
 from fastapi import FastAPI
 from fastapi import HTTPException
 from fastapi import Request
 from fastapi import status
 from starlette.responses import FileResponse
-
 
 # get folder of this file
 static_path = os.path.dirname(os.path.realpath(__file__)) + "/static"
@@ -30,10 +28,10 @@ class Frontend:
 
         # this has no effect yet!
         # just trying out if it works as expected!
-        if request.headers.get('X-Email'):
+        if request.headers.get("X-Email"):
             user = {}
-            user['user'] = request.headers.get('X-User')
-            user['email'] = request.headers.get('X-Email')
+            user["user"] = request.headers.get("X-User")
+            user["email"] = request.headers.get("X-Email")
 
         if file_path == "":
             file_path = "index.html"

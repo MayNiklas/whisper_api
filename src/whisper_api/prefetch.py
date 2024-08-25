@@ -4,7 +4,10 @@ import threading
 
 import whisper
 
-download_root = os.path.join(os.getenv("XDG_CACHE_HOME", os.path.join(os.path.expanduser("~"), ".cache")), "whisper",)
+download_root = os.path.join(
+    os.getenv("XDG_CACHE_HOME", os.path.join(os.path.expanduser("~"), ".cache")),
+    "whisper",
+)
 
 
 def download_model(name: str):

@@ -17,17 +17,15 @@ I hope it's the correct way to do it...
 """
 
 
-Identifier_t = TypeVar('Identifier_t')
-Value_t = TypeVar('Value_t')
+Identifier_t = TypeVar("Identifier_t")
+Value_t = TypeVar("Value_t")
 
 creation_time_t = float
 
 
 class TempDict(MutableMapping[Identifier_t, Value_t]):
 
-    def __init__(self, expiration_time_m=30,
-                 refresh_expiration_time_on_usage=True,
-                 auto_gc_interval_s=60):
+    def __init__(self, expiration_time_m=30, refresh_expiration_time_on_usage=True, auto_gc_interval_s=60):
         """
         Args:
             expiration_time_m: time in minutes after which an item is considered expired
@@ -47,18 +45,19 @@ class TempDict(MutableMapping[Identifier_t, Value_t]):
             self.start_auto_gc()
 
     def start_auto_gc(self):
-        """ Start thread that cleans up in given interval """
+        """Start thread that cleans up in given interval"""
+
         def cleaner():
-            """ Cleaner with adapting interval if value is changed """
+            """Cleaner with adapting interval if value is changed"""
             self._clean_expired_items()
             time.sleep(self.auto_gc_interval_s)
 
         threading.Thread(target=cleaner, daemon=True).start()
 
     class ExpirationChecker:
-        """ Context manager that triggers a gc when no auto_gc_interval is set """
+        """Context manager that triggers a gc when no auto_gc_interval is set"""
 
-        def __init__(self, parent: 'TempDict', force_check=False):
+        def __init__(self, parent: "TempDict", force_check=False):
             self.parent = parent
             self.force_check = force_check
 
@@ -94,14 +93,14 @@ class TempDict(MutableMapping[Identifier_t, Value_t]):
 
     @property
     def size(self) -> int:
-        """ number of items in datastructure """
+        """number of items in datastructure"""
         with self.lock:
             self._clean_expired_items()
             return self.__data.__len__()
 
     @property
     def speed(self) -> int:
-        """ items per second averaged over expiration time"""
+        """items per second averaged over expiration time"""
         with self.lock:
             self._clean_expired_items()
             return self.__data.__len__() // self.expiration_time_s
@@ -123,7 +122,7 @@ class TempDict(MutableMapping[Identifier_t, Value_t]):
             return self.__data.__iter__()
 
     def __item_getter(self, key: Identifier_t, not_found_behavior: Callable) -> Optional[Value_t]:
-        """ Returns None if key is not found """
+        """Returns None if key is not found"""
         with self.lock:
             self._clean_expired_items()
 
@@ -139,7 +138,8 @@ class TempDict(MutableMapping[Identifier_t, Value_t]):
             return val[1]
 
     def __getitem__(self, key: Identifier_t) -> Optional[Value_t]:
-        """ Raises KeyError if key is not found """
+        """Raises KeyError if key is not found"""
+
         # getitem shall behave like normal dict -> raise KeyError if key is not found
         def raise_key_error():
             raise KeyError(f"Key {key} not found")
@@ -147,7 +147,8 @@ class TempDict(MutableMapping[Identifier_t, Value_t]):
         return self.__item_getter(key, not_found_behavior=lambda: raise_key_error())
 
     def get(self, key: Identifier_t, default=...) -> Optional[Value_t]:
-        """ Raises KeyError if key is not found and no default is given """
+        """Raises KeyError if key is not found and no default is given"""
+
         # get function shall behave like normal dicts get function
         def return_default():
             if default is ...:
@@ -162,35 +163,32 @@ class TempDict(MutableMapping[Identifier_t, Value_t]):
     """
 
     def __setitem__(self, identifier: Identifier_t, value: Value_t) -> None:
-        """ Just add an item without any expiration checks, not expanding liespan if item already exists """
+        """Just add an item without any expiration checks, not expanding liespan if item already exists"""
         with self.lock, self.lazy_expiry_checker:
             self.__add_item(identifier, value, extend_lifespan_if_exists=False)
 
-    def add_item(self,
-                 identifier: Identifier_t,
-                 value: Value_t,
-                 extend_lifespan_if_exists=True):
-        """ Add item, expand lifespan if it already exists and trigger expiration checks """
+    def add_item(self, identifier: Identifier_t, value: Value_t, extend_lifespan_if_exists=True):
+        """Add item, expand lifespan if it already exists and trigger expiration checks"""
         with self.lock, self.lazy_expiry_checker:
             # check if items shall also be refreshed or just added if new
             if not extend_lifespan_if_exists and identifier in self.__data.keys():
                 return
 
-            self.__add_item(identifier,
-                            value,
-                            extend_lifespan_if_exists=extend_lifespan_if_exists)
+            self.__add_item(identifier, value, extend_lifespan_if_exists=extend_lifespan_if_exists)
 
-    def add_items(self,
-                  items: Iterable[Union[tuple[Identifier_t, Value_t], list[Identifier_t, Value_t]]],
-                  extend_lifespan_if_exists=True):
-        """ Add multiple items without expiration checks """
+    def add_items(
+        self,
+        items: Iterable[Union[tuple[Identifier_t, Value_t], list[Identifier_t, Value_t]]],
+        extend_lifespan_if_exists=True,
+    ):
+        """Add multiple items without expiration checks"""
         # TODO maybe allow for manual overwrite of expiry time expansion
         with self.lock, self.lazy_expiry_checker:
             for key, value in items:
                 self.__add_item(key, value, extend_lifespan_if_exists=extend_lifespan_if_exists)
 
     def extend_lifespan(self, key: Identifier_t, expiration_time_overwrite_m: float = None):
-        """ Extend lifespan of item and trigger expiration checks """
+        """Extend lifespan of item and trigger expiration checks"""
         if expiration_time_overwrite_m is None and not self.refresh_expiration_time_on_usage:
             raise ValueError("Lifetime extension is not enabled by default and overwrite time is not given")
 
@@ -198,7 +196,7 @@ class TempDict(MutableMapping[Identifier_t, Value_t]):
             self.__extend_lifespan(key, expiration_time_overwrite_m * 60)
 
     def __delitem__(self, key: Identifier_t):
-        """ Does not trigger expiration checks """
+        """Does not trigger expiration checks"""
         with self.lock, self.lazy_expiry_checker:
             if key not in self.__data.keys():
                 return
@@ -206,14 +204,14 @@ class TempDict(MutableMapping[Identifier_t, Value_t]):
             del self.__data[key]
 
     def remove_item(self, item: Identifier_t):
-        """ Remove item and trigger expiration checks """
+        """Remove item and trigger expiration checks"""
         with self.lock, self.lazy_expiry_checker:
             self.__delitem__(item)
 
     """ Internal helpers """
 
     def _clean_expired_items(self):
-        """ Garbage collector that removes expired items """
+        """Garbage collector that removes expired items"""
         with self.lock:
             now = time.time()
             keys_to_remove = []
@@ -227,7 +225,7 @@ class TempDict(MutableMapping[Identifier_t, Value_t]):
                 del self.__data[key]
 
     def __add_item(self, identifier: Identifier_t, value: Value_t, extend_lifespan_if_exists: bool):
-        """ Non-thread safe internal add item, not triggering gc """
+        """Non-thread safe internal add item, not triggering gc"""
         # when item in dict and extend lifespan is enabled, just extend lifespan
         if extend_lifespan_if_exists and identifier in self.__data.keys():
             self.__extend_lifespan(identifier)
@@ -238,7 +236,7 @@ class TempDict(MutableMapping[Identifier_t, Value_t]):
         self.__data[identifier] = [now, value]
 
     def __extend_lifespan(self, key: Identifier_t, expiration_time_overwrite_s: float = None):
-        """ Not thread safe, not checking for gc """
+        """Not thread safe, not checking for gc"""
         # if no expansion time is given at all return
         if not (self.refresh_expiration_time_on_usage or expiration_time_overwrite_s):
             return
@@ -255,13 +253,13 @@ class TempDict(MutableMapping[Identifier_t, Value_t]):
         val[0] = time.time()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # Example usage:
     temp_store = TempDict(expiration_time_m=5)  # retention time in seconds
 
-    temp_store.add_item('item1')
-    temp_store.add_item('item2')
+    temp_store.add_item("item1")
+    temp_store.add_item("item2")
     print(temp_store.size)  # prints 2
     time.sleep(6)  # wait for 6 seconds
     print(temp_store.size)  # prints 0 (items have expired)

@@ -1,16 +1,12 @@
 import datetime as dt
 import io
-import os
-from dataclasses import dataclass
 from tempfile import NamedTemporaryFile
 from typing import Any
-from typing import Optional
-from typing import Union
 from uuid import uuid4
 
 from pydantic import BaseModel
-from pydantic.dataclasses import dataclass as pydantic_dataclass
 from whisper.utils import WriteSRT
+
 from whisper_api.data_models.data_types import model_sizes_str_t
 from whisper_api.data_models.data_types import named_temp_file_name_t
 from whisper_api.data_models.data_types import status_str_t
@@ -19,7 +15,8 @@ from whisper_api.data_models.data_types import uuid_hex_t
 
 
 class TaskResponse(BaseModel):
-    """ The class that is returned via the API"""
+    """The class that is returned via the API"""
+
     task_id: str
     task_type: task_type_str_t
     status: str
@@ -35,7 +32,8 @@ class TaskResponse(BaseModel):
 
 
 class WhisperResult(BaseModel):
-    """ The result of a whisper translation/ transcription plus additional information"""
+    """The result of a whisper translation/ transcription plus additional information"""
+
     text: str
     language: str  # spoken language
     output_language: str  # language code of the output language (hopefully)  # TODO validate that always true
@@ -50,7 +48,7 @@ class WhisperResult(BaseModel):
         return (self.end_time - self.start_time).seconds
 
     def get_srt_buffer(self) -> io.StringIO:
-        """ The result text in SRT format """
+        """The result text in SRT format"""
         # setup buffer
         buffer = io.StringIO()
         # ResultWriter base-class requires an output directory
@@ -109,43 +107,44 @@ class Task(BaseModel):
             time_processing_finished=self.whisper_result.end_time,
             target_model_size=self.target_model_size,
             used_model_size=self.whisper_result.used_model_size,
-            used_device=self.whisper_result.used_device
+            used_device=self.whisper_result.used_device,
         )
 
     @property
     def to_json(self) -> dict:
-        json_cls = {**self.__dict__,
-                    "whisper_result": self.whisper_result.__dict__ if self.whisper_result else None,
-                    "audiofile_name": self.audiofile_name
-                    }
+        json_cls = {
+            **self.__dict__,
+            "whisper_result": self.whisper_result.__dict__ if self.whisper_result else None,
+            "audiofile_name": self.audiofile_name,
+        }
 
         return json_cls
 
     @staticmethod
     def from_json(serialized_task: dict) -> "Task":
-        """ Create a Task object from a json dict """
+        """Create a Task object from a json dict"""
         whisper_result = serialized_task["whisper_result"]
-        json_cls = {**serialized_task,
-                    "whisper_result": WhisperResult(**whisper_result) if whisper_result else None,
-                    "audiofile_name": serialized_task["audiofile_name"]
-                    }
+        json_cls = {
+            **serialized_task,
+            "whisper_result": WhisperResult(**whisper_result) if whisper_result else None,
+            "audiofile_name": serialized_task["audiofile_name"],
+        }
 
         return Task(**json_cls)
 
 
-if __name__ == '__main__':
-    t = Task(
-        audiofile_name=NamedTemporaryFile().name,
-        source_language="en",
-        task_type="transcribe")
-    t.whisper_result = WhisperResult(text="hello",
-                                     language="en",
-                                     output_language="de",
-                                     segments=[],
-                                     used_model_size="medium",
-                                     start_time=dt.datetime.now(),
-                                     end_time=dt.datetime.now(),
-                                     used_device="gpu")
+if __name__ == "__main__":
+    t = Task(audiofile_name=NamedTemporaryFile().name, source_language="en", task_type="transcribe")
+    t.whisper_result = WhisperResult(
+        text="hello",
+        language="en",
+        output_language="de",
+        segments=[],
+        used_model_size="medium",
+        start_time=dt.datetime.now(),
+        end_time=dt.datetime.now(),
+        used_device="gpu",
+    )
     serialized = t.to_json
     new_task = Task.from_json(serialized)
 

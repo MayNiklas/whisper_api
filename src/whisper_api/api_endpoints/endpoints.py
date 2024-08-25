@@ -8,11 +8,12 @@ import ffmpeg
 from fastapi import FastAPI
 from fastapi import HTTPException
 from fastapi import Request
-from fastapi import status
 from fastapi import UploadFile
+from fastapi import status
 from fastapi.responses import FileResponse
 from fastapi.responses import RedirectResponse
 from fastapi.responses import StreamingResponse
+
 from whisper_api.data_models.data_types import named_temp_file_name_t
 from whisper_api.data_models.data_types import task_type_str_t
 from whisper_api.data_models.data_types import uuid_hex_t
@@ -28,11 +29,14 @@ V1_PREFIX = "/api/v1"
 
 
 class EndPoints:
-    def __init__(self, app: FastAPI,
-                 tasks_dict: TempDict[uuid_hex_t, Task],
-                 decoder_state: DecoderState,
-                 open_audio_files_dict: dict[named_temp_file_name_t, NamedTemporaryFile],
-                 conn_to_child: Connection):
+    def __init__(
+        self,
+        app: FastAPI,
+        tasks_dict: TempDict[uuid_hex_t, Task],
+        decoder_state: DecoderState,
+        open_audio_files_dict: dict[named_temp_file_name_t, NamedTemporaryFile],
+        conn_to_child: Connection,
+    ):
         self.tasks = tasks_dict
         self.decoder_state = decoder_state
         self.open_audio_files_dict = open_audio_files_dict
@@ -60,16 +64,18 @@ class EndPoints:
         del self.tasks[task_id]
 
     async def decoder_status(self):
-        """ Get the last reported status of the decoder """
+        """Get the last reported status of the decoder"""
         # TODO: should this be some kind of admin route?
         #  hm... guess there is no downside in leaving it public
         return self.decoder_state
 
     async def decoder_status_refresh(self):
-        """ trigger a refresh of the decoder - the response will NEITHER await nor include the new state """
-        self.conn_to_child.send({
-            "type": "status",
-        })
+        """trigger a refresh of the decoder - the response will NEITHER await nor include the new state"""
+        self.conn_to_child.send(
+            {
+                "type": "status",
+            }
+        )
         return "Request to refresh state is sent to decoder"
 
     async def status(self, task_id: uuid_hex_t) -> TaskResponse:
@@ -100,10 +106,7 @@ class EndPoints:
         # test that file has audio track
         if not self.is_file_audio(named_file.name):
             logger.info(f"File '{named_file.name}' has no audio track.")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"File has no audio track."
-            )
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"File has no audio track.")
 
         self.open_audio_files_dict[named_file.name] = named_file
         if file.filename is not None:
@@ -111,14 +114,10 @@ class EndPoints:
                 audiofile_name=named_file.name,
                 source_language=source_language,
                 task_type=task_type,
-                original_file_name=file.filename
+                original_file_name=file.filename,
             )
         else:
-            task = Task(
-                audiofile_name=named_file.name,
-                source_language=source_language,
-                task_type=task_type
-            )
+            task = Task(audiofile_name=named_file.name, source_language=source_language, task_type=task_type)
         self.add_task(task)
 
         # send task into queue
@@ -181,9 +180,9 @@ class EndPoints:
 
         zip_archive = f"{LOG_DIR}/logs.zip"
 
-        with zipfile.ZipFile(zip_archive, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        with zipfile.ZipFile(zip_archive, "w", zipfile.ZIP_DEFLATED) as zipf:
 
-            for file in glob.glob(LOG_DIR + '/*.log*'):
+            for file in glob.glob(LOG_DIR + "/*.log*"):
                 # Add file to zip
                 zipf.write(file)
 
@@ -198,13 +197,13 @@ class EndPoints:
         """
         user = {}
 
-        if request.headers.get('X-Email'):
-            user['email'] = request.headers.get('X-Email')
+        if request.headers.get("X-Email"):
+            user["email"] = request.headers.get("X-Email")
 
-        if request.headers.get('X-User'):
-            user['user'] = request.headers.get('X-User')
+        if request.headers.get("X-User"):
+            user["user"] = request.headers.get("X-User")
 
-        user['user_agent'] = request.headers.get('User-Agent')
+        user["user_agent"] = request.headers.get("User-Agent")
 
         return user
 
@@ -227,7 +226,7 @@ class EndPoints:
         -> create a session cookie after successful login.
         -> redirect to parameter 'redirect' or '/app/'.
         """
-        return RedirectResponse(url=request.query_params.get('redirect', '/app/'))
+        return RedirectResponse(url=request.query_params.get("redirect", "/app/"))
 
     @staticmethod
     def is_file_audio(file_path: str) -> bool:
@@ -239,8 +238,7 @@ class EndPoints:
 
         try:
             probe = ffmpeg.probe(file_path)
-            audio_stream = next(
-                (stream for stream in probe['streams'] if stream['codec_type'] == 'audio'), None)
+            audio_stream = next((stream for stream in probe["streams"] if stream["codec_type"] == "audio"), None)
             return audio_stream is not None
 
         except ffmpeg.Error as e:
