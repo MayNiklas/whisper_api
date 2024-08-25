@@ -17,13 +17,7 @@ python3.pkgs.buildPythonApplication {
   pyproject = true;
   src = self;
 
-  nativeBuildInputs = with python3.pkgs; [
-    setuptools
-  ];
-
-  buildInputs = with python3.pkgs; [
-    setuptools
-  ];
+  nativeBuildInputs = with python3.pkgs; [ setuptools ];
 
   propagatedBuildInputs = with python3.pkgs; [
     fastapi
