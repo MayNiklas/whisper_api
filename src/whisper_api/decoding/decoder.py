@@ -2,6 +2,7 @@ import datetime as dt
 import gc
 import logging
 import signal
+import sys
 import threading
 import time
 from multiprocessing.connection import Connection
@@ -185,7 +186,7 @@ class Decoder:
     def task_to_pipe_message(task: Task, /) -> dict:
         return {
             "type": "task_update",
-            "data": task
+            "data": task.to_json
         }
 
     def send_task_update(self, task: Task, /):
@@ -346,9 +347,9 @@ class Decoder:
 
             # reconstruct task from json
             try:
-                task: Task = data
+                task: Task = Task.from_json(data)
             except Exception as e:
-                self.logger.warning(f"Task didn't survive the pipe (continuing): '{e}'")
+                self.logger.warning(f"Could not parse task from json (continuing): '{e}'")
                 continue
 
             # put task to queue
