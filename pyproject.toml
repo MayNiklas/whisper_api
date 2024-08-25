@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "whisper_api"
+version = "20240825"
+description = "A simple API for whisper"
+readme = "README.md"
+requires-python = ">=3.7"
+license = { text = "" }
+authors = [{name = "MayNiklas", email = "info@niklas-steffen.de"}]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[project.urls]
+homepage = "https://github.com/MayNiklas/whisper_api"
+
+[project.scripts]
+whisper_api = "whisper_api:start"
+
+[project.optional-dependencies]
+dev = ["black", "httpx", "pre-commit"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+exclude = ["tests*"]
+
+[tool.isort]
+profile = "black"
+force_single_line = "true"
+
+[tool.black]
+line-length = 120
