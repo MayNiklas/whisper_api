@@ -3,12 +3,13 @@ let
   python-with-packages = pkgs.python3.withPackages (p: with p; [
     # only needed for development
     autopep8
+    black
     httpx
     pip
   ] ++ self.packages.${pkgs.system}.whisper_api.propagatedBuildInputs);
 in
 pkgs.mkShell {
-  buildInputs = with pkgs;[
+  buildInputs = with pkgs; [
     # only needed for development
     nixpkgs-fmt
     pre-commit
