@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "whisper_api"
-version = "20240825"
+dynamic = ["version"]
 description = "A simple API for whisper"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 license = { text = "" }
 authors = [
     {name = "MayNiklas", email = "info@niklas-steffen.de"},
