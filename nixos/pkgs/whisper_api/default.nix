@@ -14,9 +14,7 @@ python3.pkgs.buildPythonApplication {
   pyproject = true;
   src = self;
 
-  pythonRelaxDeps = [
-    "fastapi"
-  ];
+  pythonRelaxDeps = [ ];
 
   nativeBuildInputs = with python3.pkgs; [
     setuptools
