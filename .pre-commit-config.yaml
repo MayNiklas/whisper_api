@@ -9,8 +9,7 @@ repos:
     hooks:
       - id: detect-private-key
       - id: end-of-file-fixer
-      - id: pretty-format-json
-        exclude: ^(.devcontainer/devcontainer.json|.vscode/settings.json)$
+        exclude: ^.vscode/
       - id: requirements-txt-fixer
       - id: trailing-whitespace
 
