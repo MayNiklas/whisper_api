@@ -14,7 +14,14 @@ python3.pkgs.buildPythonApplication {
   pyproject = true;
   src = self;
 
-  nativeBuildInputs = with python3.pkgs; [ setuptools ];
+  pythonRelaxDeps = [
+    "fastapi"
+  ];
+
+  nativeBuildInputs = with python3.pkgs; [
+    setuptools
+    pythonRelaxDepsHook
+  ];
 
   propagatedBuildInputs = with python3.pkgs; [
     fastapi
