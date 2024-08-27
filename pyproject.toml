@@ -24,6 +24,7 @@ homepage = "https://github.com/MayNiklas/whisper_api"
 [project.scripts]
 whisper_api = "whisper_api:start"
 
+# pip install -e '.[dev]'
 [project.optional-dependencies]
 dev = ["black", "httpx", "pre-commit"]
 
