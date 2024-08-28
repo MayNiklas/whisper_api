@@ -24,6 +24,7 @@ if __package__ is None and not hasattr(sys, "frozen"):
     sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
 
 import whisper_api.decoding.decoder as decoder
+from whisper_api import __version__
 from whisper_api.api_endpoints.endpoints import EndPoints
 from whisper_api.data_models.data_types import named_temp_file_name_t
 from whisper_api.data_models.data_types import uuid_hex_t
@@ -43,7 +44,6 @@ from whisper_api.environment import USE_GPU_IF_AVAILABLE
 from whisper_api.frontend.endpoints import Frontend
 from whisper_api.log_setup import configure_logging
 from whisper_api.log_setup import logger
-from whisper_api.version import __version__
 
 IS_MAIN_PROCESS = multiprocessing.current_process().name == "MainProcess"
 

@@ -6,10 +6,12 @@
 python3.pkgs.buildPythonApplication {
 
   pname = "whisper_api";
-  version = (lib.strings.removePrefix ''__version__ = "'' (lib.strings.removeSuffix ''
-    "
-  ''
-    (builtins.readFile "${self}/src/whisper_api/version.py")));
+
+  # get version by reading __version__ from src/whisper_api/version.py
+  version = lib.strings.removeSuffix ''"''
+    (lib.strings.removePrefix ''__version__ = "'' (lib.elemAt
+      (lib.filter (line: lib.hasPrefix "__version__" line) (lib.splitString "\n"
+        (builtins.readFile "${self}/src/whisper_api/__init__.py"))) 0));
 
   pyproject = true;
   src = self;

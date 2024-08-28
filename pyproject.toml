@@ -16,7 +16,7 @@ authors = [
 
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.txt"] }
-version = { attr = "whisper_api.version.__version__" }
+version = { attr = "whisper_api.__version__" }
 
 [project.urls]
 homepage = "https://github.com/MayNiklas/whisper_api"

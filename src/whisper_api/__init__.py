@@ -6,6 +6,8 @@ if __package__ is None and not hasattr(sys, "frozen"):
     path = os.path.realpath(os.path.abspath(__file__))
     sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
 
+__version__ = "20240825"
+
 from whisper_api.main import app  # isort: skip
 from whisper_api.main import start
 
