@@ -24,7 +24,12 @@ python3.pkgs.buildPythonApplication {
   ];
 
   propagatedBuildInputs = with python3.pkgs; [
-    fastapi
+    # temporary workaround for https://github.com/NixOS/nixpkgs/issues/335841
+    (fastapi.overrideAttrs {
+      postInstall = ''
+        rm -r $out/bin
+      '';
+    })
     ffmpeg-python
     openai-whisper
     python-multipart
