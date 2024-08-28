@@ -26,7 +26,7 @@ whisper_api = "whisper_api:start"
 
 # pip install -e '.[dev]'
 [project.optional-dependencies]
-dev = ["black", "httpx", "pre-commit"]
+dev = ["black", "httpx", "pre-commit", "isort", "pylint"]
 
 [tool.setuptools]
 package-dir = { "" = "src" }
@@ -42,3 +42,6 @@ force_single_line = "true"
 
 [tool.black]
 line-length = 120
+
+[tool.pylint]
+FORMAT = { max-line-length = 120 }

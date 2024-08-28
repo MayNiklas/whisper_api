@@ -5,6 +5,8 @@ let
     autopep8
     black
     httpx
+    isort
+    pylint
     pip
   ] ++ self.packages.${pkgs.system}.whisper_api.propagatedBuildInputs);
 in
