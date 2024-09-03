@@ -1,3 +1,4 @@
+{ system ? builtins.currentSystem }:
 let
   flake = (import
     (
@@ -13,4 +14,4 @@ let
       src = ./.;
     });
 in
-flake.defaultNix.outputs.packages.${builtins.currentSystem}.whisper_api
+flake.defaultNix.outputs.packages.${system}.whisper_api
