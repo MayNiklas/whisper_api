@@ -13,8 +13,4 @@ let
       src = ./.;
     });
 in
-{
-  whisper_api = (flake.defaultNix.outputs.packages.${builtins.currentSystem}.whisper_api);
-  whisper_api_withCUDA = (flake.defaultNix.outputs.packages.${builtins.currentSystem}.whisper_api_withCUDA);
-  whisper_api_withoutCUDA = (flake.defaultNix.outputs.packages.${builtins.currentSystem}.whisper_api_withoutCUDA);
-}
+flake.defaultNix.outputs.packages.${builtins.currentSystem}.whisper_api
