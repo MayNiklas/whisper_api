@@ -43,7 +43,7 @@ if __name__ == "__main__":
     else:
         print("Pre fetching all whisper models...")
 
-        models = ["large", "medium", "base", "small", "tiny"]
+        models = ["large", "turbo", "medium", "base", "small", "tiny"]
 
         threads = []
 

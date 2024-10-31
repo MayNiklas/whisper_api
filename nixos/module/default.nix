@@ -73,7 +73,7 @@ let cfg = config.services.whisper_api; in
       default = "None";
       description = ''
         The maximum model size.
-        Choose between "tiny", "small", "medium" and "large"
+        Choose between "tiny", "small", "medium", "turbo" and "large"
       '';
     };
 

@@ -25,6 +25,7 @@ from whisper_api.environment import MAX_TASK_QUEUE_SIZE
 gigabyte_factor = int(1e9)
 vram_model_map: dict[model_sizes_str_t, int] = {
     "large": 10 * gigabyte_factor,
+    "turbo": 6 * gigabyte_factor,
     "medium": 5 * gigabyte_factor,
     "small": 2 * gigabyte_factor,
     "base": 1 * gigabyte_factor,
