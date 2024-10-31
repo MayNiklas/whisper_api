@@ -1,6 +1,6 @@
 fastapi==0.112.0
 ffmpeg-python==0.2.0
-openai-whisper==20231117
+openai-whisper==20240930
 pydantic==2.8.2
 python-multipart==0.0.9
 uvicorn==0.29.0
