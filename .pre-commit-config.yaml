@@ -1,25 +1,31 @@
 repos:
-  - repo: https://github.com/pre-commit/mirrors-autopep8
-    rev: v2.0.4
+  - repo: https://github.com/psf/black
+    rev: 24.4.2
     hooks:
-      - id: autopep8
+      - id: black
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
       - id: detect-private-key
       - id: end-of-file-fixer
-      - id: pretty-format-json
-        exclude: ^(.devcontainer/devcontainer.json|.vscode/settings.json)$
+        exclude: ^.vscode/
       - id: requirements-txt-fixer
       - id: trailing-whitespace
 
-  - repo: https://github.com/asottile/reorder_python_imports
-    rev: v3.10.0
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
     hooks:
-      - id: reorder-python-imports
+      - id: isort
+        name: isort (python)
 
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.10.1
     hooks:
       - id: pyupgrade
+
+  - repo: https://github.com/PyCQA/autoflake
+    rev: v2.3.1
+    hooks:
+      - id: autoflake
+        args: [ --remove-all-unused-imports, --in-place ]

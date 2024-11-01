@@ -36,7 +36,7 @@ class FastQueue(Generic[T]):
 
         self.__next_element_idx = 0  # points to the lobby next in queue ("pos 1 in queue")
         self.__next_free_index = 0
-        self.current: T = None       # the current element that was returned by next()
+        self.current: T = None  # the current element that was returned by next()
 
     def put(self, elm: T) -> int:
         """
@@ -143,7 +143,7 @@ class FastQueue(Generic[T]):
         return self.__max_size
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     fq = FastQueue(4)
 
     fq.put(1)

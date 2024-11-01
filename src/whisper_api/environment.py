@@ -21,12 +21,13 @@ LOG_DIR = os.getenv("LOG_DIR", "data/")
 LOG_FILE = os.getenv("LOG_FILE", "whisper_api.log")
 LOG_LEVEL_FILE = os.getenv("LOG_LEVEL", "INFO")
 LOG_LEVEL_CONSOLE = os.getenv("LOG_LEVEL", "INFO")
-LOG_FORMAT = os.getenv("LOG_FORMAT",
-                       "[{asctime}] [{levelname}][{processName}][{threadName}][{module}.{funcName}] {message}")
+LOG_FORMAT = os.getenv(
+    "LOG_FORMAT", "[{asctime}] [{levelname:<8}][{processName}][{threadName}][{module}.{funcName}] {message}"
+)
 LOG_DATE_FORMAT = os.getenv("LOG_DATE_FORMAT", "%d.%m. %H:%M:%S")
 LOG_ROTATION_WHEN = os.getenv("LOG_ROTATION", "H")
 LOG_ROTATION_INTERVAL = int(os.getenv("LOG_ROTATION_INTERVAL", 2))
 LOG_ROTATION_BACKUP_COUNT = int(os.getenv("LOG_ROTATION_BACKUP_COUNT", 48))
 
 AUTHORIZED_MAILS = set(os.getenv("LOG_AUTHORIZED_MAILS", "").split(" "))
-AUTHORIZED_MAILS = AUTHORIZED_MAILS - {"", }
+AUTHORIZED_MAILS = AUTHORIZED_MAILS - {""}

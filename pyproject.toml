@@ -4,15 +4,19 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "whisper_api"
-version = "20240825"
+dynamic = ["dependencies", "version"]
 description = "A simple API for whisper"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 license = { text = "" }
-authors = [{name = "MayNiklas", email = "info@niklas-steffen.de"}]
+authors = [
+    { name = "MayNiklas", email = "info@niklas-steffen.de" },
+    { name = "nonchris", email = "git@chris-ge.de" },
+]
 
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.txt"] }
+version = { attr = "whisper_api.__version__" }
 
 [project.urls]
 homepage = "https://github.com/MayNiklas/whisper_api"
@@ -20,11 +24,12 @@ homepage = "https://github.com/MayNiklas/whisper_api"
 [project.scripts]
 whisper_api = "whisper_api:start"
 
+# pip install -e '.[dev]'
 [project.optional-dependencies]
-dev = ["black", "httpx", "pre-commit"]
+dev = ["black", "httpx", "pre-commit", "isort", "pylint"]
 
 [tool.setuptools]
-package-dir = {"" = "src"}
+package-dir = { "" = "src" }
 include-package-data = true
 
 [tool.setuptools.packages.find]
@@ -37,3 +42,6 @@ force_single_line = "true"
 
 [tool.black]
 line-length = 120
+
+[tool.pylint]
+FORMAT = { max-line-length = 120 }

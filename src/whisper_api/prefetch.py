@@ -4,7 +4,10 @@ import threading
 
 import whisper
 
-download_root = os.path.join(os.getenv("XDG_CACHE_HOME", os.path.join(os.path.expanduser("~"), ".cache")), "whisper",)
+download_root = os.path.join(
+    os.getenv("XDG_CACHE_HOME", os.path.join(os.path.expanduser("~"), ".cache")),
+    "whisper",
+)
 
 
 def download_model(name: str):
@@ -40,7 +43,7 @@ if __name__ == "__main__":
     else:
         print("Pre fetching all whisper models...")
 
-        models = ["large", "medium", "base", "small", "tiny"]
+        models = ["large", "turbo", "medium", "base", "small", "tiny"]
 
         threads = []
 

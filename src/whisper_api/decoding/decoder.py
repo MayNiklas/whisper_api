@@ -7,11 +7,11 @@ import time
 from multiprocessing.connection import Connection
 from types import FrameType
 from typing import Any
-from typing import Literal
 from typing import Optional
 
 import torch
 import whisper
+
 from whisper_api.data_models.data_types import model_sizes_str_t
 from whisper_api.data_models.data_types import task_type_str_t
 from whisper_api.data_models.fast_queue import FastQueue
@@ -22,10 +22,10 @@ from whisper_api.environment import DEVELOP_MODE
 from whisper_api.environment import LOAD_MODEL_ON_STARTUP
 from whisper_api.environment import MAX_TASK_QUEUE_SIZE
 
-
 gigabyte_factor = int(1e9)
 vram_model_map: dict[model_sizes_str_t, int] = {
     "large": 10 * gigabyte_factor,
+    "turbo": 6 * gigabyte_factor,
     "medium": 5 * gigabyte_factor,
     "small": 2 * gigabyte_factor,
     "base": 1 * gigabyte_factor,
@@ -37,11 +37,13 @@ model_names = list(vram_model_map.keys())
 class Decoder:
 
     @staticmethod
-    def init_and_run(pipe_to_parent: Connection,
-                     logger: logging.Logger,
-                     unload_model_after_s: bool = True,
-                     use_gpu_if_available: bool = True,
-                     max_model_to_use: model_sizes_str_t = None):
+    def init_and_run(
+        pipe_to_parent: Connection,
+        logger: logging.Logger,
+        unload_model_after_s: bool = True,
+        use_gpu_if_available: bool = True,
+        max_model_to_use: model_sizes_str_t = None,
+    ):
         """
         Initialize the decoder and run it
         Args:
@@ -55,23 +57,27 @@ class Decoder:
 
         """
 
-        decoder = Decoder(pipe_to_parent,
-                          logger,
-                          unload_model_after_s,
-                          use_gpu_if_available=use_gpu_if_available,
-                          max_model_to_use=max_model_to_use)
+        decoder = Decoder(
+            pipe_to_parent,
+            logger,
+            unload_model_after_s,
+            use_gpu_if_available=use_gpu_if_available,
+            max_model_to_use=max_model_to_use,
+        )
         try:
             decoder.run()
         # stop process 'gracefully' when KeyboardInterrupt
         except KeyboardInterrupt:
             exit(0)
 
-    def __init__(self,
-                 pipe_to_parent: Connection,
-                 logger: logging.Logger,
-                 unload_model_after_s: bool = True,
-                 use_gpu_if_available: bool = True,
-                 max_model_to_use: model_sizes_str_t = None):
+    def __init__(
+        self,
+        pipe_to_parent: Connection,
+        logger: logging.Logger,
+        unload_model_after_s: bool = True,
+        use_gpu_if_available: bool = True,
+        max_model_to_use: model_sizes_str_t = None,
+    ):
         """
         Holding and managing the whisper model
         Args:
@@ -94,9 +100,9 @@ class Decoder:
         self.logger = logger
 
         # register signal handlers
-        signal.signal(signal.SIGINT, self.clean_up_and_exit)   # Handle Control + C
+        signal.signal(signal.SIGINT, self.clean_up_and_exit)  # Handle Control + C
         signal.signal(signal.SIGTERM, self.clean_up_and_exit)  # Handle .terminate() from parent process
-        signal.signal(signal.SIGHUP, self.clean_up_and_exit)   # Handle terminal closure
+        signal.signal(signal.SIGHUP, self.clean_up_and_exit)  # Handle terminal closure
 
         # determine mode to run in
         self.max_model_to_use = max_model_to_use
@@ -122,7 +128,9 @@ class Decoder:
 
         # start thread that read tasks from queue and processes them
         # it's a daemon, because it shall die when the main thread exits
-        self.decoder_thread: threading.Thread = threading.Thread(target=self.decode_loop, name="decode-loop", daemon=True)
+        self.decoder_thread: threading.Thread = threading.Thread(
+            target=self.decode_loop, name="decode-loop", daemon=True
+        )
         self.decoder_thread.start()
 
         # let parent know we're ready and which state we're in
@@ -137,7 +145,7 @@ class Decoder:
         return bool(self.model)
 
     def __is_gpu_mode(self, use_gpu_if_available: bool):
-        """ Determine if GPU can and shall be used or not """
+        """Determine if GPU can and shall be used or not"""
         if not torch.cuda.is_available():
             self.logger.warning("CUDA is not available, using CPU-mode")
             return False
@@ -161,7 +169,7 @@ class Decoder:
             "max_model_to_use": self.max_model_to_use,
             "last_loaded_model_size": self.last_loaded_model_size,
             "is_model_loaded": self.is_model_loaded,
-            "currently_busy": self.__busy
+            "currently_busy": self.__busy,
         }
 
         # TODO: maybe add a kwarg to decide whether this "locked" data shall be collected or if data above is enough
@@ -183,10 +191,7 @@ class Decoder:
 
     @staticmethod
     def task_to_pipe_message(task: Task, /) -> dict:
-        return {
-            "type": "task_update",
-            "data": task.to_json
-        }
+        return {"type": "task_update", "data": task.to_json}
 
     def send_task_update(self, task: Task, /):
         self.pipe_to_parent.send(self.task_to_pipe_message(task))
@@ -209,10 +214,12 @@ class Decoder:
             self.send_task_update(task)
 
         # start processing
-        whisper_result = self.__run_model(audio_path=task.audiofile_name,
-                                          task=task.task_type,
-                                          source_language=task.source_language,
-                                          model_size=task.target_model_size)
+        whisper_result = self.__run_model(
+            audio_path=task.audiofile_name,
+            task=task.task_type,
+            source_language=task.source_language,
+            model_size=task.target_model_size,
+        )
 
         # set result and send to parent
         if whisper_result is not None:
@@ -243,6 +250,7 @@ class Decoder:
         Args:
             condition_timeout_s: timeout for the condition wait
         """
+
         def get_unload_time():
             if self.unload_model_after_s is None:
                 # return greatest possible float
@@ -346,7 +354,7 @@ class Decoder:
 
             # reconstruct task from json
             try:
-                task = Task.from_json(data)
+                task: Task = Task.from_json(data)
             except Exception as e:
                 self.logger.warning(f"Could not parse task from json (continuing): '{e}'")
                 continue
@@ -408,13 +416,12 @@ class Decoder:
         exit(0)
 
     def __get_models_below(self, model_name: model_sizes_str_t) -> list[model_sizes_str_t]:
-        """ includes the given model itself """
-        return model_names[model_names.index(model_name):]
+        """includes the given model itself"""
+        return model_names[model_names.index(model_name) :]
 
-    def get_possible_model_names_for_gpu(self,
-                                         sizes_to_try: Optional[list[model_sizes_str_t]] = None,
-                                         max_vram=None
-                                         ) -> Optional[list[model_sizes_str_t]]:
+    def get_possible_model_names_for_gpu(
+        self, sizes_to_try: Optional[list[model_sizes_str_t]] = None, max_vram=None
+    ) -> Optional[list[model_sizes_str_t]]:
         """
         Get all models that would technically fit the GPU if all memory was available
         Args:
@@ -562,7 +569,8 @@ class Decoder:
             self.logger.warning(f"Requested model '{requested_model_size}' doesn't fit.")
 
         self.logger.debug(
-            f"No model loaded. Trying to find the largest model that's currently possible. {possible_sizes=}")
+            f"No model loaded. Trying to find the largest model that's currently possible. {possible_sizes=}"
+        )
         self.logger.debug(f"Current model state: {self.last_loaded_model_size=}, {self.model=}")
 
         # iterate over all possible models, try to find the largest one that currently fits
@@ -578,8 +586,11 @@ class Decoder:
                     "No model currently fits the GPU. Set 'USE_GPU_IF_AVAILABLE' to 0 to disable GPU mode."
                 )
             else:
-                info = ("CUDA is available, but disabled by 'USE_GPU_IF_AVAILABLE'."
-                        if torch.cuda.is_available() else "CUDA is not available.")
+                info = (
+                    "CUDA is available, but disabled by 'USE_GPU_IF_AVAILABLE'."
+                    if torch.cuda.is_available()
+                    else "CUDA is not available."
+                )
 
                 raise MemoryError(f"No model currently fits the CPU. {info}")
 
@@ -588,9 +599,13 @@ class Decoder:
 
         return self.model
 
-    def __run_model(self, audio_path: str, task: task_type_str_t,
-                    source_language: Optional[str],
-                    model_size: model_sizes_str_t = None) -> Optional[WhisperResult]:
+    def __run_model(
+        self,
+        audio_path: str,
+        task: task_type_str_t,
+        source_language: Optional[str],
+        model_size: model_sizes_str_t = None,
+    ) -> Optional[WhisperResult]:
         """
         'Generic' function to run the model and centralize the needed logic
         This is used by transcribe() and translate()
@@ -621,18 +636,19 @@ class Decoder:
 
         self.logger.info(f"Finished decode of '{audio_path}' with model '{self.last_loaded_model_size}', {task=}")
 
-        return WhisperResult(**result,
-                             start_time=start,
-                             end_time=end,
-                             used_model_size=self.last_loaded_model_size,
-                             # TODO is this the correct code for translation?
-                             output_language="en_US" if task == "translate" else result["language"],
-                             used_device="gpu" if self.gpu_mode else "cpu"
-                             )
+        return WhisperResult(
+            **result,
+            start_time=start,
+            end_time=end,
+            used_model_size=self.last_loaded_model_size,
+            # TODO is this the correct code for translation?
+            output_language="en_US" if task == "translate" else result["language"],
+            used_device="gpu" if self.gpu_mode else "cpu",
+        )
 
-    def transcribe(self, audio_path: str,
-                   source_language: Optional[str],
-                   model_size: model_sizes_str_t = None) -> Optional[WhisperResult]:
+    def transcribe(
+        self, audio_path: str, source_language: Optional[str], model_size: model_sizes_str_t = None
+    ) -> Optional[WhisperResult]:
         """
         Transcribe an audio file in its source language
         Args:
@@ -648,9 +664,9 @@ class Decoder:
 
         return transcription_result
 
-    def translate(self, audio_path: str,
-                  source_language: Optional[str],
-                  model_size: model_sizes_str_t = None) -> Optional[WhisperResult]:
+    def translate(
+        self, audio_path: str, source_language: Optional[str], model_size: model_sizes_str_t = None
+    ) -> Optional[WhisperResult]:
         """
         Translate a given audio file to english
         Args:
