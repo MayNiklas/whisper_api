@@ -14,6 +14,7 @@ from fastapi.responses import FileResponse
 from fastapi.responses import RedirectResponse
 from fastapi.responses import StreamingResponse
 
+from whisper_api import __version__
 from whisper_api.data_models.data_types import named_temp_file_name_t
 from whisper_api.data_models.data_types import task_type_str_t
 from whisper_api.data_models.data_types import uuid_hex_t
@@ -54,6 +55,7 @@ class EndPoints:
         self.app.add_api_route(f"{V1_PREFIX}/userinfo", self.userinfo)
         self.app.add_api_route(f"{V1_PREFIX}/login", self.login)
         self.app.add_api_route(f"{V1_PREFIX}/srt", self.srt)
+        self.app.add_api_route(f"{V1_PREFIX}/version", self.get_version_info)
         if AUTHORIZED_MAILS:
             self.app.add_api_route(f"{V1_PREFIX}/logs", self.get_logs)
 
@@ -244,3 +246,12 @@ class EndPoints:
         except ffmpeg.Error as e:
             logger.warning(e.stderr)
             return False
+
+    @staticmethod
+    def get_version_info(request: Request):
+        """
+        Returns information about the version being deployed.
+        :param request: request object
+        :return: dict with version info
+        """
+        return {"version": __version__}
