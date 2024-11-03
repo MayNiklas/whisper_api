@@ -17,6 +17,7 @@ from typing import Optional
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
+from starlette.responses import Response
 
 if __package__ is None and not hasattr(sys, "frozen"):
 
@@ -44,6 +45,7 @@ from whisper_api.environment import USE_GPU_IF_AVAILABLE
 from whisper_api.frontend.endpoints import Frontend
 from whisper_api.log_setup import configure_logging
 from whisper_api.log_setup import logger
+from whisper_api.log_setup import uuid_log_format
 
 IS_MAIN_PROCESS = multiprocessing.current_process().name == "MainProcess"
 
@@ -89,7 +91,12 @@ def handle_message(message_type: str, data: dict[str, Any]):
         data: the data that was sent with the message, must match the type of the message
     """
     if message_type == "status":
-        logger.info(f"Received status update: {data=}")
+        # create uuid safe copy for log
+        log_data = data.copy()
+        log_data["queue_status"] = {uuid_log_format(k): v for k, v in data["queue_status"].items()}
+        logger.info(f"Received status update: {log_data=}")
+
+        # do the actual processing
         decoder_state.gpu_mode = data["gpu_mode"]
         decoder_state.max_model_to_use = data["max_model_to_use"]
         decoder_state.last_loaded_model_size = data["last_loaded_model_size"]
@@ -99,7 +106,7 @@ def handle_message(message_type: str, data: dict[str, Any]):
         decoder_state.tasks_in_queue = data.get("tasks_in_queue")
         decoder_state.received_at = dt.datetime.now()
 
-        # check if new postion data arrived else continue
+        # check if new position data arrived else continue
         if (queue_status := data.get("queue_status")) is None:
             return
 
@@ -111,7 +118,9 @@ def handle_message(message_type: str, data: dict[str, Any]):
 
     if message_type == "task_update":  # data is a json-serialized task
         task: Task = Task.from_json(data)
-        logger.info(f"Received task update for {task.uuid=}, {task.status=}, {task.position_in_queue=}")
+        logger.info(
+            f"Received task update for task.uuid={uuid_log_format(task.uuid)}, {task.status=}, {task.position_in_queue=}"
+        )
 
         task_dict[task.uuid] = task
 
@@ -163,7 +172,9 @@ def listen_to_decoder(pipe_to_listen_to: multiprocessing.connection.Connection, 
 
         except Exception as e:
             # I'd love to print the full data, but that would potentially log the transcriptions, so not an option.
-            logger.error(f"Exception '{type(e).__name__}': {e}, message_type={message_type}, data={list(data.keys())}")
+            logger.error(
+                f"Exception '{type(e).__name__}': {e}, message_type={message_type!r}, data.keys()={list(data.keys())}"
+            )
 
 
 """
@@ -310,19 +321,26 @@ if IS_MAIN_PROCESS:
         """
 
         idem = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
-        req_base_str = f'{req.client.host}:{req.client.port} "{req.method} {req.url.path}", rid={idem}'
+        req_base_str = f'"{req.method} {req.url.path}", rid={idem}'
+        origin = f"{req.client.host}:{req.client.port}"
 
         # logger.info(f'{req_base_str}, q_params={req.query_params or dict()}')
         start_time = time.time()
 
-        resp = await call_next(req)
+        resp: Response = await call_next(req)
 
         process_time = (time.time() - start_time) * 1000
+
+        # build query parameter string
+        query_params = ""
+        if req.query_params:
+            query_params = "?" + "&".join(
+                f"{k}={v if k != 'task_id' else uuid_log_format(v)}" for k, v in req.query_params.items()
+            )
+
         logger.info(
-            f"{req_base_str}, "
-            f"status_code={resp.status_code}, "
-            f"completed_in={process_time:.2f}ms, "
-            f"q_params={req.query_params or dict()}"
+            f'{origin} - "{req.method} {req.url.path}{query_params} HTTP/{req.scope['http_version']}" '
+            f"{resp.status_code}, completed in: {process_time:.2f}ms"
         )
 
         return resp
