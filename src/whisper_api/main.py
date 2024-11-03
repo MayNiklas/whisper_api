@@ -357,7 +357,7 @@ def start():
     # TODO:
     # forwarded_allow_ips= should be set via env var
     # proxy_headers=True only when needed
-    uvicorn.run(app, host=API_LISTEN, port=API_PORT, proxy_headers=True, forwarded_allow_ips="*", log_level="debug")
+    uvicorn.run(app, host=API_LISTEN, port=API_PORT, proxy_headers=True, forwarded_allow_ips="*", log_level="warning")
 
 
 if __name__ == "__main__":
