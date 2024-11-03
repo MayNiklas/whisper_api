@@ -46,7 +46,7 @@ class PrivacyAwareTaskBaseModel(BaseModel):
         return f"{self.__class__.__name__}({self.__str__()})"
 
 
-class TaskResponse(BaseModel):
+class TaskResponse(PrivacyAwareTaskBaseModel):
     """The class that is returned via the API"""
 
     task_id: str
@@ -96,7 +96,7 @@ class WhisperResult(BaseModel):
         return buffer
 
 
-class Task(BaseModel):
+class Task(PrivacyAwareTaskBaseModel):
     audiofile_name: named_temp_file_name_t
     task_type: task_type_str_t
 
