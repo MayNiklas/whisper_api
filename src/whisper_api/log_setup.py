@@ -7,10 +7,13 @@ from logging.handlers import TimedRotatingFileHandler
 from multiprocessing.connection import Connection
 from typing import Literal
 
+from whisper_api.data_models.data_types import private_uuid_hex_t
+from whisper_api.data_models.data_types import uuid_hex_t
 from whisper_api.environment import LOG_DATE_FORMAT
 from whisper_api.environment import LOG_FORMAT
 from whisper_api.environment import LOG_LEVEL_CONSOLE
 from whisper_api.environment import LOG_LEVEL_FILE
+from whisper_api.environment import LOG_PRIVACY_MODE
 from whisper_api.environment import LOG_ROTATION_BACKUP_COUNT
 from whisper_api.environment import LOG_ROTATION_INTERVAL
 from whisper_api.environment import LOG_ROTATION_WHEN
@@ -34,6 +37,17 @@ logger = logging.getLogger("logger")
 
 # register loggers
 logger.setLevel(logging.DEBUG)
+
+
+def uuid_log_format(uid: uuid_hex_t) -> uuid_hex_t | private_uuid_hex_t:
+    """
+    returns the all task uuids shall be logged as.
+    reason: the uuids shall not be visible in a privacy focussed production deployment
+    the print of an uuid might allow the host to access the data we try to hide
+    """
+    if LOG_PRIVACY_MODE:
+        return f"<task_uuid: {uid[:4]}...{uid[-4:]}>"
+    return uid
 
 
 # TODO: rotating filehandler?
@@ -94,7 +108,6 @@ class PipedFileHandler(TimedRotatingFileHandler):
 
         self.setFormatter(_formatter)
         super().emit(record)
-
 
     def listen_for_logs_from_children(self, pipe_to_listen_to: Connection, wait_before_exit_s: float = 1.0):
         """Tread listening for logs from children and sending them to main process"""
