@@ -266,7 +266,7 @@ class Decoder:
             try:
                 with self.task_queue_lock:
                     task: Task = next(self.task_queue)
-                    logging.debug(f"Extracted new task from queue: '{task.uuid}' ")
+                    self.logger.debug(f"Extracted new task from queue: '{task.uuid}' ")
 
                 self.__busy = True
                 sent_empty_queue_info = False
