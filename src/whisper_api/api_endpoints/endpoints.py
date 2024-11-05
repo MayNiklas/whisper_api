@@ -25,6 +25,7 @@ from whisper_api.data_models.temp_dict import TempDict
 from whisper_api.environment import AUTHORIZED_MAILS
 from whisper_api.environment import LOG_DIR
 from whisper_api.log_setup import logger
+from whisper_api.log_setup import uuid_log_format
 
 V1_PREFIX = "/api/v1"
 
@@ -88,7 +89,7 @@ class EndPoints:
         """
         task = self.tasks.get(task_id, None)
         if task is None:
-            logger.info(f"task_id '{task_id}' not found")
+            logger.info(f"task_id '{uuid_log_format(task_id)}' not found")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="task_id not valid",
@@ -138,7 +139,7 @@ class EndPoints:
         task = self.tasks.get(task_id, None)
         # TODO maybe hold a set of tasks that were present but aren't any more for better message?
         if task is None:
-            logger.info(f"task_id '{task_id}' not found")
+            logger.info(f"task_id '{uuid_log_format(task_id)}' not found")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="task_id not found",
@@ -146,7 +147,7 @@ class EndPoints:
 
         # TODO better way for central declaration of those states
         if task.status in ["pending", "processing", "failed"]:
-            logger.info(f"task_id '{task_id}' not ready or failed, status: '{task.status}'")
+            logger.info(f"task_id '{uuid_log_format(task_id)}' not ready or failed, status: '{task.status}'")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=task.to_transmit_full,

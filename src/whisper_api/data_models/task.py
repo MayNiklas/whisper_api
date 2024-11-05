@@ -1,5 +1,6 @@
 import datetime as dt
 import io
+import re
 from tempfile import NamedTemporaryFile
 from typing import Any
 from uuid import uuid4
@@ -12,9 +13,40 @@ from whisper_api.data_models.data_types import named_temp_file_name_t
 from whisper_api.data_models.data_types import status_str_t
 from whisper_api.data_models.data_types import task_type_str_t
 from whisper_api.data_models.data_types import uuid_hex_t
+from whisper_api.log_setup import uuid_log_format
 
 
-class TaskResponse(BaseModel):
+class PrivacyAwareTaskBaseModel(BaseModel):
+    """BaseModel that doesn't print full uuids when in privacy mode"""
+
+    def __str__(self):
+        """gets the __str__ of the BaseModel in injects uuid obfuscation if needed"""
+        original_repr = super().__str__()
+
+        # regex pattern to extract the UUID
+        pattern = r"uuid='([a-f0-9\-]+)'"
+
+        # search for the pattern in the repr string
+        match = re.search(pattern, original_repr)
+
+        # check if a match was found
+        if not match:
+            return original_repr
+
+        old_uuid = match.group(1)
+        # convert uuid
+        new_uuid = uuid_log_format(old_uuid)
+
+        # replace old uuid with new uuid in the string
+        new_repr = re.sub(pattern, f"uuid='{new_uuid}'", original_repr)
+        return new_repr
+
+    def __repr__(self):
+        """rebuild the BaseModel repr but with potential uuid obfuscation"""
+        return f"{self.__class__.__name__}({self.__str__()})"
+
+
+class TaskResponse(PrivacyAwareTaskBaseModel):
     """The class that is returned via the API"""
 
     task_id: str
@@ -64,7 +96,7 @@ class WhisperResult(BaseModel):
         return buffer
 
 
-class Task(BaseModel):
+class Task(PrivacyAwareTaskBaseModel):
     audiofile_name: named_temp_file_name_t
     task_type: task_type_str_t
 

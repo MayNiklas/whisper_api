@@ -7,13 +7,21 @@ It simplifies offloading the heavy lifting of using Whisper to a central GPU ser
 ## Features
 
 * Transcribes audio files to text using OpenAI Whisper
+
+### Simple frontend
 * Includes a simple static frontend to transcribe audio files (`/`)
 * Includes a interactive API documentation using the Swagger UI (`/docs`)
-* Uses GPU acceleration if available
 * Implements a task queue to handle multiple requests (first in, first out)
-* Stateless: to prioritize data privacy, the API only stores data in RAM. Audio files are stored using tempfile and are deleted after processing
+
+### Resource friendly GPU support
+* Uses GPU acceleration if available
 * Supports loading the model into VRAM on startup OR on first request
 * Supports unloading the model after a certain time of inactivity
+
+### Privacy focussed
+* Stateless: to prioritize data privacy, the API only stores data in RAM. Audio files are stored using tempfile and are deleted after processing.
+* Logs don't contain any transcribed text and transcription ids are obfuscated
+* Results are deleted from RAM after a given time
 
 ## Setup recommendations
 
@@ -206,7 +214,8 @@ nix develop .#withCUDA
 | `CPU_FALLBACK_MODEL`               | The fallback when `MAX_MODEL` is not set and CPU mode is needed                           | name of official model                           | medium            |
 | `LOG_DIR`                          | The directory to store log-file(s) in "" means 'this directory', dir is created if needed | wanted directory name or empty str               | "data/"           |
 | `LOG_FILE`                         | The name of the log file                                                                  | arbitrary filename                               | whisper_api.log   |
-| `LOG_LEVEL_CONSOLE`                | Level of logging for the console                                                          | "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL") | "INFO"            |
+| `LOG_LEVEL_CONSOLE`                | The name of the log file                                                                  | arbitrary filename                               | whisper_api.log   |
+| `LOG_PRIVACY_MODE`                 | Don't display full task uuids and other sensitive data in the logs                        | `1` (yes) or `0` (no)                            | 1                 |
 | `LOG_LEVEL_FILE`                   | Level of logging for the file                                                             | "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL") | "INFO"            |
 | `LOG_FORMAT`                       | Format of the log messages                                                                | any valid log message format                     | \*see below\*     |
 | `LOG_DATE_FORMAT`                  | Format of the date in log messages                                                        | any valid date format                            | "%d.%m. %H:%M:%S" |

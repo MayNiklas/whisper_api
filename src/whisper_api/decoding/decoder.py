@@ -21,6 +21,7 @@ from whisper_api.environment import CPU_FALLBACK_MODEL
 from whisper_api.environment import DEVELOP_MODE
 from whisper_api.environment import LOAD_MODEL_ON_STARTUP
 from whisper_api.environment import MAX_TASK_QUEUE_SIZE
+from whisper_api.log_setup import uuid_log_format
 
 gigabyte_factor = int(1e9)
 vram_model_map: dict[model_sizes_str_t, int] = {
@@ -233,7 +234,7 @@ class Decoder:
 
         self.send_task_update(task)
         self.logger.info(
-            f"Sent update for task {task.uuid}, "
+            f"Sent update for task {uuid_log_format(task.uuid)}, "
             f"status={task.status}, position_in_queue={task.position_in_queue}, "
             f"whisper result: 'is {'not' if task.whisper_result else ''} None'"
         )
@@ -266,12 +267,12 @@ class Decoder:
             try:
                 with self.task_queue_lock:
                     task: Task = next(self.task_queue)
-                    logging.debug(f"Extracted new task from queue: '{task.uuid}' ")
+                    self.logger.debug(f"Extracted new task from queue: '{uuid_log_format(task.uuid)}' ")
 
                 self.__busy = True
                 sent_empty_queue_info = False
 
-                self.logger.info(f"Now processing task '{task.uuid}'")
+                self.logger.info(f"Now processing task '{uuid_log_format(task.uuid)}'")
                 self.logger.info(f"Sending status update to parent")
                 self.send_status_update()  # queue changed in size - status update
 
@@ -330,7 +331,7 @@ class Decoder:
             data = msg.get("data", None)
 
             if task_type is None:
-                self.logger.debug(f"Decoder received '{task_type=}', weird... continuing - data: {msg=}")
+                self.logger.debug(f"Decoder received '{task_type=}', weird... ignoring message - data: {msg=}")
                 continue
 
             elif task_type == "exit":  # data is arbitrary since it will not be considered
@@ -364,12 +365,13 @@ class Decoder:
             # so just hold it for the whole time and nothing can go wrong :)
             with self.task_queue_lock:
                 try:
-                    self.logger.debug(f"Adding task '{task.uuid}' to queue")
+                    self.logger.debug(f"Adding task '{uuid_log_format(task.uuid)}' to queue")
                     self.task_queue.put(task)
                 except OverflowError:
                     # TODO: maybe add new status "rejected" and a reason to it?
                     self.logger.warning(
-                        f"Task '{task.uuid}' failed because queue of size {self.task_queue.max_size} is full"
+                        f"Task '{uuid_log_format(task.uuid)}' failed "
+                        f"because queue of size {self.task_queue.max_size} is full"
                     )
                     task.status = "failed"
                     self.send_task_update(task)

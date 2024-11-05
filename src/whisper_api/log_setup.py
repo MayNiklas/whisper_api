@@ -7,10 +7,13 @@ from logging.handlers import TimedRotatingFileHandler
 from multiprocessing.connection import Connection
 from typing import Literal
 
+from whisper_api.data_models.data_types import private_uuid_hex_t
+from whisper_api.data_models.data_types import uuid_hex_t
 from whisper_api.environment import LOG_DATE_FORMAT
 from whisper_api.environment import LOG_FORMAT
 from whisper_api.environment import LOG_LEVEL_CONSOLE
 from whisper_api.environment import LOG_LEVEL_FILE
+from whisper_api.environment import LOG_PRIVACY_MODE
 from whisper_api.environment import LOG_ROTATION_BACKUP_COUNT
 from whisper_api.environment import LOG_ROTATION_INTERVAL
 from whisper_api.environment import LOG_ROTATION_WHEN
@@ -36,6 +39,17 @@ logger = logging.getLogger("logger")
 logger.setLevel(logging.DEBUG)
 
 
+def uuid_log_format(uid: uuid_hex_t) -> uuid_hex_t | private_uuid_hex_t:
+    """
+    returns the all task uuids shall be logged as.
+    reason: the uuids shall not be visible in a privacy focussed production deployment
+    the print of an uuid might allow the host to access the data we try to hide
+    """
+    if LOG_PRIVACY_MODE:
+        return f"<task_uuid: {uid[:4]}...{uid[-4:]}>"
+    return uid
+
+
 # TODO: rotating filehandler?
 class PipedFileHandler(TimedRotatingFileHandler):
     """A logger that can be used in two processes, but only writes from MainProcess"""
@@ -48,7 +62,6 @@ class PipedFileHandler(TimedRotatingFileHandler):
 
         super().__init__(self.log_path, **rotating_file_handler_kwargs)
         self.log_pipe = log_pipe
-        self.am_I_main = multiprocessing.current_process().name == "MainProcess"
 
         if multiprocessing.current_process().name == "MainProcess":
             # start listening for logs from children
@@ -57,6 +70,10 @@ class PipedFileHandler(TimedRotatingFileHandler):
             self.listener_thread.start()
             atexit.register(self.wait_for_listener)
             self.is_end = False
+
+    @property
+    def am_I_main(self):
+        return multiprocessing.current_process().name == "MainProcess"
 
     def wait_for_listener(self):
         """Ensure that we wait for thread when we shall exit"""
@@ -70,27 +87,27 @@ class PipedFileHandler(TimedRotatingFileHandler):
 
     def emit(self, record: logging.LogRecord):
         """Emit the message or send it to the main"""
-        # only write from main process
-        if self.am_I_main:
 
-            # we need to replace the process name manually, otherwise processName is overwritten with 'MainProcess'
-            if record.processName != "MainProcess":
-                _formatter = logging.Formatter(
-                    formatter_string.replace("{processName}", record.processName),
-                    style=formatter_style,
-                    datefmt=formatter_date_fmt,
-                )
-
-            # just use the normal formatter for main messages
-            else:
-                _formatter = logging.Formatter(formatter_string, style=formatter_style, datefmt=formatter_date_fmt)
-
-            self.setFormatter(_formatter)
-            super().emit(record)
-
-        # if we're in a child process, send the record to the pipe
-        else:
+        # if we're in a child process, send the record to the pipe to main process
+        if not self.am_I_main:
             self.log_pipe.send(record)
+            return
+
+        # only write from main process
+        # we need to replace the process name manually, otherwise processName is overwritten with 'MainProcess'
+        if record.processName != "MainProcess":
+            _formatter = logging.Formatter(
+                formatter_string.replace("{processName}", record.processName),
+                style=formatter_style,
+                datefmt=formatter_date_fmt,
+            )
+
+        # just use the normal formatter for main messages
+        else:
+            _formatter = logging.Formatter(formatter_string, style=formatter_style, datefmt=formatter_date_fmt)
+
+        self.setFormatter(_formatter)
+        super().emit(record)
 
     def listen_for_logs_from_children(self, pipe_to_listen_to: Connection, wait_before_exit_s: float = 1.0):
         """Tread listening for logs from children and sending them to main process"""
