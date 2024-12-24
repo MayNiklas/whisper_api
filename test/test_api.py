@@ -1,6 +1,8 @@
+import os
 import time
 import unittest
 
+import httpx
 import torch
 from fastapi.testclient import TestClient
 
@@ -10,7 +12,13 @@ from whisper_api import app
 Test that the API works.
 """
 
-client = TestClient(app)
+
+# if env test_base_url is set, use that as the base url
+# export test_base_url=http://127.0.0.1:3001
+if os.environ.get("test_base_url") is not None:
+    client = httpx.Client(base_url=os.environ.get("test_base_url"))
+else:
+    client = TestClient(app)
 
 
 class TestAPI(unittest.TestCase):
@@ -18,7 +26,10 @@ class TestAPI(unittest.TestCase):
     Test basic features of the API.
     """
 
-    @unittest.skipIf(not torch.cuda.is_available(), "no gpu on this system")
+    @unittest.skipIf(
+        (not torch.cuda.is_available() and (os.environ.get("test_base_url") is None)),
+        "no gpu on this system and test_base_url not set",
+    )
     def test_loaded_model(self):
         """
         Test that the API is reachable and the model is loaded within 120 seconds.
