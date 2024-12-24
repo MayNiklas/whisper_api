@@ -1,11 +1,11 @@
 import os
 import time
 import unittest
+from typing import Tuple
 
 import httpx
 import torch
 from fastapi.testclient import TestClient
-from typing import Tuple
 
 from whisper_api import app
 
@@ -30,7 +30,7 @@ def do_test() -> Tuple[bool, str]:
 # if env test_base_url is set, use that as the base url
 # export test_base_url=http://127.0.0.1:3001
 if os.environ.get("test_base_url") is not None:
-    client = httpx.Client(base_url=os.environ.get("test_base_url"))
+    client = httpx.Client(base_url=os.environ["test_base_url"])
 else:
     client = TestClient(app)
 
@@ -47,6 +47,7 @@ class TestAPI(unittest.TestCase):
         """
         Test that the API is reachable and the model is loaded within 120 seconds.
         """
+
         timeout = 120
         start_time = time.time()
 
@@ -66,7 +67,6 @@ class TestAPI(unittest.TestCase):
         """
         Test that the API can transcribe a given audio file.
         """
-
         file = open("test/files/En-Open_Source_Software_CD-article.ogg", "rb")
         files = {"file": file}
         response = client.post("/api/v1/transcribe", files=files)
@@ -76,7 +76,7 @@ class TestAPI(unittest.TestCase):
 
         print(response.json())
 
-        timeout = 120
+        timeout = 30
         start_time = time.time()
 
         while time.time() - start_time < timeout:
@@ -87,8 +87,20 @@ class TestAPI(unittest.TestCase):
             time.sleep(1)
         else:
             self.fail(f"Transcription did not complete within {timeout} seconds")
+            return False
 
         print(response.json())
 
         self.assertTrue(response.json().get("status") == "finished")
         self.assertTrue(response.json().get("transcript") is not None and len(response.json().get("transcript")) > 0)
+
+    @unittest.skipIf(not do_test, reason)
+    def test_stability(self):
+        """
+        Test the stability of the API by running test_transcribe 20 times.
+        """
+
+        for i in range(20):
+            print(f"Test {i+1}:")
+            if self.test_transcribe() is False:
+                self.fail("Stability test failed")
