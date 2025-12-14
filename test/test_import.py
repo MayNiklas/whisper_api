@@ -9,4 +9,15 @@ class TestImport(unittest.TestCase):
 
             assert whisper_api
         except ImportError:
-            unittest.fail("Failed to import whisper_api")
+            unittest.fail("Failed to 'import whisper_api'")
+
+    def test_from_import(self):
+        try:
+            from whisper_api import app
+
+            assert app
+
+        except ImportError:
+            unittest.fail("Failed to 'from whisper_api import app'")
+
+    # TODO: write a test that attempt to import from a a mp.Process and assert that app does not exist
