@@ -47,20 +47,25 @@ from whisper_api.log_setup import configure_logging
 from whisper_api.log_setup import logger
 from whisper_api.log_setup import uuid_log_format
 
-IS_MAIN_PROCESS = multiprocessing.current_process().name == "MainProcess"
+
+def am_i_process(name: str) -> bool:
+    return multiprocessing.current_process().name == name
+
+def am_i_main_process() -> bool:
+    return am_i_process("MainProcess")
 
 description = """
 Whisper API transcribes audio files.
 """
 
-if IS_MAIN_PROCESS:
+if am_i_main_process():
     print(description)
 
 
 """
 init global variables
 """
-if IS_MAIN_PROCESS:
+if am_i_main_process():
     # TODO: can tasks get GCed before they finish if queue is too long?
     task_dict: TempDict[uuid_hex_t, Task] = TempDict(
         expiration_time_m=DELETE_RESULTS_AFTER_M,
@@ -284,7 +289,7 @@ async def lifespan(_app: FastAPI):
 """
 Init API
 """
-if IS_MAIN_PROCESS:
+if am_i_main_process():
     app = FastAPI(
         title="Whisper API",
         description=description,
