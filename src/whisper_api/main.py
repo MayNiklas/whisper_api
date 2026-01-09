@@ -357,6 +357,7 @@ if am_i_main_process():
 
 
     def start():
+        """Entrypoint to start the API (note: this version is only imported on the MainProcess (see __init.py__)"""
         import uvicorn
 
         # TODO:
