@@ -1,9 +1,24 @@
-{ self
-, lib
-, python3
-,
+{
+  self,
+  lib,
+  buildPythonApplication,
+
+  # build-system
+  setuptools,
+  pythonRelaxDepsHook,
+
+  # dependencies
+  fastapi,
+  ffmpeg-python,
+  openai-whisper,
+  python-multipart,
+  uvicorn,
+
+  # tests
+  unittestCheckHook,
+  httpx,
 }:
-python3.pkgs.buildPythonApplication {
+buildPythonApplication {
 
   pname = "whisper_api";
 
@@ -18,12 +33,12 @@ python3.pkgs.buildPythonApplication {
 
   pythonRelaxDeps = [ ];
 
-  nativeBuildInputs = with python3.pkgs; [
+  nativeBuildInputs = [
     setuptools
     pythonRelaxDepsHook
   ];
 
-  propagatedBuildInputs = with python3.pkgs; [
+  propagatedBuildInputs = [
     fastapi
     ffmpeg-python
     openai-whisper
@@ -31,7 +46,7 @@ python3.pkgs.buildPythonApplication {
     uvicorn
   ];
 
-  nativeCheckInputs = with python3.pkgs; [
+  nativeCheckInputs = [
     unittestCheckHook
     httpx
   ];
