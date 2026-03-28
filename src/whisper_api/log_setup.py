@@ -2,6 +2,7 @@ import atexit
 import logging
 import multiprocessing
 import os
+import select
 import threading
 from logging.handlers import TimedRotatingFileHandler
 from multiprocessing.connection import Connection
@@ -90,7 +91,15 @@ class PipedFileHandler(TimedRotatingFileHandler):
 
         # if we're in a child process, send the record to the pipe to main process
         if not self.am_I_main:
-            self.log_pipe.send(record)
+            try:
+                # Use select to avoid blocking when the pipe buffer is full.
+                # If the pipe isn't ready for writing, silently drop the record —
+                # the console handler already printed it.
+                _, writable, _ = select.select([], [self.log_pipe.fileno()], [], 0)
+                if writable:
+                    self.log_pipe.send(record)
+            except Exception:
+                pass
             return
 
         # only write from main process

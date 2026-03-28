@@ -90,6 +90,7 @@ class Decoder:
         """
 
         self.pipe_to_parent = pipe_to_parent
+        self.pipe_send_lock = threading.Lock()
         # TODO: handle maxsize by making it configurable from outside and handle case where Queue reaches limit
         # queue that stores tasks that wait for processing
         # using FastQueue because it allows for position queries of queued objects
@@ -188,14 +189,16 @@ class Decoder:
         status_dict = self.get_status_dict()
         self.logger.debug(f"{status_dict}")
 
-        self.pipe_to_parent.send(status_dict)
+        with self.pipe_send_lock:
+            self.pipe_to_parent.send(status_dict)
 
     @staticmethod
     def task_to_pipe_message(task: Task, /) -> dict:
         return {"type": "task_update", "data": task.to_json}
 
     def send_task_update(self, task: Task, /):
-        self.pipe_to_parent.send(self.task_to_pipe_message(task))
+        with self.pipe_send_lock:
+            self.pipe_to_parent.send(self.task_to_pipe_message(task))
 
     def handle_task(self, task: Task) -> Task:
         """

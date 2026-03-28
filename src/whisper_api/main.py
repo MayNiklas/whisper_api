@@ -242,7 +242,7 @@ def setup_decoder_process_and_listener_thread() -> Callable[[int], None]:
         # - the logger thread (registered in atexit)
         # - uvicorn (it'll be fine and have its own shutdown procedures)
 
-        sys.exit(0)
+        os._exit(0)
 
     def signal_worker_to_exit(signum: int, frame: Optional[FrameType]):
         """
