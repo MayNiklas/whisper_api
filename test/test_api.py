@@ -23,7 +23,7 @@ def do_test() -> tuple[bool, str]:
     Decide whether to run the tests or not.
     These tests require a running whisper model and are skipped by default.
     """
-    return True, "These tests require a whisper model and are skipped by default"
+    return False, "These tests require a whisper model and are skipped by default"
 
 
 def find_free_port() -> int:
