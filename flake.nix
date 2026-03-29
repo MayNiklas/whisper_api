@@ -33,7 +33,7 @@
         (system: nixpkgsFor.${system}.nixpkgs-fmt);
 
       overlays.default = final: prev: {
-        devShell = final.python3Packages.callPackage nixos/devShell { inherit self; };
+        devShell = final.python3Packages.callPackage nixos/devShell { };
         whisper_api = final.python3Packages.callPackage nixos/pkgs/whisper_api { inherit self; };
         # Our code is not compatible with pydantic version 2 yet.
         python3 = prev.python3.override {
