@@ -2,7 +2,7 @@ import atexit
 import logging
 import multiprocessing
 import os
-import select
+import queue
 import threading
 from logging.handlers import TimedRotatingFileHandler
 from multiprocessing.connection import Connection
@@ -64,6 +64,12 @@ class PipedFileHandler(TimedRotatingFileHandler):
         super().__init__(self.log_path, **rotating_file_handler_kwargs)
         self.log_pipe = log_pipe
 
+        # Queue + drain thread for non-blocking pipe sends from child processes.
+        # Initialized lazily on first emit() in a child, because the handler is
+        # constructed in MainProcess and then inherited across fork().
+        self._send_queue: queue.Queue[logging.LogRecord] | None = None
+        self._drain_thread: threading.Thread | None = None
+
         if multiprocessing.current_process().name == "MainProcess":
             # start listening for logs from children
             self.listener_thread = threading.Thread(target=self.listen_for_logs_from_children, args=(self.log_pipe,))
@@ -86,20 +92,25 @@ class PipedFileHandler(TimedRotatingFileHandler):
             self.listener_thread.join()
             print("Logger closed")
 
+    def _drain_send_queue(self):
+        """Drain buffered log records into the pipe. Runs in child processes only."""
+        while True:
+            try:
+                record = self._send_queue.get()
+                self.log_pipe.send(record)
+            except Exception:
+                break
+
     def emit(self, record: logging.LogRecord):
         """Emit the message or send it to the main"""
 
-        # if we're in a child process, send the record to the pipe to main process
+        # if we're in a child process, buffer the record for async sending
         if not self.am_I_main:
-            try:
-                # Use select to avoid blocking when the pipe buffer is full.
-                # If the pipe isn't ready for writing, silently drop the record —
-                # the console handler already printed it.
-                _, writable, _ = select.select([], [self.log_pipe.fileno()], [], 0)
-                if writable:
-                    self.log_pipe.send(record)
-            except Exception:
-                pass
+            if self._send_queue is None:
+                self._send_queue = queue.Queue()
+                self._drain_thread = threading.Thread(target=self._drain_send_queue, daemon=True)
+                self._drain_thread.start()
+            self._send_queue.put_nowait(record)
             return
 
         # only write from main process
