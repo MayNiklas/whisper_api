@@ -21,9 +21,9 @@ TEST_AUDIO_FILE = TEST_FILES_DIR / "En-Open_Source_Software_CD-article.ogg"
 def do_test() -> tuple[bool, str]:
     """
     Decide whether to run the tests or not.
-    These tests require a running whisper model and are skipped by default.
+    These tests require a running whisper model.
     """
-    return False, "These tests require a whisper model and are skipped by default"
+    return True, "These tests require a whisper model and are skipped"
 
 
 def find_free_port() -> int:

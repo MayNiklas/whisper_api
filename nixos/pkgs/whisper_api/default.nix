@@ -15,7 +15,7 @@
   uvicorn,
 
   # tests
-  unittestCheckHook,
+  pytestCheckHook,
   httpx,
 }:
 buildPythonApplication {
@@ -47,8 +47,12 @@ buildPythonApplication {
   ];
 
   nativeCheckInputs = [
-    unittestCheckHook
+    pytestCheckHook
     httpx
+  ];
+
+  disabledTestPaths = [
+    "test/test_api.py"
   ];
 
   pythonImportsCheck = [ "whisper_api" ];
