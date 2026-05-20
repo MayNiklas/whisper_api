@@ -1,16 +1,19 @@
-{ self, pkgs, ... }:
+{ pkgs, ... }:
 let
+  whisper_api = pkgs.whisper_api;
   python-with-packages = pkgs.python3.withPackages (p: with p; [
     # only needed for development
     autopep8
     black
     httpx
     isort
-    pylint
     pip
-  ] ++ self.packages.${pkgs.system}.whisper_api.propagatedBuildInputs);
+    pylint
+    pytest
+  ] ++ whisper_api.propagatedBuildInputs);
 in
 pkgs.mkShell {
+  inputsFrom = [ whisper_api ];
   buildInputs = with pkgs; [
     # only needed for development
     nixpkgs-fmt
