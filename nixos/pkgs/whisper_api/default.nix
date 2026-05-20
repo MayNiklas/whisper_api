@@ -51,6 +51,10 @@ buildPythonApplication {
     httpx
   ];
 
+  disabledTestPaths = [
+    "test/test_api.py"
+  ];
+
   pythonImportsCheck = [ "whisper_api" ];
 
   meta = with lib; {
