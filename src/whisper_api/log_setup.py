@@ -62,6 +62,7 @@ class PipedFileHandler(TimedRotatingFileHandler):
 
         super().__init__(self.log_path, **rotating_file_handler_kwargs)
         self.log_pipe = log_pipe
+        self.am_I_main = multiprocessing.current_process().name == "MainProcess"
 
         if multiprocessing.current_process().name == "MainProcess":
             # start listening for logs from children
@@ -70,10 +71,6 @@ class PipedFileHandler(TimedRotatingFileHandler):
             self.listener_thread.start()
             atexit.register(self.wait_for_listener)
             self.is_end = False
-
-    @property
-    def am_I_main(self):
-        return multiprocessing.current_process().name == "MainProcess"
 
     def wait_for_listener(self):
         """Ensure that we wait for thread when we shall exit"""
