@@ -3,10 +3,7 @@
   description = "A simple API for OpenAI's Whisper";
 
   inputs = {
-    # Pinned to the commit just before torch 2.11.0 was introduced (2026-03-23).
-    # torch 2.11 fails to build with CUDA on sm_90 due to MSLK FP4 GEMM kernels
-    # (f4f4bf16_grouped) which target Blackwell (sm_100+) only.
-    nixpkgs.url = "github:nixos/nixpkgs/37d281c8b0315e5a03db0a3a66cead7c50361817";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
   };
 
   outputs = { self, nixpkgs, ... }:
