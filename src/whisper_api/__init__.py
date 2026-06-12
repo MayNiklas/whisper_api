@@ -8,8 +8,11 @@ if __package__ is None and not hasattr(sys, "frozen"):
 
 __version__ = "20241105"
 
-from whisper_api.main import app  # isort: skip
-from whisper_api.main import start
+from whisper_api.main import is_main_process  # isort: skip
+
+if is_main_process():
+    from whisper_api.main import app  # isort: skip
+    from whisper_api.main import start
 
 if __name__ == "__main__":
     start()
