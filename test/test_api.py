@@ -155,7 +155,7 @@ class TestAPI(unittest.TestCase):
     @unittest.skipIf(not do_test, reason)
     def test_stability(self):
         """
-        Test the stability of the API by running transcription 20 times.
+        Test the stability of the API by running transcription`self.STABILITY_RUNS` times.
         Only passes if all runs complete successfully.
         """
         failures = []
