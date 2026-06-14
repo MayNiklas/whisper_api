@@ -82,7 +82,6 @@ in {
           server.succeed("chown -R whisper_api:whisper_api /var/lib/whisper_api/.cache/whisper")
 
           # wait until the server is up
-          server.wait_for_unit("network-online.target")
           server.wait_for_unit("whisper_api")
 
           # check if server can reach API

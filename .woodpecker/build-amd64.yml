@@ -7,7 +7,9 @@ steps:
     image: bash
     commands:
       - attic login lounge-rocks https://cache.lounge.rocks $ATTIC_KEY --set-default
-    secrets: [attic_key]
+    environment:
+      ATTIC_KEY:
+        from_secret: attic_key
 
   - name: build whisper_api
     image: bash
