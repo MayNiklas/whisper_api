@@ -12,13 +12,22 @@ services:
       - LOAD_MODEL_ON_STARTUP=1
       # - UNLOAD_MODEL_AFTER_S=300
       # - DEVELOP_MODE=0
-    # include the following lines when using a NVIDIA GPU!
-    # make sure to have the NVIDIA Container Toolkit installed
-    # for more information visit:
-    # https://github.com/NVIDIA/nvidia-container-toolkit
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              capabilities: [gpu]
+    # NVIDIA GPU access — enable exactly one of the two blocks below.
+    #
+    # Option A (preferred): CDI (Container Device Interface). Vendor-neutral
+    # standard where the NVIDIA Container Toolkit installs a spec at
+    # /etc/cdi/nvidia.yaml and the device is addressed by name. Requires
+    # Docker >=25 and Compose >=v2.30. This is what modern setups use.
+    devices:
+      - nvidia.com/gpu=all
+    #
+    # Option B (legacy): the old `nvidia` OCI runtime registered in
+    # /etc/docker/daemon.json by older versions of the NVIDIA Container
+    # Toolkit. Being phased out, but still works on hosts that have the
+    # runtime registered and no CDI spec installed.
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           capabilities: [gpu]

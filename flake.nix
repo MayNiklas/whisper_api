@@ -2,7 +2,9 @@
 
   description = "A simple API for OpenAI's Whisper";
 
-  inputs = { nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable"; };
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+  };
 
   outputs = { self, nixpkgs, ... }:
     let
@@ -33,8 +35,8 @@
         (system: nixpkgsFor.${system}.nixpkgs-fmt);
 
       overlays.default = final: prev: {
-        devShell = final.callPackage nixos/devShell { inherit self; };
-        whisper_api = final.callPackage nixos/pkgs/whisper_api { inherit self; };
+        devShell = final.python3Packages.callPackage nixos/devShell { };
+        whisper_api = final.python3Packages.callPackage nixos/pkgs/whisper_api { inherit self; };
         # Our code is not compatible with pydantic version 2 yet.
         python3 = prev.python3.override {
           packageOverrides = python-self: python-super: {
