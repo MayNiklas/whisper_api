@@ -1,0 +1,75 @@
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+compose.yaml
+docker-compose.yml
+
+# Python virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python caches / build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Test / coverage / type-checker caches
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.hypothesis/
+
+# Application data
+data/
+
+# Nix
+result
+flake.nix
+flake.lock
+.envrc
+nixos/
+
+# CI / tooling config
+.github/
+.woodpecker/
+.pre-commit-config.yaml
+.devcontainer/
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# Environment files
+.env
