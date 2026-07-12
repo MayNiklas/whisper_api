@@ -3,7 +3,7 @@ services:
     image: ghcr.io/mayniklas/whisper_api:latest
     build:
       args:
-        # - CUDA_VERSION=12.4.1 # make sure CUDA_VERSION is compatible with the installed NVIDIA driver
+        # - CUDA_VERSION=13.0.1 # make sure CUDA_VERSION is compatible with the installed NVIDIA driver
         - PREFETCH_MODEL=large  # set it to 0 to disable model prefetching
     ports:
       - "3001:3001"
