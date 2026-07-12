@@ -65,7 +65,6 @@ nixos/
 .github/
 .woodpecker/
 .pre-commit-config.yaml
-.devcontainer/
 
 # Editor / IDE
 .vscode/
