@@ -70,6 +70,13 @@ button[type="button"]:hover {
   padding: 10px;
 }
 
+.privacy-info {
+  margin: 0 0 20px;
+  text-align: center;
+  font-size: 0.85em;
+  color: #666;
+}
+
 #taskIdContainer,
 #resultContainer {
   border: 1px solid #ccc;

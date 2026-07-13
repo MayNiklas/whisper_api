@@ -54,6 +54,25 @@ function handleDrop(event) {
   transcribe();
 }
 
+// Fetch privacy related configuration and display it below the transcribe button
+function loadPrivacyInfo() {
+  fetch("/api/v1/privacy")
+    .then((response) => response.json())
+    .then((data) => {
+      const obfuscation = data.LOG_PRIVACY_MODE ? "on" : "off";
+      const privacyInfo = document.getElementById("privacyInfo");
+      privacyInfo.innerText =
+        `Transcriptions are never written to disk. ` +
+        `Transcriptions are held in memory for ${data.DELETE_RESULTS_AFTER_M} minutes. ` +
+        `Obfuscation for UUIDs in the logs is ${obfuscation}.`;
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+    });
+}
+
+loadPrivacyInfo();
+
 function transcribe() {
   // Clear the output container
   const outputContainer = document.getElementById("resultContainer");

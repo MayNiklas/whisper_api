@@ -47,7 +47,19 @@ from whisper_api.log_setup import configure_logging
 from whisper_api.log_setup import logger
 from whisper_api.log_setup import uuid_log_format
 
-IS_MAIN_PROCESS = multiprocessing.current_process().name == "MainProcess"
+
+def get_process_name() -> str:
+    """ shorthand for multiprocessing.current_process().name """
+    return multiprocessing.current_process().name
+
+
+# when uvicorn is executed with --reload the program isn't spawned in main but in "SpawnProcess-x", x = 'num of reload'
+def is_main_process() -> bool:
+    """ get bool if this process is the process that shall provide the api """
+    return get_process_name() == "MainProcess" or "SpawnProcess" in get_process_name()
+
+
+IS_MAIN_PROCESS = is_main_process()
 
 description = """
 Whisper API transcribes audio files.

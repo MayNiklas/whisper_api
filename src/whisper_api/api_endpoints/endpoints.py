@@ -22,7 +22,7 @@ from whisper_api.data_models.decoder_state import DecoderState
 from whisper_api.data_models.task import Task
 from whisper_api.data_models.task import TaskResponse
 from whisper_api.data_models.temp_dict import TempDict
-from whisper_api.environment import AUTHORIZED_MAILS
+from whisper_api.environment import AUTHORIZED_MAILS, LOG_PRIVACY_MODE, DELETE_RESULTS_AFTER_M
 from whisper_api.environment import LOG_DIR
 from whisper_api.log_setup import logger
 from whisper_api.log_setup import uuid_log_format
@@ -56,6 +56,7 @@ class EndPoints:
         self.app.add_api_route(f"{V1_PREFIX}/userinfo", self.userinfo)
         self.app.add_api_route(f"{V1_PREFIX}/login", self.login)
         self.app.add_api_route(f"{V1_PREFIX}/srt", self.srt)
+        self.app.add_api_route(f"{V1_PREFIX}/privacy", self.get_privacy)
         self.app.add_api_route(f"{V1_PREFIX}/version", self.get_version_info)
         if AUTHORIZED_MAILS:
             self.app.add_api_route(f"{V1_PREFIX}/logs", self.get_logs)
@@ -247,6 +248,16 @@ class EndPoints:
         except ffmpeg.Error as e:
             logger.warning(e.stderr)
             return False
+
+    @staticmethod
+    def get_privacy(request: Request) -> dict[str, str | int]:
+        """Returns the configuration of the privacy related env variables"""
+
+        return {
+            "LOG_PRIVACY_MODE": LOG_PRIVACY_MODE,
+            "DELETE_RESULTS_AFTER_M": DELETE_RESULTS_AFTER_M,
+        }
+
 
     @staticmethod
     def get_version_info(request: Request):
